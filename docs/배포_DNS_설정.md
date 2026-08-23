@@ -9,21 +9,20 @@
 
 ## 1. GitHub 저장소 만들기
 
-이 폴더는 이미 git 저장소이고, 작업은 `deploy/github-pages` 브랜치에 있습니다.
+이 폴더는 이미 git 저장소입니다. **브랜치 정리는 7차(2026-08-23)에 끝냈습니다** —
+`deploy/github-pages` 를 병합하고 브랜치 이름을 **`main`** 으로 바꿔 뒀습니다.
+그러므로 아래 두 줄만 하면 됩니다.
 
 ```bash
 # 저장소를 만들고 올린다 (공개 — BD 결정 2026-08-23)
 gh repo create barosportstv --public --source=. --remote=origin
-
-# 기본 브랜치 이름을 main 으로 맞춘다 (워크플로가 main 을 본다)
-git checkout master
-git branch -M main
-git merge deploy/github-pages
 git push -u origin main
 ```
 
-> ⚠️ `deploy.yml` 은 `push: branches: [main]` 을 본다. 브랜치 이름이 `master` 로 남으면
-> 푸시할 때 배포가 돌지 않는다 (크론과 수동 실행은 그래도 된다).
+> ⚠️ **브랜치 이름을 `master` 로 되돌리지 마십시오.** `deploy.yml` 은
+> `push: branches: [main]` 을 본다. 이름이 어긋나면 푸시해도 배포가 돌지 않는다
+> (10분 크론과 수동 실행은 그래도 되지만, 첫 배포가 최대 10분 늦고 이후 푸시도
+> 즉시 반영되지 않는다).
 
 ## 2. GitHub 설정 (한 번만)
 
