@@ -41,7 +41,33 @@
     ['양키스',       'MLB',            'yankees',              'New York Yankees',     'NYY'],
     ['울산',         'K-League',       'ulsan',                'Ulsan Hyundai',        'ULS'],
     ['전북',         'K-League',       'jeonbuk',              'Jeonbuk Motors',       'JBM'],
-    ['LG 트윈스',    'KBO',            'lg twins 엘지',        'LG Twins',             'LG']
+    ['LG 트윈스',    'KBO',            'lg twins 엘지',        'LG Twins',             'LG'],
+
+    /* KBO·NPB — 리그 등급 1군에 올라와 홈 첫 화면을 차지하므로 사전에 넣는다.
+       영문 이름은 추측하지 않고 프리베이크 데이터에서 그대로 옮겼다
+       (2026-08-23 실측). API 이름과 한 글자라도 다르면 팀을 못 찾는다. */
+    ['두산 베어스',  'KBO',            'doosan bears 두산',    'Doosan Bears',         'OB'],
+    ['KT 위즈',      'KBO',            'kt wiz 케이티',        'KT Wiz',               'KT'],
+    ['SSG 랜더스',   'KBO',            'ssg landers 랜더스',   'SSG Landers',          'SSG'],
+    ['NC 다이노스',  'KBO',            'nc dinos 엔씨',        'NC Dinos',             'NC'],
+    ['KIA 타이거즈', 'KBO',            'kia tigers 기아',      'Kia Tigers',           'KIA'],
+    ['삼성 라이온즈', 'KBO',           'samsung lions 삼성',   'Samsung Lions',        'SS'],
+    ['롯데 자이언츠', 'KBO',           'lotte giants 롯데',    'Lotte Giants',         'LOT'],
+    ['한화 이글스',  'KBO',            'hanwha eagles 한화',   'Hanwha Eagles',        'HH'],
+    ['키움 히어로즈', 'KBO',           'kiwoom heroes 키움',   'Kiwoom Heroes',        'KIW'],
+
+    ['요미우리',     'NPB',            'yomiuri giants 자이언츠', 'Yomiuri Giants',    'YOM'],
+    ['한신',         'NPB',            'hanshin tigers 타이거스', 'Hanshin Tigers',    'HAN'],
+    ['주니치',       'NPB',            'chunichi dragons 드래곤즈', 'Chunichi Dragons', 'CHU'],
+    ['히로시마',     'NPB',            'hiroshima carp 카프',  'Hiroshima Toyo Carp',  'HIR'],
+    ['야쿠르트',     'NPB',            'yakult swallows 스왈로즈', 'Tokyo Yakult Swallows', 'YAK'],
+    ['요코하마',     'NPB',            'yokohama dena baystars 베이스타즈', 'Yokohama DeNA BayStars', 'YOK'],
+    ['소프트뱅크',   'NPB',            'softbank hawks 호크스', 'Fukuoka SoftBank Hawks', 'SFT'],
+    ['세이부',       'NPB',            'seibu lions 라이온즈', 'Saitama Seibu Lions',  'SEI'],
+    ['라쿠텐',       'NPB',            'rakuten eagles 이글스', 'Tohoku Rakuten Golden Eagles', 'RAK'],
+    ['지바 롯데',    'NPB',            'chiba lotte marines 마린스', 'Chiba Lotte Marines', 'CLM'],
+    ['오릭스',       'NPB',            'orix buffaloes 버팔로즈', 'Orix Buffaloes',    'ORI'],
+    ['니혼햄',       'NPB',            'nippon ham fighters 파이터즈', 'Hokkaido Nippon-Ham Fighters', 'NIP']
   ];
 
   var LIST = ROWS.map(function (r) {
