@@ -1455,14 +1455,14 @@ git commit -m "docs: DNS 안내서 · 핸드오프 문서 정정 · 새 규칙 2
 **Files:**
 - Modify: `다음세션_재개.md` (실측 결과 기록)
 
-- [ ] **Step 1: 로컬에서 6장을 띄운다**
+- [x] **Step 1: 로컬에서 6장을 띄운다**
 
 Run:
 ```bash
 SPORTSDB_KEY=3 npm run prebake && npx --yes http-server -p 8080 -c-1 . &
 ```
 
-- [ ] **Step 2: Lighthouse 를 6장 돌린다**
+- [x] **Step 2: Lighthouse 를 6장 돌린다**
 
 `index.html`·`schedule.html`·`match-center.html`·`team-hub.html`·`dashboard.html`·`news.html`
 
@@ -1473,7 +1473,7 @@ SPORTSDB_KEY=3 npm run prebake && npx --yes http-server -p 8080 -c-1 . &
 | Agentic Browsing (홈) | **100** — 덮개 링크 구조를 건드리지 않았으므로 유지 |
 | Best Practices | **예상 100.** 429/CORS 로 96 이던 것이 사라질 것으로 본다. **예상이므로 실측값을 그대로 적는다** |
 
-- [ ] **Step 3: 반응형 회귀를 확인한다**
+- [x] **Step 3: 반응형 회귀를 확인한다**
 
 `다음세션_재개.md` 5차 실측표의 폭에서 넘침·겹침이 0 인지 본다:
 **360 · 390 · 632 · 640 · 768 · 800 · 1024 · 1080 · 1090 · 1280 · 1536 · 1560 · 1920px**
@@ -1486,7 +1486,7 @@ SPORTSDB_KEY=3 npm run prebake && npx --yes http-server -p 8080 -c-1 . &
 
 **하나라도 깨지면 Task 5 를 의심한다** — 그 외에는 배치에 영향을 주는 변경이 없다.
 
-- [ ] **Step 4: 키가 새지 않는지 마지막으로 확인한다**
+- [x] **Step 4: 키가 새지 않는지 마지막으로 확인한다**
 
 Run:
 ```bash
@@ -1497,11 +1497,11 @@ Expected: 두 줄 다 `(통과)`
 
 브라우저 네트워크 탭에서도 `thesportsdb.com` 요청이 **0건**인지 다시 확인한다.
 
-- [ ] **Step 5: 실측 결과를 문서에 적는다**
+- [x] **Step 5: 실측 결과를 문서에 적는다**
 
 `다음세션_재개.md` 1절에 「✅ 6차(2026-08-23)에 끝난 것 — GitHub Pages 배포 준비」 절을 만들어 적는다. **예상이 아니라 실측값**을 적고, Best Practices 가 100 이 되지 않았으면 그 사실과 원인을 적는다.
 
-- [ ] **Step 6: 커밋**
+- [x] **Step 6: 커밋**
 
 ```bash
 git add "다음세션_재개.md"

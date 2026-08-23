@@ -91,7 +91,10 @@ async function write(file, json) {
 await rm(OUT, { recursive: true, force: true });   // 지난 회차 잔재를 남기지 않는다
 await mkdir(OUT, { recursive: true });
 
-const days = [-1, 0, 1].map(utcKey);
+/* 경기 일정 화면은 날짜 칩 5개(오늘~+4일)를 쓰고, 한 번에 이틀씩 그린다(offset, offset+1).
+   현지 하루는 UTC 사흘에 걸치므로 마지막 칩까지 누르면 UTC +6일까지 필요하다.
+   여기를 좁히면 브라우저에 404 가 뜨고 다음 날 목록이 하드코딩으로 되돌아간다. */
+const days = [-1, 0, 1, 2, 3, 4, 5, 6].map(utcKey);
 console.log(`① 경기 목록 — 종목 ${SPORTS.length} × UTC ${days.length}일 (${days.join(', ')})`);
 
 const lists = [];
@@ -139,9 +142,19 @@ const year = new Date().getUTCFullYear();
 const seasons = [`${year}-${year + 1}`, String(year), `${year - 1}-${year}`];
 let tableHit = 0;
 for (const leagueId of leagues.keys()) {
+  let hit = null;
   for (const season of seasons) {
     const json = await bake(`lookuptable.php?l=${leagueId}&s=${season}`);
-    if (json && json.table && json.table.length) { tableHit++; break; }
+    if (json && json.table && json.table.length) { hit = json; tableHit++; break; }
+  }
+  /* 브라우저는 시즌을 모른 채 후보를 앞에서부터 찔러 본다(data-pages.js:334).
+     맞은 시즌 파일만 두면 앞의 후보에서 404 가 나 콘솔에 오류가 쌓이고
+     Lighthouse Best Practices 가 떨어진다. 그래서 후보 **전부**에 같은 표를
+     둔다. 하나도 못 구했으면 빈 표를 둬서 404 대신 200 을 주게 한다 —
+     행이 비면 브라우저는 다음 후보로 넘어가고 결국 하드코딩을 유지한다. */
+  const body = hit || { table: [] };
+  for (const season of seasons) {
+    await write(ArenaPath.fileFor(`lookuptable.php?l=${leagueId}&s=${season}`), body);
   }
 }
 console.log(`⑤ 순위표 ${tableHit}/${leagues.size}개`);
