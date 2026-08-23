@@ -1,0 +1,102 @@
+# ARENA LIVE — 프리베이크 + Pages 배포
+#
+# API 키는 Secret SPORTSDB_KEY 에만 있고, 여기서만 쓰인다.
+# 브라우저는 이 워크플로가 만든 data/**.json 만 읽는다.
+name: deploy
+
+on:
+  schedule:
+    # 10분마다. 크론 최소 간격은 5분이지만 GitHub 부하로 10분 이상 밀리는
+    # 일이 흔해, 5분으로 잡아도 실측 지연은 비슷하면서 실행 횟수만 두 배가 된다.
+    - cron: '*/10 * * * *'
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 겹쳐 돌면 Pages 배포가 서로를 덮는다. 진행 중인 것을 끝까지 두고 새 것만 취소한다.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+
+      - run: npm ci
+
+      - name: 단위 테스트
+        run: npm test
+
+      - name: Tailwind 빌드
+        run: npm run build:css
+
+      - name: 프리베이크 (API 를 부르는 유일한 곳)
+        env:
+          SPORTSDB_KEY: ${{ secrets.SPORTSDB_KEY }}
+        run: npm run prebake
+
+      - name: 배포할 것만 모은다
+        # 백업(_백업_수정전)·검토 스크린샷(_검토_스크린샷)·설계 문서·빌드 도구는
+        # 공개 주소로 나가면 안 된다. 필요한 것만 골라 담는다.
+        run: |
+          mkdir -p _site
+          cp *.html CNAME _site/
+          cp -r assets data _site/
+          rm -f "_site/assets/img/출처.md"
+          echo "담은 것:" && ls -la _site/
+
+      - name: 키가 산출물에 새지 않았는지 검사
+        # 사람의 주의력에 기대지 않고 구조로 막는다.
+        env:
+          SPORTSDB_KEY: ${{ secrets.SPORTSDB_KEY }}
+        run: |
+          # 무료 테스트 키는 '3' 한 글자다. 그대로 검색하면 어느 파일에서나
+          # 걸려 배포가 항상 중단된다. 그래서 실제 키 길이(8자 이상)일 때만 본다.
+          if [ ${#SPORTSDB_KEY} -ge 8 ]; then
+            if grep -rqF "$SPORTSDB_KEY" _site/; then
+              echo "::error::산출물에서 API 키를 발견했다. 배포를 중단한다."
+              grep -rlF "$SPORTSDB_KEY" _site/
+              exit 1
+            fi
+            echo "키 문자열 검사 통과"
+          else
+            echo "::warning::키가 8자 미만이라(무료 테스트 키로 보인다) 문자열 검사를 건너뛴다. 유료 키를 넣으면 자동으로 켜진다."
+          fi
+          if grep -rqE 'thesportsdb\.com/api' _site/ ; then
+            echo "::error::산출물이 TheSportsDB 를 직접 부르고 있다. 브라우저에서 API 를 부르면 안 된다."
+            grep -rlE 'thesportsdb\.com/api' _site/
+            exit 1
+          fi
+          echo "키 노출 없음 · 브라우저에서 API 를 직접 부르는 곳 없음"
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - id: deploy
+        uses: actions/deploy-pages@v4
+
+      - name: 프리베이크 결과 요약
+        # 상한에 걸려 못 구운 팀·실패한 호출을 로그에 남긴다.
+        # 조용히 잘라내면 "다 구웠다"로 읽힌다.
+        run: |
+          echo '### 프리베이크 결과' >> $GITHUB_STEP_SUMMARY
+          echo '```json' >> $GITHUB_STEP_SUMMARY
+          cat data/manifest.json >> $GITHUB_STEP_SUMMARY
+          echo '' >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
