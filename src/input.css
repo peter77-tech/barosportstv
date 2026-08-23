@@ -1,0 +1,7 @@
+/* ARENA LIVE — Tailwind 입력 파일
+ * 여기서 assets/tailwind.css 를 만든다. 결과물은 직접 편집하지 않는다.
+ * 커스텀 CSS(.glass-card 등)는 assets/app.css 에 그대로 둔다.
+ */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;

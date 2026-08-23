@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>경기 일정 — ARENA LIVE</title>
+<meta name="description" content="오늘 중계되는 경기 일정을 확인하세요. EPL·라리가·NBA·MLB·K리그 경기 시간과 실시간 스코어를 한 곳에서 제공합니다.">
+<link rel="canonical" href="https://example.com/schedule">
+
+<!-- Open Graph : 커뮤니티 공유 시 링크 미리보기 -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="경기 일정 — ARENA LIVE">
+<meta property="og:description" content="오늘 중계되는 경기 일정을 확인하세요. EPL·라리가·NBA·MLB·K리그 경기 시간과 실시간 스코어를 한 곳에서 제공합니다.">
+<meta property="og:image" content="https://example.com/assets/img/news-main.jpg">
+<meta property="og:locale" content="ko_KR">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#E85110">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap">
+
+<!-- Tailwind: 빌드된 CSS. 토큰은 assets/theme.js 에서 고치고 `npm run build:css` 로 다시 만든다 -->
+<link rel="stylesheet" href="assets/tailwind.css">
+<link rel="stylesheet" href="assets/app.css">
+
+<!-- 사이트 전체 정보. 경기·팀 정보는 실제 데이터가 온 뒤 assets/seo.js 가 붙인다.
+     `example.com` 은 배포 위치가 정해지기 전의 자리표시자다 (BD 판단 항목).
+     `SearchAction` 은 넣지 않는다 — 검색 결과 페이지를 만들지 않기로 했다(BD 결정). -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "ARENA LIVE",
+  "alternateName": "아레나 라이브",
+  "url": "https://example.com/",
+  "inLanguage": "ko-KR",
+  "description": "실시간 스포츠 중계와 경기 일정·스코어를 한 곳에서 제공합니다."
+}
+</script>
+</head>
+
+<body class="bg-background text-on-surface font-body-md antialiased overflow-x-hidden flex min-h-screen">
+
+<a class="skip-link" href="#main">본문으로 건너뛰기</a>
+<div class="scrim md:hidden" id="scrim" aria-hidden="true"></div>
+
+<!-- ══════════════════ 사이드바 ══════════════════ -->
+<aside id="sidebar" class="sidebar flex flex-col h-screen py-8 left-0 fixed border-r border-outline-variant bg-shadow-navy z-50 overflow-y-auto overflow-x-hidden"
+       aria-label="종목 탐색">
+  <div class="carbon-texture absolute inset-0 pointer-events-none"></div>
+
+  <div class="px-6 mb-8 relative z-10 flex items-center gap-3">
+    <div class="w-10 h-10 bg-surface-container-highest rounded-pill flex items-center justify-center shrink-0">
+      <span class="material-symbols-outlined text-shadow-navy" style="font-variation-settings:'FILL' 1" aria-hidden="true">dashboard</span>
+    </div>
+    <div class="sidebar-header-text whitespace-nowrap">
+      <p class="font-headline-lg text-body-md font-bold text-on-primary">DASHBOARD</p>
+      <p class="font-label-caps text-[10px] text-surface-variant/70">v4.2.0-STABLE</p>
+    </div>
+  </div>
+
+  <div class="px-4 mb-8 relative z-10">
+    <button type="button" class="sidebar-switch-btn w-full bg-primary-container hover:bg-primary-hover text-on-primary font-label-caps py-3 px-4 rounded shadow-[inset_0_1px_0_rgba(255,255,255,0.2)] transition-colors flex justify-center items-center gap-2">
+      <span class="sidebar-switch-text whitespace-nowrap">SWITCH MODE</span>
+      <span class="material-symbols-outlined sidebar-switch-icon hidden" aria-hidden="true">swap_horiz</span>
+    </button>
+  </div>
+
+  <nav class="flex-1 relative z-10 space-y-1">
+    <a class="sidebar-link flex items-center gap-3 px-6 py-3 hover:bg-white/10 transition-all group" href="schedule.html?sport=nba">
+      <span class="material-symbols-outlined text-outline group-hover:text-hermes-orange shrink-0" aria-hidden="true">sports_basketball</span>
+      <span class="sidebar-label font-label-caps text-surface-variant group-hover:text-hermes-orange whitespace-nowrap">NBA</span>
+    </a>
+    <a class="sidebar-link flex items-center gap-3 px-6 py-3 hover:bg-white/10 transition-all group" href="schedule.html?sport=nfl">
+      <span class="material-symbols-outlined text-outline group-hover:text-hermes-orange shrink-0" aria-hidden="true">sports_football</span>
+      <span class="sidebar-label font-label-caps text-surface-variant group-hover:text-hermes-orange whitespace-nowrap">NFL</span>
+    </a>
+    <a class="sidebar-link flex items-center gap-3 px-6 py-3 hover:bg-white/10 transition-all group" href="schedule.html?sport=premier-league">
+      <span class="material-symbols-outlined text-outline group-hover:text-hermes-orange shrink-0" aria-hidden="true">sports_soccer</span>
+      <span class="sidebar-label font-label-caps text-surface-variant group-hover:text-hermes-orange whitespace-nowrap">EPL</span>
+    </a>
+    <a class="sidebar-link flex items-center gap-3 px-6 py-3 hover:bg-white/10 transition-all group" href="schedule.html?sport=mlb">
+      <span class="material-symbols-outlined text-outline group-hover:text-hermes-orange shrink-0" aria-hidden="true">sports_baseball</span>
+      <span class="sidebar-label font-label-caps text-surface-variant group-hover:text-hermes-orange whitespace-nowrap">MLB</span>
+    </a>
+    <a class="sidebar-link flex items-center gap-3 px-6 py-3 hover:bg-white/10 transition-all group" href="schedule.html?sport=f1">
+      <span class="material-symbols-outlined text-outline group-hover:text-hermes-orange shrink-0" aria-hidden="true">settings_input_antenna</span>
+      <span class="sidebar-label font-label-caps text-surface-variant group-hover:text-hermes-orange whitespace-nowrap">F1</span>
+    </a>
+  </nav>
+
+  <div class="px-6 mt-auto relative z-10 border-t border-surface-variant/20 pt-6 space-y-3">
+    <p class="sidebar-status-container flex items-center gap-2">
+      <span class="material-symbols-outlined text-emerald-400 text-sm shrink-0" style="font-variation-settings:'FILL' 1" aria-hidden="true">check_circle</span>
+      <span class="sidebar-status-text font-label-caps text-[10px] text-surface-variant whitespace-nowrap">Status: Online</span>
+    </p>
+    <p class="sidebar-status-container flex items-center gap-2">
+      <span class="material-symbols-outlined text-apex-blue text-sm shrink-0" aria-hidden="true">speed</span>
+      <span class="sidebar-status-text font-label-caps text-[10px] text-surface-variant whitespace-nowrap">Latency: 24ms</span>
+    </p>
+  </div>
+</aside>
+
+<!-- ══════════════════ 본문 래퍼 ══════════════════ -->
+<div class="main-wrap flex-1 flex flex-col md:pl-64 min-h-screen relative w-full">
+  <div class="absolute inset-0 technical-grid pointer-events-none -z-10"></div>
+
+  <!-- ── 상단 바 ── -->
+  <header class="app-header w-full top-0 sticky bg-surface/90 backdrop-blur border-b-2 border-hermes-orange z-40">
+    <div class="flex justify-between items-center px-margin-mobile md:px-gutter py-4 max-w-container-max mx-auto">
+
+      <div class="flex items-center gap-3 lg:gap-6 xl:gap-10 min-w-0">
+        <button type="button" id="sidebar-toggle" aria-expanded="true" aria-controls="sidebar"
+                class="cursor-pointer text-on-surface hover:text-hermes-orange transition-colors p-2 rounded-pill hover:bg-surface-container-highest shrink-0">
+          <span class="material-symbols-outlined block" aria-hidden="true">menu</span>
+          <span class="sr-only">메뉴 열기·닫기</span>
+        </button>
+
+        <a href="./index.html" class="font-display-lg text-[22px] sm:text-[26px] font-bold tracking-tighter text-on-surface flex items-center gap-2 whitespace-nowrap shrink-0">
+          ARENA <span class="font-medium text-hermes-orange">LIVE</span>
+        </a>
+
+        <!-- 🔴 브레이크포인트 주의: Tailwind의 lg/xl은 "화면 폭" 기준인데, 이 헤더가 쓰는
+             실제 폭은 사이드바 256px을 뺀 값이다. 그래서 판단 기준을 한 단계씩 올려 잡는다.
+             (예: 가용폭 1024px가 필요하면 xl=1280 이 아니라 2xl=1536에서 켠다)
+             Command Center는 가장 길어 2xl에서만 노출하고, 그 아래에서는 사이드바로 접근한다. -->
+        <nav class="hidden md:flex items-center gap-4 2xl:gap-8 overflow-hidden" aria-label="주 메뉴">
+          <a class="text-on-surface-variant font-medium hover:text-primary transition-colors font-label-caps text-label-caps uppercase whitespace-nowrap" href="index.html">Home</a>
+          <a class="text-primary font-bold border-b-2 border-hermes-orange pb-1 font-label-caps text-label-caps uppercase whitespace-nowrap" href="schedule.html" aria-current="page">Schedule</a>
+          <a class="text-on-surface-variant font-medium hover:text-primary transition-colors font-label-caps text-label-caps uppercase whitespace-nowrap" href="match-center.html">Live</a>
+          <a class="text-on-surface-variant font-medium hover:text-primary transition-colors font-label-caps text-label-caps uppercase whitespace-nowrap" href="news.html">News</a>
+          <a class="hidden 2xl:inline text-on-surface-variant font-medium hover:text-primary transition-colors font-label-caps text-label-caps uppercase whitespace-nowrap" href="dashboard.html">Command Center</a>
+        </nav>
+      </div>
+
+      <div class="flex items-center gap-1 sm:gap-2 xl:gap-4 shrink-0">
+        <!-- 검색: xl에서 좁게, 2xl 이상에서 넉넉하게. 그 아래는 아이콘 버튼으로 대체 -->
+        <form class="relative hidden xl:block" role="search" onsubmit="return false">
+          <label class="sr-only" for="site-search">경기·팀 검색</label>
+          <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline-variant text-sm" aria-hidden="true">search</span>
+          <input id="site-search" type="search" placeholder="경기, 팀 검색…"
+                 class="bg-surface-container pl-9 pr-3 py-2 rounded-pill text-sm font-body-sm border-none focus:ring-1 focus:ring-hermes-orange w-40 2xl:w-56 inset-panel">
+        </form>
+        <button type="button" class="xl:hidden text-outline hover:text-hermes-orange transition-colors p-2 shrink-0">
+          <span class="material-symbols-outlined" aria-hidden="true">search</span>
+          <span class="sr-only">검색</span>
+        </button>
+
+        <button type="button" class="bg-primary-container text-on-primary font-label-caps px-4 py-2 rounded shadow-[inset_0_1px_0_rgba(255,255,255,0.2)] hover:bg-primary-hover transition-colors text-xs font-bold uppercase whitespace-nowrap shrink-0 hidden sm:block">GO PRO</button>
+
+        <button type="button" class="text-outline hover:text-hermes-orange transition-colors p-2 shrink-0">
+          <span class="material-symbols-outlined" aria-hidden="true">notifications</span>
+          <span class="sr-only">알림</span>
+        </button>
+        <button type="button" class="text-outline hover:text-hermes-orange transition-colors p-2 shrink-0 hidden 2xl:block">
+          <span class="material-symbols-outlined" aria-hidden="true">settings</span>
+          <span class="sr-only">설정</span>
+        </button>
+
+        <div class="w-8 h-8 rounded-pill bg-surface-variant overflow-hidden border-2 border-outline-variant shrink-0">
+          <img class="w-full h-full object-cover" src="assets/img/avatar.svg" alt="내 계정" width="32" height="32">
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ── 메인 ── -->
+  <main id="main" class="flex-1 p-margin-mobile md:p-gutter w-full max-w-container-max mx-auto pb-section-gap">
+
+    <header class="mt-stack-lg mb-stack-lg">
+      <h1 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-surface mb-2">경기 일정</h1>
+      <p class="font-body-md text-on-surface-variant">오늘부터 일주일간의 중계 일정입니다. 종목·리그별로 걸러 볼 수 있습니다.</p>
+    </header>
+
+    <!-- 날짜 선택 -->
+    <section class="mb-stack-lg" aria-labelledby="date-title">
+      <h2 id="date-title" class="sr-only">날짜 선택</h2>
+      <div class="flex overflow-x-auto gap-stack-sm pb-3 snap-x no-scrollbar" role="tablist" aria-label="날짜 선택">
+        <button type="button" role="tab" aria-selected="true" class="date-chip snap-start shrink-0 px-5 py-3 rounded-xl glass-card text-center min-w-[84px] transition-colors">
+          <span data-role="chip-label" class="block font-label-caps text-[10px] text-secondary uppercase">오늘</span>
+          <span data-role="chip-date" class="block font-label-data text-label-data mt-1">10.24</span></button>
+        <button type="button" role="tab" aria-selected="false" class="date-chip snap-start shrink-0 px-5 py-3 rounded-xl glass-card text-center min-w-[84px] transition-colors">
+          <span data-role="chip-label" class="block font-label-caps text-[10px] text-secondary uppercase">내일</span>
+          <span data-role="chip-date" class="block font-label-data text-label-data mt-1">10.25</span></button>
+        <button type="button" role="tab" aria-selected="false" class="date-chip snap-start shrink-0 px-5 py-3 rounded-xl glass-card text-center min-w-[84px] transition-colors">
+          <span data-role="chip-label" class="block font-label-caps text-[10px] text-secondary uppercase">토</span>
+          <span data-role="chip-date" class="block font-label-data text-label-data mt-1">10.26</span></button>
+        <button type="button" role="tab" aria-selected="false" class="date-chip snap-start shrink-0 px-5 py-3 rounded-xl glass-card text-center min-w-[84px] transition-colors">
+          <span data-role="chip-label" class="block font-label-caps text-[10px] text-secondary uppercase">일</span>
+          <span data-role="chip-date" class="block font-label-data text-label-data mt-1">10.27</span></button>
+        <button type="button" role="tab" aria-selected="false" class="date-chip snap-start shrink-0 px-5 py-3 rounded-xl glass-card text-center min-w-[84px] transition-colors">
+          <span data-role="chip-label" class="block font-label-caps text-[10px] text-secondary uppercase">월</span>
+          <span data-role="chip-date" class="block font-label-data text-label-data mt-1">10.28</span></button>
+      </div>
+    </section>
+
+    <!-- 리그 필터 -->
+    <section class="mb-stack-lg" aria-labelledby="filter-title">
+      <h2 id="filter-title" class="sr-only">리그 필터</h2>
+      <div class="flex overflow-x-auto gap-stack-md pb-3 snap-x no-scrollbar" role="tablist" aria-label="리그 필터">
+        <button type="button" role="tab" aria-selected="true"  data-league="all" class="league-chip snap-start shrink-0 px-6 py-3 rounded-pill font-label-caps text-label-caps whitespace-nowrap transition-colors">전체</button>
+        <button type="button" role="tab" aria-selected="false" data-league="premier-league" class="league-chip snap-start shrink-0 px-6 py-3 rounded-pill glass-card hover:border-hermes-orange text-on-surface font-label-caps text-label-caps whitespace-nowrap transition-colors">Premier League</button>
+        <button type="button" role="tab" aria-selected="false" data-league="la-liga" class="league-chip snap-start shrink-0 px-6 py-3 rounded-pill glass-card hover:border-hermes-orange text-on-surface font-label-caps text-label-caps whitespace-nowrap transition-colors">La Liga</button>
+        <button type="button" role="tab" aria-selected="false" data-league="nba" class="league-chip snap-start shrink-0 px-6 py-3 rounded-pill glass-card hover:border-hermes-orange text-on-surface font-label-caps text-label-caps whitespace-nowrap transition-colors">NBA</button>
+        <button type="button" role="tab" aria-selected="false" data-league="mlb" class="league-chip snap-start shrink-0 px-6 py-3 rounded-pill glass-card hover:border-hermes-orange text-on-surface font-label-caps text-label-caps whitespace-nowrap transition-colors">MLB</button>
+        <button type="button" role="tab" aria-selected="false" data-league="k-league" class="league-chip snap-start shrink-0 px-6 py-3 rounded-pill glass-card hover:border-hermes-orange text-on-surface font-label-caps text-label-caps whitespace-nowrap transition-colors">K-League</button>
+        <button type="button" role="tab" aria-selected="false" data-league="nfl" class="league-chip snap-start shrink-0 px-6 py-3 rounded-pill glass-card hover:border-hermes-orange text-on-surface font-label-caps text-label-caps whitespace-nowrap transition-colors">NFL</button>
+        <button type="button" role="tab" aria-selected="false" data-league="f1" class="league-chip snap-start shrink-0 px-6 py-3 rounded-pill glass-card hover:border-hermes-orange text-on-surface font-label-caps text-label-caps whitespace-nowrap transition-colors">F1</button>
+      </div>
+    </section>
+
+    <!-- 진행 중 -->
+    <section class="depth-panel mb-section-gap" data-schedule-day="today" aria-labelledby="today-title">
+      <div class="flex items-center gap-3 mb-stack-md">
+        <h2 id="today-title" data-role="day-title" class="font-headline-md text-headline-md text-on-surface">오늘 · 10월 24일</h2>
+        <span class="bg-error-container text-on-error-container px-3 py-1 rounded-pill font-label-data text-label-data flex items-center gap-2">
+          <span class="w-1.5 h-1.5 rounded-pill bg-error pulse-live" aria-hidden="true"></span><span data-live-count>3</span> LIVE</span>
+      </div>
+      <div class="glass-card rounded-xl px-gutter">
+        <ul class="divide-y-0">
+        <li data-league="premier-league" class="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-gutter py-gutter border-b border-outline-variant/40 last:border-b-0">
+          <div class="flex items-center gap-3 sm:w-44 shrink-0">
+            <time data-role="time" class="font-label-data text-label-data text-on-surface whitespace-nowrap shrink-0">72'</time>
+            <span data-role="league" class="font-label-caps text-[10px] text-secondary uppercase truncate">Premier League</span>
+          </div>
+          <div class="flex-1 flex items-center justify-between sm:justify-start gap-4 min-w-0">
+            <span class="font-body-md font-semibold text-on-surface truncate flex-1 sm:flex-none sm:w-44 text-right">
+              <a data-role="home" class="hover:text-primary transition-colors" href="team-hub.html">아스날</a></span>
+            <span class="flex items-center shrink-0 px-3"><span data-role="home-score" class="font-label-data text-label-data text-xl font-bold text-on-surface">2</span><span class="px-1">-</span><span data-role="away-score" class="font-label-data text-label-data text-xl font-bold text-on-surface">1</span></span>
+            <span class="font-body-md font-semibold text-on-surface truncate flex-1 sm:flex-none sm:w-44">
+              <a data-role="away" class="hover:text-primary transition-colors" href="team-hub.html">첼시</a></span>
+          </div>
+          <div class="flex items-center justify-between sm:justify-end gap-3 sm:w-40 shrink-0 sm:ml-auto"><span data-role="status" class="inline-flex items-center gap-1.5 bg-error-container text-on-error-container px-2.5 py-1 rounded-pill font-label-data text-[11px] whitespace-nowrap"><span class="w-1.5 h-1.5 rounded-pill bg-error pulse-live" aria-hidden="true"></span>진행 중</span><a data-role="action" href="match-center.html" class="bg-primary-container text-on-primary font-label-caps text-[11px] px-4 py-2 rounded shadow-[inset_0_1px_0_rgba(255,255,255,0.2)] hover:bg-primary-hover transition-colors whitespace-nowrap flex items-center gap-1"><span data-role="action-icon" class="material-symbols-outlined text-[16px]" aria-hidden="true">play_arrow</span><span data-role="action-label">중계 보기</span></a></div>
+        </li>
+        <li data-league="nba" class="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-gutter py-gutter border-b border-outline-variant/40 last:border-b-0">
+          <div class="flex items-center gap-3 sm:w-44 shrink-0">
+            <time data-role="time" class="font-label-data text-label-data text-on-surface whitespace-nowrap shrink-0">Q3</time>
+            <span data-role="league" class="font-label-caps text-[10px] text-secondary uppercase truncate">NBA</span>
+          </div>
+          <div class="flex-1 flex items-center justify-between sm:justify-start gap-4 min-w-0">
+            <span class="font-body-md font-semibold text-on-surface truncate flex-1 sm:flex-none sm:w-44 text-right">
+              <a data-role="home" class="hover:text-primary transition-colors" href="team-hub.html">레이커스</a></span>
+            <span class="flex items-center shrink-0 px-3"><span data-role="home-score" class="font-label-data text-label-data text-xl font-bold text-on-surface">88</span><span class="px-1">-</span><span data-role="away-score" class="font-label-data text-label-data text-xl font-bold text-on-surface">82</span></span>
+            <span class="font-body-md font-semibold text-on-surface truncate flex-1 sm:flex-none sm:w-44">
+              <a data-role="away" class="hover:text-primary transition-colors" href="team-hub.html">워리어스</a></span>
+          </div>
+          <div class="flex items-center justify-between sm:justify-end gap-3 sm:w-40 shrink-0 sm:ml-auto"><span data-role="status" class="inline-flex items-center gap-1.5 bg-error-container text-on-error-container px-2.5 py-1 rounded-pill font-label-data text-[11px] whitespace-nowrap"><span class="w-1.5 h-1.5 rounded-pill bg-error pulse-live" aria-hidden="true"></span>진행 중</span><a data-role="action" href="match-center.html" class="bg-primary-container text-on-primary font-label-caps text-[11px] px-4 py-2 rounded shadow-[inset_0_1px_0_rgba(255,255,255,0.2)] hover:bg-primary-hover transition-colors whitespace-nowrap flex items-center gap-1"><span data-role="action-icon" class="material-symbols-outlined text-[16px]" aria-hidden="true">play_arrow</span><span data-role="action-label">중계 보기</span></a></div>
+        </li>
+        <li data-league="la-liga" class="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-gutter py-gutter border-b border-outline-variant/40 last:border-b-0">
+          <div class="flex items-center gap-3 sm:w-44 shrink-0">
+            <time data-role="time" class="font-label-data text-label-data text-on-surface whitespace-nowrap shrink-0">45+2'</time>
+            <span data-role="league" class="font-label-caps text-[10px] text-secondary uppercase truncate">La Liga</span>
+          </div>
+          <div class="flex-1 flex items-center justify-between sm:justify-start gap-4 min-w-0">
+            <span class="font-body-md font-semibold text-on-surface truncate flex-1 sm:flex-none sm:w-44 text-right">
+              <a data-role="home" class="hover:text-primary transition-colors" href="team-hub.html">바르셀로나</a></span>
+            <span class="flex items-center shrink-0 px-3"><span data-role="home-score" class="font-label-data text-label-data text-xl font-bold text-on-surface">0</span><span class="px-1">-</span><span data-role="away-score" class="font-label-data text-label-data text-xl font-bold text-on-surface">0</span></span>
+            <span class="font-body-md font-semibold text-on-surface truncate flex-1 sm:flex-none sm:w-44">
+              <a data-role="away" class="hover:text-primary transition-colors" href="team-hub.html">세비야</a></span>
+          </div>
+          <div class="flex items-center justify-between sm:justify-end gap-3 sm:w-40 shrink-0 sm:ml-auto"><span data-role="status" class="inline-flex items-center gap-1.5 bg-error-container text-on-error-container px-2.5 py-1 rounded-pill font-label-data text-[11px] whitespace-nowrap"><span class="w-1.5 h-1.5 rounded-pill bg-error pulse-live" aria-hidden="true"></span>진행 중</span><a data-role="action" href="match-center.html" class="bg-primary-container text-on-primary font-label-caps text-[11px] px-4 py-2 rounded shadow-[inset_0_1px_0_rgba(255,255,255,0.2)] hover:bg-primary-hover transition-colors whitespace-nowrap flex items-center gap-1"><span data-role="action-icon" class="material-symbols-outlined text-[16px]" aria-hidden="true">play_arrow</span><span data-role="action-label">중계 보기</span></a></div>
+        </li>
+        <li data-league="premier-league" class="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-gutter py-gutter border-b border-outline-variant/40 last:border-b-0">
+          <div class="flex items-center gap-3 sm:w-44 shrink-0">
+            <time data-role="time" class="font-label-data text-label-data text-on-surface whitespace-nowrap shrink-0">21:00</time>
+            <span data-role="league" class="font-label-caps text-[10px] text-secondary uppercase truncate">Premier League</span>
+          </div>
+          <div class="flex-1 flex items-center justify-between sm:justify-start gap-4 min-w-0">
+            <span class="font-body-md font-semibold text-on-surface truncate flex-1 sm:flex-none sm:w-44 text-right">
+              <a data-role="home" class="hover:text-primary transition-colors" href="team-hub.html">리버풀</a></span>
+            <span class="flex items-center shrink-0 px-3"><span data-role="vs" class="font-label-data text-label-data text-secondary">vs</span></span>
+            <span class="font-body-md font-semibold text-on-surface truncate flex-1 sm:flex-none sm:w-44">
+              <a data-role="away" class="hover:text-primary transition-colors" href="team-hub.html">맨시티</a></span>
+          </div>
+          <div class="flex items-center justify-between sm:justify-end gap-3 sm:w-40 shrink-0 sm:ml-auto"><span data-role="status" class="font-label-data text-[11px] text-secondary whitespace-nowrap">예정</span><button type="button" aria-pressed="false" class="notify-btn border border-outline-variant text-on-surface-variant font-label-caps text-[11px] px-4 py-2 rounded hover:border-hermes-orange hover:text-primary transition-colors whitespace-nowrap flex items-center gap-1"><span class="material-symbols-outlined text-[16px]" aria-hidden="true">notifications</span>알림</button></div>
+        </li>
+        <li data-league="la-liga" class="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-gutter py-gutter border-b border-outline-variant/40 last:border-b-0">
+          <div class="flex items-center gap-3 sm:w-44 shrink-0">
+            <time data-role="time" class="font-label-data text-label-data text-on-surface whitespace-nowrap shrink-0">23:30</time>
+            <span data-role="league" class="font-label-caps text-[10px] text-secondary uppercase truncate">La Liga</span>
+          </div>
+          <div class="flex-1 flex items-center justify-between sm:justify-start gap-4 min-w-0">
+            <span class="font-body-md font-semibold text-on-surface truncate flex-1 sm:flex-none sm:w-44 text-right">
+              <a data-role="home" class="hover:text-primary transition-colors" href="team-hub.html">레알 마드리드</a></span>
+            <span class="flex items-center shrink-0 px-3"><span data-role="vs" class="font-label-data text-label-data text-secondary">vs</span></span>
+            <span class="font-body-md font-semibold text-on-surface truncate flex-1 sm:flex-none sm:w-44">
+              <a data-role="away" class="hover:text-primary transition-colors" href="team-hub.html">아틀레티코</a></span>
+          </div>
+          <div class="flex items-center justify-between sm:justify-end gap-3 sm:w-40 shrink-0 sm:ml-auto"><span data-role="status" class="font-label-data text-[11px] text-secondary whitespace-nowrap">예정</span><button type="button" aria-pressed="false" class="notify-btn border border-outline-variant text-on-surface-variant font-label-caps text-[11px] px-4 py-2 rounded hover:border-hermes-orange hover:text-primary transition-colors whitespace-nowrap flex items-center gap-1"><span class="material-symbols-outlined text-[16px]" aria-hidden="true">notifications</span>알림</button></div>
+        </li></ul>
+        <p class="schedule-empty hidden font-body-md text-on-surface-variant py-gutter text-center" data-empty-for="today">선택한 종목의 경기가 없습니다.</p>
+      </div>
+    </section>
+
+    <!-- 내일 -->
+    <section class="depth-panel" data-schedule-day="tomorrow" aria-labelledby="tomorrow-title">
+      <h2 id="tomorrow-title" data-role="day-title" class="font-headline-md text-headline-md text-on-surface mb-stack-md">내일 · 10월 25일</h2>
+      <div class="glass-card rounded-xl px-gutter">
+        <ul class="divide-y-0">
+        <li data-league="nba" class="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-gutter py-gutter border-b border-outline-variant/40 last:border-b-0">
+          <div class="flex items-center gap-3 sm:w-44 shrink-0">
+            <time data-role="time" class="font-label-data text-label-data text-on-surface whitespace-nowrap shrink-0">04:00</time>
+            <span data-role="league" class="font-label-caps text-[10px] text-secondary uppercase truncate">NBA</span>
+          </div>
+          <div class="flex-1 flex items-center justify-between sm:justify-start gap-4 min-w-0">
+            <span class="font-body-md font-semibold text-on-surface truncate flex-1 sm:flex-none sm:w-44 text-right">
+              <a data-role="home" class="hover:text-primary transition-colors" href="team-hub.html">셀틱스</a></span>
+            <span class="flex items-center shrink-0 px-3"><span data-role="vs" class="font-label-data text-label-data text-secondary">vs</span></span>
+            <span class="font-body-md font-semibold text-on-surface truncate flex-1 sm:flex-none sm:w-44">
+              <a data-role="away" class="hover:text-primary transition-colors" href="team-hub.html">히트</a></span>
+          </div>
+          <div class="flex items-center justify-between sm:justify-end gap-3 sm:w-40 shrink-0 sm:ml-auto"><span data-role="status" class="font-label-data text-[11px] text-secondary whitespace-nowrap">예정</span><button type="button" aria-pressed="false" class="notify-btn border border-outline-variant text-on-surface-variant font-label-caps text-[11px] px-4 py-2 rounded hover:border-hermes-orange hover:text-primary transition-colors whitespace-nowrap flex items-center gap-1"><span class="material-symbols-outlined text-[16px]" aria-hidden="true">notifications</span>알림</button></div>
+        </li>
+        <li data-league="k-league" class="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-gutter py-gutter border-b border-outline-variant/40 last:border-b-0">
+          <div class="flex items-center gap-3 sm:w-44 shrink-0">
+            <time data-role="time" class="font-label-data text-label-data text-on-surface whitespace-nowrap shrink-0">18:30</time>
+            <span data-role="league" class="font-label-caps text-[10px] text-secondary uppercase truncate">K-League</span>
+          </div>
+          <div class="flex-1 flex items-center justify-between sm:justify-start gap-4 min-w-0">
+            <span class="font-body-md font-semibold text-on-surface truncate flex-1 sm:flex-none sm:w-44 text-right">
+              <a data-role="home" class="hover:text-primary transition-colors" href="team-hub.html">울산</a></span>
+            <span class="flex items-center shrink-0 px-3"><span data-role="vs" class="font-label-data text-label-data text-secondary">vs</span></span>
+            <span class="font-body-md font-semibold text-on-surface truncate flex-1 sm:flex-none sm:w-44">
+              <a data-role="away" class="hover:text-primary transition-colors" href="team-hub.html">전북</a></span>
+          </div>
+          <div class="flex items-center justify-between sm:justify-end gap-3 sm:w-40 shrink-0 sm:ml-auto"><span data-role="status" class="font-label-data text-[11px] text-secondary whitespace-nowrap">예정</span><button type="button" aria-pressed="false" class="notify-btn border border-outline-variant text-on-surface-variant font-label-caps text-[11px] px-4 py-2 rounded hover:border-hermes-orange hover:text-primary transition-colors whitespace-nowrap flex items-center gap-1"><span class="material-symbols-outlined text-[16px]" aria-hidden="true">notifications</span>알림</button></div>
+        </li>
+        <li data-league="premier-league" class="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-gutter py-gutter border-b border-outline-variant/40 last:border-b-0">
+          <div class="flex items-center gap-3 sm:w-44 shrink-0">
+            <time data-role="time" class="font-label-data text-label-data text-on-surface whitespace-nowrap shrink-0">20:00</time>
+            <span data-role="league" class="font-label-caps text-[10px] text-secondary uppercase truncate">Premier League</span>
+          </div>
+          <div class="flex-1 flex items-center justify-between sm:justify-start gap-4 min-w-0">
+            <span class="font-body-md font-semibold text-on-surface truncate flex-1 sm:flex-none sm:w-44 text-right">
+              <a data-role="home" class="hover:text-primary transition-colors" href="team-hub.html">토트넘</a></span>
+            <span class="flex items-center shrink-0 px-3"><span data-role="vs" class="font-label-data text-label-data text-secondary">vs</span></span>
+            <span class="font-body-md font-semibold text-on-surface truncate flex-1 sm:flex-none sm:w-44">
+              <a data-role="away" class="hover:text-primary transition-colors" href="team-hub.html">뉴캐슬</a></span>
+          </div>
+          <div class="flex items-center justify-between sm:justify-end gap-3 sm:w-40 shrink-0 sm:ml-auto"><span data-role="status" class="font-label-data text-[11px] text-secondary whitespace-nowrap">예정</span><button type="button" aria-pressed="false" class="notify-btn border border-outline-variant text-on-surface-variant font-label-caps text-[11px] px-4 py-2 rounded hover:border-hermes-orange hover:text-primary transition-colors whitespace-nowrap flex items-center gap-1"><span class="material-symbols-outlined text-[16px]" aria-hidden="true">notifications</span>알림</button></div>
+        </li>
+        <li data-league="mlb" class="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-gutter py-gutter border-b border-outline-variant/40 last:border-b-0">
+          <div class="flex items-center gap-3 sm:w-44 shrink-0">
+            <time data-role="time" class="font-label-data text-label-data text-on-surface whitespace-nowrap shrink-0">22:45</time>
+            <span data-role="league" class="font-label-caps text-[10px] text-secondary uppercase truncate">MLB</span>
+          </div>
+          <div class="flex-1 flex items-center justify-between sm:justify-start gap-4 min-w-0">
+            <span class="font-body-md font-semibold text-on-surface truncate flex-1 sm:flex-none sm:w-44 text-right">
+              <a data-role="home" class="hover:text-primary transition-colors" href="team-hub.html">다저스</a></span>
+            <span class="flex items-center shrink-0 px-3"><span data-role="vs" class="font-label-data text-label-data text-secondary">vs</span></span>
+            <span class="font-body-md font-semibold text-on-surface truncate flex-1 sm:flex-none sm:w-44">
+              <a data-role="away" class="hover:text-primary transition-colors" href="team-hub.html">양키스</a></span>
+          </div>
+          <div class="flex items-center justify-between sm:justify-end gap-3 sm:w-40 shrink-0 sm:ml-auto"><span data-role="status" class="font-label-data text-[11px] text-secondary whitespace-nowrap">예정</span><button type="button" aria-pressed="false" class="notify-btn border border-outline-variant text-on-surface-variant font-label-caps text-[11px] px-4 py-2 rounded hover:border-hermes-orange hover:text-primary transition-colors whitespace-nowrap flex items-center gap-1"><span class="material-symbols-outlined text-[16px]" aria-hidden="true">notifications</span>알림</button></div>
+        </li></ul>
+        <p class="schedule-empty hidden font-body-md text-on-surface-variant py-gutter text-center" data-empty-for="tomorrow">선택한 종목의 경기가 없습니다.</p>
+      </div>
+    </section>
+  </main>
+
+  <!-- SEO 본문 블록 -->
+  <section class="mb-section-gap px-margin-mobile md:px-gutter max-w-container-max mx-auto w-full">
+    <div class="glass-card rounded-xl overflow-hidden border border-outline-variant">
+      <details class="group" open>
+        <summary class="flex items-center justify-between p-6 cursor-pointer list-none hover:bg-surface-container-highest transition-colors">
+          <h2 class="font-headline-md text-on-surface">경기 일정 안내 — 오늘 중계되는 경기</h2>
+          <span class="material-symbols-outlined text-hermes-orange transition-transform group-open:rotate-180" aria-hidden="true">expand_more</span>
+        </summary>
+        <div class="p-6 pt-0 border-t border-outline-variant/20">
+          <div class="space-y-4 text-on-surface-variant font-body-md">
+            <p>ARENA LIVE의 <strong class="text-on-surface">경기 일정</strong> 페이지에서는 오늘부터 일주일간 중계되는 모든 경기를 확인할 수 있습니다. 프리미어리그, 라리가, NBA, MLB, K리그를 비롯한 주요 리그를 한 곳에 모았습니다.</p>
+            <p>각 경기의 <strong class="text-on-surface">중계 시작 시각</strong>은 한국 시간(KST) 기준으로 표시됩니다. 진행 중인 경기는 실시간 스코어와 경과 시간이 함께 나타나며, 바로 보기 버튼으로 중계 화면에 들어갈 수 있습니다.</p>
+            <p>아직 시작하지 않은 경기는 <strong class="text-on-surface">알림 설정</strong>을 해두면 시작 전에 알려드립니다. 날짜와 리그 필터를 함께 쓰면 원하는 경기만 골라 볼 수 있습니다.</p>
+          </div>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <!-- ── 푸터 ── -->
+  <footer class="w-full mt-auto bg-surface-container-highest border-t-2 border-hermes-orange">
+    <div class="flex flex-col md:flex-row justify-between items-center px-margin-mobile md:px-gutter py-6 max-w-container-max mx-auto gap-4">
+      <p class="font-label-caps text-on-surface-variant text-center">© 2026 ARENA LIVE BROADCASTING. ALL RIGHTS RESERVED.</p>
+      <nav class="flex items-center gap-4 md:gap-6 flex-wrap justify-center" aria-label="푸터 메뉴">
+        <a class="font-label-caps text-on-surface-variant hover:text-primary transition-colors uppercase" href="#">About Us</a>
+        <a class="font-label-caps text-on-surface-variant hover:text-primary transition-colors uppercase" href="#">Terms of Service</a>
+        <a class="font-label-caps text-on-surface-variant hover:text-primary transition-colors uppercase" href="#">Privacy Policy</a>
+        <a class="font-label-caps text-on-surface-variant hover:text-primary transition-colors uppercase" href="#">Help Center</a>
+        <a class="font-label-caps text-on-surface-variant hover:text-primary transition-colors uppercase" href="#">Careers</a>
+      </nav>
+    </div>
+  </footer>
+</div>
+
+<script src="assets/teams.js"></script>
+<script src="assets/app.js"></script>
+<script src="assets/search.js"></script>
+<script src="assets/user.js"></script>
+<script src="assets/seo.js"></script>
+<script src="assets/data.js"></script>
+<script src="assets/data-pages.js"></script>
+</body>
+</html>

@@ -1,0 +1,7 @@
+# 빌드 도구 (재설치 가능 — npm install)
+node_modules/
+
+# 빌드 산출물. assets/tailwind.css 는 배포에 필요하므로 제외하지 않는다.
+
+# 프리베이크 산출물 (CI 에서 매 배포마다 새로 만든다 — 커밋하지 않는다)
+data/

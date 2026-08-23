@@ -1,0 +1,481 @@
+/* ARENA LIVE — 커스텀 스타일
+ * 시안(Stitch)의 <style> 블록을 옮기고, 접근성·모바일 처리를 보완했다.
+ *
+ * ── 깊이(elevation) 체계 ─────────────────────────────────
+ * BD 지적 (2026-08-19): "너무 평면적이다. 종이 조각을 연결해 놓은 느낌이다."
+ * 원인은 ① 배경과 카드의 밝기가 같음 ② 테두리가 흰색이라 안 보임
+ *        ③ 그림자가 한 종류뿐 ④ 구역 구분이 여백뿐 이었다.
+ *
+ * 높이를 4단으로 나눈다. 아래로 갈수록 더 떠 있다.
+ *   0단  배경        — 브랜드 광원이 깔린 바닥
+ *   1단  구역 패널    — 살짝 뜸
+ *   2단  카드         — 더 뜸
+ *   3단  히어로·대표기사 — 가장 뜸
+ *   보조  칩·스코어박스 — 아주 살짝 뜸
+ *
+ * 규칙: 눌린(inset) 그림자를 단독으로 쓰지 않는다. 파여 보인다.
+ *       inset 은 위쪽 하이라이트(모서리 광택)로만 쓴다.
+ */
+
+:root {
+  --elev-chip:  0 1px 2px rgba(15, 23, 42, 0.07), 0 2px 4px rgba(15, 23, 42, 0.05);
+  --elev-panel: 0 2px 4px rgba(15, 23, 42, 0.04), 0 8px 18px rgba(15, 23, 42, 0.07);
+  --elev-card:  0 2px 5px rgba(15, 23, 42, 0.05), 0 12px 26px rgba(15, 23, 42, 0.10);
+  --elev-hero:  0 6px 14px rgba(15, 23, 42, 0.08), 0 28px 60px rgba(15, 23, 42, 0.15);
+  --elev-hover: 0 5px 10px rgba(15, 23, 42, 0.07), 0 20px 40px rgba(15, 23, 42, 0.14);
+}
+
+/* ── 한국어 줄바꿈 ───────────────────────────────────────
+ * 기본값(break-word)은 한글을 어절 중간에서 자른다.
+ * 「내 팀 경기의 득 / 점 소식」처럼 읽기 나쁜 줄바꿈이 생긴다.
+ * keep-all 은 어절(띄어쓰기) 단위로만 끊는다.
+ * 끊을 자리가 아예 없는 긴 영문·URL 은 break-word 로 받아 넘침을 막는다.
+ */
+body {
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+/* ── 배경 텍스처 ─────────────────────────────────────────── */
+.technical-grid {
+  background-size: 40px 40px;
+  /* 0.03 -> 0.05 : 바닥 격자가 깊이의 기준선 역할을 하도록 살짝 진하게 */
+  background-image:
+    linear-gradient(to right, rgba(15, 23, 42, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(15, 23, 42, 0.05) 1px, transparent 1px);
+}
+
+.carbon-texture {
+  background-image: url("data:image/svg+xml,%3Csvg width='6' height='6' viewBox='0 0 6 6' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.02' fill-rule='evenodd'%3E%3Cpath d='M5 0h1L0 6V5zM6 5v1H5z'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+/* ── 카드 ────────────────────────────────────────────────── */
+/* 2단 — 카드.
+ * 이전에는 테두리가 흰색이라 밝은 배경에서 윤곽이 보이지 않았고,
+ * 그림자가 한 종류뿐이어서 모든 카드가 같은 높이로 납작하게 보였다. */
+.glass-card {
+  background: rgba(255, 255, 255, 0.86);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  box-shadow: var(--elev-card);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+/* ⚠️ glass-card 는 밝은 표면 전용이다 (흰 배경 86%).
+ *    어두운 배경 위에 올리면 흰 글자가 묻힌다 —
+ *    그런 곳에는 bg-white/10 + backdrop-blur-sm 을 쓴다. */
+
+/* 원래는 눌린(inset) 그림자였다. 모든 블록이 살짝 뜨는 방향으로 통일했다. */
+.inset-panel {
+  box-shadow: var(--elev-chip);
+}
+
+/* ── LIVE 점멸 ───────────────────────────────────────────── */
+.pulse-live {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* ── 사이드바 ─────────────────────────────────────────────
+ * 시안은 :checked 형제 선택자로 처리했으나, 상태를 body의
+ * data-sidebar 속성으로 옮겼다. JS에서 다루기 쉽고 aria와 묶인다.
+ */
+.sidebar { width: 256px; transition: width 0.3s ease, transform 0.3s ease; }
+.main-wrap { transition: padding-left 0.3s ease; }
+
+@media (min-width: 769px) {
+  body[data-sidebar='collapsed'] .sidebar { width: 80px; }
+  body[data-sidebar='collapsed'] .sidebar-label,
+  body[data-sidebar='collapsed'] .sidebar-header-text,
+  body[data-sidebar='collapsed'] .sidebar-status-text,
+  body[data-sidebar='collapsed'] .sidebar-switch-text { display: none; }
+  body[data-sidebar='collapsed'] .sidebar-switch-icon { display: block; }
+  body[data-sidebar='collapsed'] .sidebar-switch-btn,
+  body[data-sidebar='collapsed'] .sidebar-link,
+  body[data-sidebar='collapsed'] .sidebar-status-container {
+    justify-content: center;
+    padding-left: 0;
+    padding-right: 0;
+  }
+  body[data-sidebar='collapsed'] .main-wrap { padding-left: 80px; }
+}
+
+/* 모바일: 사이드바는 드로어로 동작한다 (시안에는 열 방법이 없었다) */
+@media (max-width: 768px) {
+  .sidebar { transform: translateX(-100%); }
+  body[data-sidebar='open'] .sidebar { transform: translateX(0); }
+  body[data-sidebar='open'] { overflow: hidden; }
+}
+
+.scrim {
+  position: fixed; inset: 0; z-index: 40;
+  background: rgba(15, 23, 42, 0.5);
+  opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+}
+@media (max-width: 768px) {
+  body[data-sidebar='open'] .scrim { opacity: 1; pointer-events: auto; }
+}
+
+/* ── 접근성 ──────────────────────────────────────────────── */
+:where(a, button, input, summary, [tabindex]):focus-visible {
+  outline: 3px solid #E85110;
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.skip-link {
+  position: absolute; left: 8px; top: -60px; z-index: 100;
+  padding: 12px 20px; background: #0F172A; color: #fff;
+  font-weight: 700; transition: top 0.2s ease;
+}
+.skip-link:focus { top: 8px; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* 리그 탭 선택 상태 */
+.league-chip[aria-selected='true'] {
+  background: #d14300;
+  color: #fff;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    0 2px 0 #a73400,
+    0 4px 10px rgba(232, 81, 16, 0.28);
+}
+
+/* ═══════════════════════════════════════════════════════════
+ * 깊이 — 0단 배경 / 1단 구역 패널 / 셸(사이드바·헤더·푸터)
+ * 위의 elevation 변수를 쓴다. 값을 바꿀 때는 :root 쪽만 고친다.
+ * ═══════════════════════════════════════════════════════════ */
+
+/* ── 0단 : 배경 ────────────────────────────────────────────
+ * 단색이던 바닥에 브랜드 광원을 깐다.
+ * 이제서야 glass-card 의 backdrop-filter 가 의미를 갖는다
+ * (뒤에 흐릴 것이 없으면 blur 는 성능만 먹는다). */
+body {
+  background-color: #e7e4e1;
+  position: relative;
+}
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(1100px 700px at 82% -10%, rgba(232, 81, 16, 0.42), transparent 62%),
+    radial-gradient(1200px 800px at 8% 110%,  rgba(27, 77, 148, 0.38), transparent 64%),
+    radial-gradient(700px 500px at 50% 45%,   rgba(255, 255, 255, 0.55), transparent 70%),
+    linear-gradient(155deg, #efece9 0%, #ddd8d4 55%, #d3cec9 100%);
+}
+body > * { position: relative; z-index: 1; }
+
+/* ── 1단 : 구역 패널 ──────────────────────────────────────
+ * 여백만으로 나뉘던 구역이 각자의 판을 갖는다.
+ * 대상은 HTML 에서 .depth-panel 로 명시한다.
+ *
+ * ⚠️ 처음에는 `main > section:not(...)` 같은 구조 선택자를 썼으나,
+ *    중계 화면은 섹션이 그리드 안에 중첩돼 있어 규칙이 빗나갔다
+ *    (경기 기록·주요 장면에 패널이 붙지 않았다).
+ *    페이지마다 구조가 달라 구조 의존 선택자는 쓰지 않는다.
+ *
+ * 붙이지 않는 곳
+ *   히어로            — 자기 배경이 있다
+ *   칩·필터 줄        — 내용 몇 개만 담긴 거대한 빈 판이 된다
+ *                       (일정 페이지 날짜·리그 줄에서 실제로 그랬다) */
+.depth-panel {
+  background: rgba(255, 255, 255, 0.42);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 44px;
+  box-shadow: var(--elev-panel);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+/* 구역 제목에 왼쪽 강조선 */
+.depth-panel > h2:first-child,
+.depth-panel > div:first-child > h2 {
+  border-left: 4px solid #E85110;
+  padding-left: 14px;
+}
+
+/* ── 3단 : 히어로 · 대표 기사 ─────────────────────────────── */
+main > section.glass-card,
+article.lg\:col-span-8 {
+  box-shadow: var(--elev-hero);
+}
+
+/* ── 보조 : 작은 블록 ─────────────────────────────────────── */
+.league-chip.glass-card:not([aria-selected='true']) { box-shadow: var(--elev-chip); }
+.bg-surface-container-highest { box-shadow: var(--elev-chip); }
+
+/* 어두운 영역 안에서는 밝은 그림자가 얼룩으로 보인다 */
+.carbon-texture .bg-surface-container-highest { box-shadow: none; }
+
+/* ── 경기 카드 : 카드 전체를 덮는 링크 하나 ────────────────────
+ * `<article>` 에 role="link" 를 씌우면 Lighthouse 가 「부적절한 ARIA 역할」로
+ * 지적하고, 카드 안에 팀명 링크가 또 있으면 「링크 안의 링크」가 된다.
+ * 그래서 카드를 덮는 링크 하나만 두고, 읽어 줄 이름은 그 안의 .sr-only 가 준다.
+ *
+ * ⚠ 링크 자체를 덮개로 쓰므로 포커스 테두리가 카드 전체를 감싼다.
+ *   .sr-only 만 링크로 두면 테두리가 1px 짜리로 잡힌다. 이 구조를 바꾸지 말 것.
+ * ⚠ 덮개가 카드 전면을 가리므로 카드 안에 다른 버튼·링크를 넣지 말 것.
+ *   넣어야 하면 그 요소에 position:relative + z-index:2 를 주어 위로 올린다. */
+.match-card { position: relative; }
+.match-card .card-link {
+  position: absolute; inset: 0; z-index: 1; border-radius: inherit;
+}
+
+/* ── 호버 : 한 단 더 들어올림 ─────────────────────────────── */
+.match-card:hover,
+article.glass-card:hover,
+a.glass-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--elev-hover);
+}
+
+/* ── 셸 : 좌측 메뉴 ───────────────────────────────────────
+ * 어두운 면이라 밝은 그림자가 보이지 않는다. 더 진한 값을 쓴다.
+ * 그림자는 오른쪽(본문 쪽)으로 던져 본문을 덮고 있는 것처럼 보이게 한다.
+ *
+ * ⚠️ 이전에는 본문 쪽에 별도의 그림자 띠(.main-wrap::before)를 깔았다.
+ *    사이드바의 ::after 가 `overflow-x: hidden` 에 잘린다고 봤기 때문인데,
+ *    box-shadow 는 overflow 에 잘리지 않는다. 즉 띠는 처음부터 불필요했다.
+ *    게다가 띠는 네모난 사각형이라 사이드바의 둥근 모서리를 따라가지 못해
+ *    "그림자가 각지게 나온다"는 지적을 받았다. 그래서 띠를 없애고
+ *    box-shadow 4단 감쇠로 대체했다 — border-radius 를 자동으로 따라간다.
+ */
+.sidebar {
+  background-image: linear-gradient(175deg, #16223c 0%, #0f172a 45%, #0a1020 100%);
+  border-right: none;
+  box-shadow:
+    /* 왼쪽 안쪽 광택 — 판의 두께 */
+    inset 1px 0 0 rgba(255, 255, 255, 0.06),
+    /* ── 오른쪽 경계 두 줄 ── 접히고 펼쳐지는 판의 끝단 */
+    inset -1px 0 0 rgba(255, 255, 255, 0.12),   /* (1) 안쪽 밝은 선 = 모서리 광택 */
+    1px 0 0 rgba(0, 0, 0, 0.6),                 /* (2) 바로 밖 어두운 선 = 판이 끝나는 곳 */
+    /* 본문 위로 드리우는 그림자 — 4단 감쇠 */
+    8px 0 18px rgba(15, 23, 42, 0.3),
+    22px 0 44px rgba(15, 23, 42, 0.26),
+    48px 0 88px rgba(15, 23, 42, 0.2),
+    84px 0 140px rgba(15, 23, 42, 0.12);
+}
+
+/* ═══ 페이지 전체 여백 ══════════════════════════════════════
+ * BD 요청: "사방 여백 좋아요, 그걸 유지한 상태에서 전체 페이지의 여백도 주세요"
+ *
+ * 사이드바까지 화면 끝에서 띄워, 앱 전체가 배경 위에 뜬 한 덩어리가 된다.
+ *
+ *   화면 끝 ─20─ [ 사이드바 ] ─24─ [ 상단바 / 본문 / 푸터 ] ─20─ 화면 끝
+ *                위아래도 20
+ */
+:root {
+  --page: 20px;      /* 화면 끝에서 앱까지 — 사방 공통 */
+  --gap: 24px;       /* 사이드바 ↔ 본문 사이 */
+  --plate: 18px;     /* 판의 모서리 반경 */
+}
+
+@media (min-width: 769px) {
+  .sidebar {
+    left: var(--page);
+    top: var(--page);
+    height: calc(100vh - var(--page) * 2);
+    border-radius: var(--plate);
+  }
+
+  .main-wrap {
+    padding-left: calc(var(--page) + 256px + var(--gap));
+    padding-right: var(--page);
+    padding-top: var(--page);
+    padding-bottom: var(--page);
+  }
+  body[data-sidebar='collapsed'] .main-wrap {
+    padding-left: calc(var(--page) + 80px + var(--gap));
+  }
+}
+
+/* 모바일 : 여백 없음 — 사이드바는 드로어이고, 좁은 화면에서 여백은 손해다 */
+@media (max-width: 768px) {
+  .sidebar { left: 0; top: 0; height: 100vh; border-radius: 0; }
+  .main-wrap { padding: 12px; }
+}
+
+/* 로고 명패 */
+.sidebar > div:nth-of-type(2) > div:first-child {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    0 2px 6px rgba(0, 0, 0, 0.45);
+}
+
+/* SWITCH MODE — 두께가 있어 실제로 눌리는 버튼 */
+.sidebar-switch-btn {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    0 3px 0 #a73400,
+    0 6px 14px rgba(0, 0, 0, 0.35);
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.sidebar-switch-btn:hover { transform: translateY(-1px); }
+.sidebar-switch-btn:active {
+  transform: translateY(2px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    0 1px 0 #a73400,
+    0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+/* 메뉴 항목 — 올리면 왼쪽에 주황 띠가 선다 */
+.sidebar-link { position: relative; }
+.sidebar-link::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  background: #E85110;
+  transform: scaleY(0);
+  transition: transform 0.18s ease;
+}
+.sidebar-link:hover::before { transform: scaleY(1); }
+.sidebar-link:hover {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.25);
+}
+
+/* 하단 상태 블록 */
+.sidebar > div:last-of-type {
+  box-shadow: 0 -1px 0 rgba(255, 255, 255, 0.07), 0 -8px 18px rgba(0, 0, 0, 0.25);
+}
+
+/* ── 셸 : 상단바 ── 배경 위에 뜬 판. 네 모서리를 깎는다. ─────
+ * ⚠️ 태그 선택자 `header` 를 쓰면 안 된다.
+ *    일정·뉴스·대시보드에는 페이지 제목용 <header> 가 본문 안에 또 있어서,
+ *    제목 주위에 상자 윤곽이 생긴다 (실제로 그랬다). */
+.app-header {
+  border-radius: var(--plate);
+  top: var(--page);          /* sticky 기준점도 여백만큼 내린다 */
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    0 2px 6px rgba(15, 23, 42, 0.07),
+    0 10px 24px rgba(15, 23, 42, 0.09);
+}
+
+.app-header input[type="text"],
+.app-header input[type="search"] {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 1px 2px rgba(15, 23, 42, 0.08),
+    0 2px 6px rgba(15, 23, 42, 0.06);
+}
+
+/* GO PRO */
+.app-header a[class*="bg-hermes-orange"],
+.app-header button[class*="bg-hermes-orange"] {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    0 2px 0 #a73400,
+    0 4px 10px rgba(232, 81, 16, 0.3);
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.app-header a[class*="bg-hermes-orange"]:hover,
+.app-header button[class*="bg-hermes-orange"]:hover { transform: translateY(-1px); }
+.app-header a[class*="bg-hermes-orange"]:active,
+.app-header button[class*="bg-hermes-orange"]:active {
+  transform: translateY(1px);
+  box-shadow: 0 1px 0 #a73400, 0 2px 5px rgba(232, 81, 16, 0.25);
+}
+
+.app-header button:not([class*="bg-hermes-orange"]):hover {
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.14);
+  border-radius: 9999px;
+}
+
+/* ── 셸 : 푸터 ────────────────────────────────────────────
+ * 그림자만으로는 바닥에 붙은 띠처럼 보였다.
+ * 위쪽 모서리를 깎아 본문 위에 얹힌 별개의 판으로 읽히게 한다. */
+footer {
+  border-radius: var(--plate);   /* 사방이 떠 있으므로 네 모서리 모두 */
+  background-image: linear-gradient(180deg, #eae8e7 0%, #dedbda 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    0 -3px 8px rgba(15, 23, 42, 0.09),
+    0 -16px 36px rgba(15, 23, 42, 0.12);
+  position: relative;
+  z-index: 2;
+}
+footer nav a {
+  display: inline-block;
+  transition: transform 0.14s ease;
+}
+footer nav a:hover { transform: translateY(-2px); }
+
+@media (max-width: 768px) {
+  .app-header { top: 0; }
+}
+
+/* ── 종목 필터로 숨긴 경기 행 ─────────────────────────────
+   Tailwind 의 display 유틸(flex 등)이 브라우저 기본 [hidden] 규칙을
+   덮어쓰므로 여기서 다시 눌러준다. */
+li[hidden], .depth-panel [hidden] { display: none; }
+
+/* ── 상단바 검색 드롭다운 ──────────────────────────────────
+   상단바(1단) 위에 뜨는 목록이므로 카드보다 한 단 위(--elev-hero)를 쓴다.
+   흰 표면이므로 글자는 어두운 색을 그대로 쓴다. */
+.search-results {
+  /* 뒤 본문 글자가 비쳐 읽기 어려워 완전 불투명으로 둔다 */
+  background: #fff;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow: var(--elev-hero);
+}
+
+.search-option + .search-option { border-top: 1px solid rgba(15, 23, 42, 0.06); }
+.search-option.is-active { background: rgba(232, 81, 16, 0.08); }
+
+/* xl 아래에서는 검색상자가 숨고 아이콘 버튼만 남는다.
+   버튼을 누르면 상단바 아래로 검색상자를 펼친다. (assets/search.js) */
+@media (max-width: 1279px) {
+  form[role='search'].search-open {
+    display: block;
+    position: absolute;
+    left: 1rem;
+    right: 1rem;
+    top: 100%;
+    margin-top: 0.5rem;
+  }
+  form[role='search'].search-open input { width: 100%; }
+  form[role='search'].search-open .search-results { width: 100%; max-width: none; }
+}
+
+/* 데이터 연동이 채우지 못하는 하드코딩 세부값은 감춘다 (data-pages.js) */
+[data-role="season-note"][hidden], [data-role="season-clean-sheet"][hidden], [data-role="player-viewers"][hidden] { display: none; }
+
+/* ───────────────────────────────────────────────────────────────
+   터치 대상 최소 크기 (WCAG 2.5.8 · 24×24px) — 2026-08-20 Lighthouse
+   경기 목록의 팀명 링크는 글자 높이 그대로라 18.9px 밖에 안 됐다.
+   ⚠️ padding 만 주면 줄 높이가 늘어 목록 간격이 벌어진다 →
+      같은 값의 음수 margin 으로 되돌려 **레이아웃은 그대로** 둔다.
+   ⚠️ `display: inline-block` 을 주면 안 된다 — 팀명은 부모의 `truncate`(말줄임)에
+      기대고 있어서 블록으로 바꾸면 긴 이름이 칸을 밀어낸다.
+      인라인 요소도 **수직 패딩만으로 클릭 영역이 넓어진다.**
+   ─────────────────────────────────────────────────────────────── */
+a[data-role='home'],
+a[data-role='away'] {
+  padding-block: 4px;
+  margin-block: -4px;
+}

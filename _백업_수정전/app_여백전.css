@@ -1,0 +1,387 @@
+/* ARENA LIVE — 커스텀 스타일
+ * 시안(Stitch)의 <style> 블록을 옮기고, 접근성·모바일 처리를 보완했다.
+ *
+ * ── 깊이(elevation) 체계 ─────────────────────────────────
+ * BD 지적 (2026-08-19): "너무 평면적이다. 종이 조각을 연결해 놓은 느낌이다."
+ * 원인은 ① 배경과 카드의 밝기가 같음 ② 테두리가 흰색이라 안 보임
+ *        ③ 그림자가 한 종류뿐 ④ 구역 구분이 여백뿐 이었다.
+ *
+ * 높이를 4단으로 나눈다. 아래로 갈수록 더 떠 있다.
+ *   0단  배경        — 브랜드 광원이 깔린 바닥
+ *   1단  구역 패널    — 살짝 뜸
+ *   2단  카드         — 더 뜸
+ *   3단  히어로·대표기사 — 가장 뜸
+ *   보조  칩·스코어박스 — 아주 살짝 뜸
+ *
+ * 규칙: 눌린(inset) 그림자를 단독으로 쓰지 않는다. 파여 보인다.
+ *       inset 은 위쪽 하이라이트(모서리 광택)로만 쓴다.
+ */
+
+:root {
+  --elev-chip:  0 1px 2px rgba(15, 23, 42, 0.07), 0 2px 4px rgba(15, 23, 42, 0.05);
+  --elev-panel: 0 2px 4px rgba(15, 23, 42, 0.04), 0 8px 18px rgba(15, 23, 42, 0.07);
+  --elev-card:  0 2px 5px rgba(15, 23, 42, 0.05), 0 12px 26px rgba(15, 23, 42, 0.10);
+  --elev-hero:  0 6px 14px rgba(15, 23, 42, 0.08), 0 28px 60px rgba(15, 23, 42, 0.15);
+  --elev-hover: 0 5px 10px rgba(15, 23, 42, 0.07), 0 20px 40px rgba(15, 23, 42, 0.14);
+}
+
+/* ── 배경 텍스처 ─────────────────────────────────────────── */
+.technical-grid {
+  background-size: 40px 40px;
+  /* 0.03 -> 0.05 : 바닥 격자가 깊이의 기준선 역할을 하도록 살짝 진하게 */
+  background-image:
+    linear-gradient(to right, rgba(15, 23, 42, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(15, 23, 42, 0.05) 1px, transparent 1px);
+}
+
+.carbon-texture {
+  background-image: url("data:image/svg+xml,%3Csvg width='6' height='6' viewBox='0 0 6 6' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.02' fill-rule='evenodd'%3E%3Cpath d='M5 0h1L0 6V5zM6 5v1H5z'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+/* ── 카드 ────────────────────────────────────────────────── */
+/* 2단 — 카드.
+ * 이전에는 테두리가 흰색이라 밝은 배경에서 윤곽이 보이지 않았고,
+ * 그림자가 한 종류뿐이어서 모든 카드가 같은 높이로 납작하게 보였다. */
+.glass-card {
+  background: rgba(255, 255, 255, 0.86);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  box-shadow: var(--elev-card);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+/* ⚠️ glass-card 는 밝은 표면 전용이다 (흰 배경 86%).
+ *    어두운 배경 위에 올리면 흰 글자가 묻힌다 —
+ *    그런 곳에는 bg-white/10 + backdrop-blur-sm 을 쓴다. */
+
+/* 원래는 눌린(inset) 그림자였다. 모든 블록이 살짝 뜨는 방향으로 통일했다. */
+.inset-panel {
+  box-shadow: var(--elev-chip);
+}
+
+/* ── LIVE 점멸 ───────────────────────────────────────────── */
+.pulse-live {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* ── 사이드바 ─────────────────────────────────────────────
+ * 시안은 :checked 형제 선택자로 처리했으나, 상태를 body의
+ * data-sidebar 속성으로 옮겼다. JS에서 다루기 쉽고 aria와 묶인다.
+ */
+.sidebar { width: 256px; transition: width 0.3s ease, transform 0.3s ease; }
+.main-wrap { transition: padding-left 0.3s ease; }
+
+@media (min-width: 769px) {
+  body[data-sidebar='collapsed'] .sidebar { width: 80px; }
+  body[data-sidebar='collapsed'] .sidebar-label,
+  body[data-sidebar='collapsed'] .sidebar-header-text,
+  body[data-sidebar='collapsed'] .sidebar-status-text,
+  body[data-sidebar='collapsed'] .sidebar-switch-text { display: none; }
+  body[data-sidebar='collapsed'] .sidebar-switch-icon { display: block; }
+  body[data-sidebar='collapsed'] .sidebar-switch-btn,
+  body[data-sidebar='collapsed'] .sidebar-link,
+  body[data-sidebar='collapsed'] .sidebar-status-container {
+    justify-content: center;
+    padding-left: 0;
+    padding-right: 0;
+  }
+  body[data-sidebar='collapsed'] .main-wrap { padding-left: 80px; }
+}
+
+/* 모바일: 사이드바는 드로어로 동작한다 (시안에는 열 방법이 없었다) */
+@media (max-width: 768px) {
+  .sidebar { transform: translateX(-100%); }
+  body[data-sidebar='open'] .sidebar { transform: translateX(0); }
+  body[data-sidebar='open'] { overflow: hidden; }
+}
+
+.scrim {
+  position: fixed; inset: 0; z-index: 40;
+  background: rgba(15, 23, 42, 0.5);
+  opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+}
+@media (max-width: 768px) {
+  body[data-sidebar='open'] .scrim { opacity: 1; pointer-events: auto; }
+}
+
+/* ── 접근성 ──────────────────────────────────────────────── */
+:where(a, button, input, summary, [tabindex]):focus-visible {
+  outline: 3px solid #E85110;
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.skip-link {
+  position: absolute; left: 8px; top: -60px; z-index: 100;
+  padding: 12px 20px; background: #0F172A; color: #fff;
+  font-weight: 700; transition: top 0.2s ease;
+}
+.skip-link:focus { top: 8px; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* 리그 탭 선택 상태 */
+.league-chip[aria-selected='true'] {
+  background: #E85110;
+  color: #fff;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    0 2px 0 #a73400,
+    0 4px 10px rgba(232, 81, 16, 0.28);
+}
+
+/* ═══════════════════════════════════════════════════════════
+ * 깊이 — 0단 배경 / 1단 구역 패널 / 셸(사이드바·헤더·푸터)
+ * 위의 elevation 변수를 쓴다. 값을 바꿀 때는 :root 쪽만 고친다.
+ * ═══════════════════════════════════════════════════════════ */
+
+/* ── 0단 : 배경 ────────────────────────────────────────────
+ * 단색이던 바닥에 브랜드 광원을 깐다.
+ * 이제서야 glass-card 의 backdrop-filter 가 의미를 갖는다
+ * (뒤에 흐릴 것이 없으면 blur 는 성능만 먹는다). */
+body {
+  background-color: #e7e4e1;
+  position: relative;
+}
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(1100px 700px at 82% -10%, rgba(232, 81, 16, 0.42), transparent 62%),
+    radial-gradient(1200px 800px at 8% 110%,  rgba(27, 77, 148, 0.38), transparent 64%),
+    radial-gradient(700px 500px at 50% 45%,   rgba(255, 255, 255, 0.55), transparent 70%),
+    linear-gradient(155deg, #efece9 0%, #ddd8d4 55%, #d3cec9 100%);
+}
+body > * { position: relative; z-index: 1; }
+
+/* ── 1단 : 구역 패널 ──────────────────────────────────────
+ * 여백만으로 나뉘던 구역이 각자의 판을 갖는다.
+ * 대상은 HTML 에서 .depth-panel 로 명시한다.
+ *
+ * ⚠️ 처음에는 `main > section:not(...)` 같은 구조 선택자를 썼으나,
+ *    중계 화면은 섹션이 그리드 안에 중첩돼 있어 규칙이 빗나갔다
+ *    (경기 기록·주요 장면에 패널이 붙지 않았다).
+ *    페이지마다 구조가 달라 구조 의존 선택자는 쓰지 않는다.
+ *
+ * 붙이지 않는 곳
+ *   히어로            — 자기 배경이 있다
+ *   칩·필터 줄        — 내용 몇 개만 담긴 거대한 빈 판이 된다
+ *                       (일정 페이지 날짜·리그 줄에서 실제로 그랬다) */
+.depth-panel {
+  background: rgba(255, 255, 255, 0.42);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 44px;
+  box-shadow: var(--elev-panel);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+/* 구역 제목에 왼쪽 강조선 */
+.depth-panel > h2:first-child,
+.depth-panel > div:first-child > h2 {
+  border-left: 4px solid #E85110;
+  padding-left: 14px;
+}
+
+/* ── 3단 : 히어로 · 대표 기사 ─────────────────────────────── */
+main > section.glass-card,
+article.lg\:col-span-8 {
+  box-shadow: var(--elev-hero);
+}
+
+/* ── 보조 : 작은 블록 ─────────────────────────────────────── */
+.league-chip.glass-card { box-shadow: var(--elev-chip); }
+.bg-surface-container-highest { box-shadow: var(--elev-chip); }
+
+/* 어두운 영역 안에서는 밝은 그림자가 얼룩으로 보인다 */
+.carbon-texture .bg-surface-container-highest { box-shadow: none; }
+
+/* ── 호버 : 한 단 더 들어올림 ─────────────────────────────── */
+.match-card:hover,
+article.glass-card:hover,
+a.glass-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--elev-hover);
+}
+
+/* ── 셸 : 좌측 메뉴 ───────────────────────────────────────
+ * 어두운 면이라 밝은 그림자가 보이지 않는다. 더 진한 값을 쓴다.
+ * 그림자는 오른쪽(본문 쪽)으로 던진다. */
+.sidebar {
+  background-image: linear-gradient(175deg, #16223c 0%, #0f172a 45%, #0a1020 100%);
+  border-right: none;
+  box-shadow:
+    /* 왼쪽 안쪽 광택 — 판의 두께 */
+    inset 1px 0 0 rgba(255, 255, 255, 0.06),
+    /* ── 오른쪽 경계 두 줄 ── 접히고 펼쳐지는 판의 끝단을 만든다 */
+    inset -1px 0 0 rgba(255, 255, 255, 0.11),   /* (1) 안쪽 밝은 선 = 판의 모서리 광택 */
+    1px 0 0 rgba(0, 0, 0, 0.6),                 /* (2) 바로 밖 어두운 선 = 판이 끝나는 곳 */
+    /* 본문 위로 드리우는 그림자 — 넓고 깊게 */
+    12px 0 24px rgba(15, 23, 42, 0.38),
+    34px 0 64px rgba(15, 23, 42, 0.3),
+    72px 0 120px rgba(15, 23, 42, 0.16);
+}
+
+/* 사이드바가 본문을 덮고 있다는 단서 — 본문 왼쪽 끝에 드리운 그림자 띠.
+ *
+ * 사이드바는 `overflow-x: hidden` 이라 자기 ::after 로 밖에 그릴 수 없다.
+ * 그래서 본문 쪽에 fixed 로 띠를 깐다.
+ *
+ * z-index: 상단바(40) 위, 사이드바(50) 아래 — 상단바에도 그림자가 드리워야
+ * 사이드바가 화면 전체를 덮은 것처럼 읽힌다. */
+.main-wrap::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 256px;            /* 사이드바 폭 */
+  width: 96px;
+  z-index: 45;
+  pointer-events: none;
+  transition: left 0.3s ease;
+  background: linear-gradient(
+    to right,
+    rgba(15, 23, 42, 0.34) 0%,
+    rgba(15, 23, 42, 0.2) 20%,
+    rgba(15, 23, 42, 0.09) 48%,
+    rgba(15, 23, 42, 0.025) 76%,
+    transparent 100%
+  );
+}
+
+/* 접었을 때는 띠도 같이 따라온다 */
+@media (min-width: 769px) {
+  body[data-sidebar='collapsed'] .main-wrap::before { left: 80px; }
+}
+
+/* 모바일에서는 사이드바가 화면 밖에 있다 — 띠를 그리면 본문에 얼룩이 남는다.
+ * (열렸을 때는 scrim 이 이미 같은 역할을 한다) */
+@media (max-width: 768px) {
+  .main-wrap::before { display: none; }
+}
+
+/* 로고 명패 */
+.sidebar > div:nth-of-type(2) > div:first-child {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    0 2px 6px rgba(0, 0, 0, 0.45);
+}
+
+/* SWITCH MODE — 두께가 있어 실제로 눌리는 버튼 */
+.sidebar-switch-btn {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    0 3px 0 #a73400,
+    0 6px 14px rgba(0, 0, 0, 0.35);
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.sidebar-switch-btn:hover { transform: translateY(-1px); }
+.sidebar-switch-btn:active {
+  transform: translateY(2px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    0 1px 0 #a73400,
+    0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+/* 메뉴 항목 — 올리면 왼쪽에 주황 띠가 선다 */
+.sidebar-link { position: relative; }
+.sidebar-link::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  background: #E85110;
+  transform: scaleY(0);
+  transition: transform 0.18s ease;
+}
+.sidebar-link:hover::before { transform: scaleY(1); }
+.sidebar-link:hover {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.25);
+}
+
+/* 하단 상태 블록 */
+.sidebar > div:last-of-type {
+  box-shadow: 0 -1px 0 rgba(255, 255, 255, 0.07), 0 -8px 18px rgba(0, 0, 0, 0.25);
+}
+
+/* ── 셸 : 상단바 ── 본문 위에 얹힌다. 그림자를 아래로. ───────
+ * ⚠️ 태그 선택자 `header` 를 쓰면 안 된다.
+ *    일정·뉴스·대시보드에는 페이지 제목용 <header> 가 본문 안에 또 있어서,
+ *    제목 주위에 상자 윤곽이 생긴다 (실제로 그랬다). */
+.app-header {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    0 2px 6px rgba(15, 23, 42, 0.07),
+    0 10px 24px rgba(15, 23, 42, 0.09);
+}
+
+.app-header input[type="text"],
+.app-header input[type="search"] {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 1px 2px rgba(15, 23, 42, 0.08),
+    0 2px 6px rgba(15, 23, 42, 0.06);
+}
+
+/* GO PRO */
+.app-header a[class*="bg-hermes-orange"],
+.app-header button[class*="bg-hermes-orange"] {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    0 2px 0 #a73400,
+    0 4px 10px rgba(232, 81, 16, 0.3);
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.app-header a[class*="bg-hermes-orange"]:hover,
+.app-header button[class*="bg-hermes-orange"]:hover { transform: translateY(-1px); }
+.app-header a[class*="bg-hermes-orange"]:active,
+.app-header button[class*="bg-hermes-orange"]:active {
+  transform: translateY(1px);
+  box-shadow: 0 1px 0 #a73400, 0 2px 5px rgba(232, 81, 16, 0.25);
+}
+
+.app-header button:not([class*="bg-hermes-orange"]):hover {
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.14);
+  border-radius: 9999px;
+}
+
+/* ── 셸 : 푸터 ────────────────────────────────────────────
+ * 그림자만으로는 바닥에 붙은 띠처럼 보였다.
+ * 위쪽 모서리를 깎아 본문 위에 얹힌 별개의 판으로 읽히게 한다. */
+footer {
+  border-radius: 18px 18px 0 0;
+  background-image: linear-gradient(180deg, #eae8e7 0%, #dedbda 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    0 -3px 8px rgba(15, 23, 42, 0.09),
+    0 -16px 36px rgba(15, 23, 42, 0.12);
+  position: relative;
+  z-index: 2;
+}
+footer nav a {
+  display: inline-block;
+  transition: transform 0.14s ease;
+}
+footer nav a:hover { transform: translateY(-2px); }

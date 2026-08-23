@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>ARENA LIVE — 실시간 스포츠 중계 · 경기 일정 · 스코어</title>
+<meta name="description" content="ARENA LIVE에서 EPL·NBA·NFL·MLB·라리가 실시간 중계와 실시간 스코어를 확인하세요. 오늘 경기 일정, 라이브 스코어, 경기 분석을 한 곳에서 제공합니다.">
+<link rel="canonical" href="https://example.com/">
+
+<!-- Open Graph : 커뮤니티 공유 시 링크 미리보기 -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="ARENA LIVE — 실시간 스포츠 중계">
+<meta property="og:description" content="EPL·NBA·NFL·MLB 실시간 중계와 라이브 스코어를 한 곳에서.">
+<meta property="og:image" content="https://example.com/assets/img/news-main.jpg">
+<meta property="og:locale" content="ko_KR">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#E85110">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap">
+
+<!-- Tailwind: 빌드된 CSS. 토큰은 assets/theme.js 에서 고치고 `npm run build:css` 로 다시 만든다 -->
+<link rel="stylesheet" href="assets/tailwind.css">
+<link rel="stylesheet" href="assets/app.css">
+
+<!-- 사이트 전체 정보. 경기·팀 정보는 실제 데이터가 온 뒤 assets/seo.js 가 붙인다.
+     `example.com` 은 배포 위치가 정해지기 전의 자리표시자다 (BD 판단 항목).
+     `SearchAction` 은 넣지 않는다 — 검색 결과 페이지를 만들지 않기로 했다(BD 결정). -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "ARENA LIVE",
+  "alternateName": "아레나 라이브",
+  "url": "https://example.com/",
+  "inLanguage": "ko-KR",
+  "description": "실시간 스포츠 중계와 경기 일정·스코어를 한 곳에서 제공합니다."
+}
+</script>
+</head>
+
+<body class="bg-background text-on-surface font-body-md antialiased overflow-x-hidden flex min-h-screen">
+
+<a class="skip-link" href="#main">본문으로 건너뛰기</a>
+<div class="scrim md:hidden" id="scrim" aria-hidden="true"></div>
+
+<!-- ══════════════════ 사이드바 ══════════════════ -->
+<aside id="sidebar" class="sidebar flex flex-col h-screen py-8 left-0 fixed border-r border-outline-variant bg-shadow-navy z-50 overflow-y-auto overflow-x-hidden"
+       aria-label="종목 탐색">
+  <div class="carbon-texture absolute inset-0 pointer-events-none"></div>
+
+  <div class="px-6 mb-8 relative z-10 flex items-center gap-3">
+    <div class="w-10 h-10 bg-surface-container-highest rounded-pill flex items-center justify-center shrink-0">
+      <span class="material-symbols-outlined text-shadow-navy" style="font-variation-settings:'FILL' 1" aria-hidden="true">dashboard</span>
+    </div>
+    <div class="sidebar-header-text whitespace-nowrap">
+      <p class="font-headline-lg text-body-md font-bold text-on-primary">DASHBOARD</p>
+      <p class="font-label-caps text-[10px] text-surface-variant/70">v4.2.0-STABLE</p>
+    </div>
+  </div>
+
+  <div class="px-4 mb-8 relative z-10">
+    <button type="button" class="sidebar-switch-btn w-full bg-primary-container hover:bg-primary-hover text-on-primary font-label-caps py-3 px-4 rounded shadow-[inset_0_1px_0_rgba(255,255,255,0.2)] transition-colors flex justify-center items-center gap-2">
+      <span class="sidebar-switch-text whitespace-nowrap">SWITCH MODE</span>
+      <span class="material-symbols-outlined sidebar-switch-icon hidden" aria-hidden="true">swap_horiz</span>
+    </button>
+  </div>
+
+  <nav class="flex-1 relative z-10 space-y-1">
+    <a class="sidebar-link flex items-center gap-3 px-6 py-3 hover:bg-white/10 transition-all group" href="schedule.html?sport=nba">
+      <span class="material-symbols-outlined text-outline group-hover:text-hermes-orange shrink-0" aria-hidden="true">sports_basketball</span>
+      <span class="sidebar-label font-label-caps text-surface-variant group-hover:text-hermes-orange whitespace-nowrap">NBA</span>
+    </a>
+    <a class="sidebar-link flex items-center gap-3 px-6 py-3 hover:bg-white/10 transition-all group" href="schedule.html?sport=nfl">
+      <span class="material-symbols-outlined text-outline group-hover:text-hermes-orange shrink-0" aria-hidden="true">sports_football</span>
+      <span class="sidebar-label font-label-caps text-surface-variant group-hover:text-hermes-orange whitespace-nowrap">NFL</span>
+    </a>
+    <a class="sidebar-link flex items-center gap-3 px-6 py-3 hover:bg-white/10 transition-all group" href="schedule.html?sport=premier-league">
+      <span class="material-symbols-outlined text-outline group-hover:text-hermes-orange shrink-0" aria-hidden="true">sports_soccer</span>
+      <span class="sidebar-label font-label-caps text-surface-variant group-hover:text-hermes-orange whitespace-nowrap">EPL</span>
+    </a>
+    <a class="sidebar-link flex items-center gap-3 px-6 py-3 hover:bg-white/10 transition-all group" href="schedule.html?sport=mlb">
+      <span class="material-symbols-outlined text-outline group-hover:text-hermes-orange shrink-0" aria-hidden="true">sports_baseball</span>
+      <span class="sidebar-label font-label-caps text-surface-variant group-hover:text-hermes-orange whitespace-nowrap">MLB</span>
+    </a>
+    <a class="sidebar-link flex items-center gap-3 px-6 py-3 hover:bg-white/10 transition-all group" href="schedule.html?sport=f1">
+      <span class="material-symbols-outlined text-outline group-hover:text-hermes-orange shrink-0" aria-hidden="true">settings_input_antenna</span>
+      <span class="sidebar-label font-label-caps text-surface-variant group-hover:text-hermes-orange whitespace-nowrap">F1</span>
+    </a>
+  </nav>
+
+  <div class="px-6 mt-auto relative z-10 border-t border-surface-variant/20 pt-6 space-y-3">
+    <p class="sidebar-status-container flex items-center gap-2">
+      <span class="material-symbols-outlined text-emerald-400 text-sm shrink-0" style="font-variation-settings:'FILL' 1" aria-hidden="true">check_circle</span>
+      <span class="sidebar-status-text font-label-caps text-[10px] text-surface-variant whitespace-nowrap">Status: Online</span>
+    </p>
+    <p class="sidebar-status-container flex items-center gap-2">
+      <span class="material-symbols-outlined text-apex-blue text-sm shrink-0" aria-hidden="true">speed</span>
+      <span class="sidebar-status-text font-label-caps text-[10px] text-surface-variant whitespace-nowrap">Latency: 24ms</span>
+    </p>
+  </div>
+</aside>
+
+<!-- ══════════════════ 본문 래퍼 ══════════════════ -->
+<div class="main-wrap flex-1 flex flex-col md:pl-64 min-h-screen relative w-full">
+  <div class="absolute inset-0 technical-grid pointer-events-none -z-10"></div>
+
+  <!-- ── 상단 바 ── -->
+  <header class="app-header w-full top-0 sticky bg-surface/90 backdrop-blur border-b-2 border-hermes-orange z-40">
+    <div class="flex justify-between items-center px-margin-mobile md:px-gutter py-4 max-w-container-max mx-auto">
+
+      <div class="flex items-center gap-3 lg:gap-6 xl:gap-10 min-w-0">
+        <button type="button" id="sidebar-toggle" aria-expanded="true" aria-controls="sidebar"
+                class="cursor-pointer text-on-surface hover:text-hermes-orange transition-colors p-2 rounded-pill hover:bg-surface-container-highest shrink-0">
+          <span class="material-symbols-outlined block" aria-hidden="true">menu</span>
+          <span class="sr-only">메뉴 열기·닫기</span>
+        </button>
+
+        <a href="./index.html" class="font-display-lg text-[22px] sm:text-[26px] font-bold tracking-tighter text-on-surface flex items-center gap-2 whitespace-nowrap shrink-0">
+          ARENA <span class="font-medium text-hermes-orange">LIVE</span>
+        </a>
+
+        <!-- 🔴 브레이크포인트 주의: Tailwind의 lg/xl은 "화면 폭" 기준인데, 이 헤더가 쓰는
+             실제 폭은 사이드바 256px을 뺀 값이다. 그래서 판단 기준을 한 단계씩 올려 잡는다.
+             (예: 가용폭 1024px가 필요하면 xl=1280 이 아니라 2xl=1536에서 켠다)
+             Command Center는 가장 길어 1560px 이상에서만 노출하고, 그 아래에서는 사이드바로 접근한다. -->
+        <!-- 🔴 규칙 ② — `gap-8` 을 없애고 `gap-4` 하나로 통일했다 (2026-08-21, 5차).
+             ⚠️ 4차 기록의 「검색창에 가려짐」은 원인이 틀렸다. 실제로는 검색창이 덮는 게
+                아니라 **이 `nav` 의 `overflow-hidden` 이 잘라내는** 것이다.
+                재는 법: `nav.scrollWidth − nav.clientWidth` (요소 사각형 비교로는 안 보인다).
+             `gap-8` 일 때 1536~1610px 에서 66.8px 잘렸고, `gap-4` 로 3px(1536~1559px)까지
+             줄었다. 마지막 3px 은 `Command Center` 를 `2xl`(1536) 대신 실측값
+             **`min-[1560px]`** 부터 보여 없앴다. nav 콘텐츠 폭은 401px 이다. -->
+        <!-- 🔴 규칙 ② — nav 를 `md`(768) 에 켜면 사이드바 256px 이 켜지는 순간
+             폭이 모자라 `overflow-hidden` 이 메뉴를 잘라낸다. 800px 에서는 nav 폭이
+             **0** 이라 아무것도 안 보였다 (필요 679px vs 헤더 465px — 물리적으로 불가).
+             실측: 1080px 7px 잘림 · 1090px 0. 그래서 **`min-[1090px]`** 부터 켠다.
+             그 아래에서는 사이드바로 이동한다. 잘린 메뉴보다 없는 메뉴가 낫다.
+             (2026-08-21, 5차 · BD 승인) -->
+        <nav class="hidden min-[1090px]:flex items-center gap-4 overflow-hidden" aria-label="주 메뉴">
+          <a class="text-primary font-bold border-b-2 border-hermes-orange pb-1 font-label-caps text-label-caps uppercase whitespace-nowrap" href="index.html" aria-current="page">Home</a>
+          <a class="text-on-surface-variant font-medium hover:text-primary transition-colors font-label-caps text-label-caps uppercase whitespace-nowrap" href="schedule.html">Schedule</a>
+          <a class="text-on-surface-variant font-medium hover:text-primary transition-colors font-label-caps text-label-caps uppercase whitespace-nowrap" href="match-center.html">Live</a>
+          <a class="text-on-surface-variant font-medium hover:text-primary transition-colors font-label-caps text-label-caps uppercase whitespace-nowrap" href="news.html">News</a>
+          <a class="hidden min-[1560px]:inline text-on-surface-variant font-medium hover:text-primary transition-colors font-label-caps text-label-caps uppercase whitespace-nowrap" href="dashboard.html">Command Center</a>
+        </nav>
+      </div>
+
+      <div class="flex items-center gap-1 sm:gap-2 xl:gap-4 shrink-0">
+        <!-- 검색: xl에서 좁게, 2xl 이상에서 넉넉하게. 그 아래는 아이콘 버튼으로 대체 -->
+        <form class="relative hidden xl:block" role="search" onsubmit="return false">
+          <label class="sr-only" for="site-search">경기·팀 검색</label>
+          <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline-variant text-sm" aria-hidden="true">search</span>
+          <input id="site-search" type="search" placeholder="경기, 팀 검색…"
+                 class="bg-surface-container pl-9 pr-3 py-2 rounded-pill text-sm font-body-sm border-none focus:ring-1 focus:ring-hermes-orange w-40 2xl:w-56 inset-panel">
+        </form>
+        <button type="button" class="xl:hidden text-outline hover:text-hermes-orange transition-colors p-2 shrink-0">
+          <span class="material-symbols-outlined" aria-hidden="true">search</span>
+          <span class="sr-only">검색</span>
+        </button>
+
+        <button type="button" class="bg-primary-container text-on-primary font-label-caps px-4 py-2 rounded shadow-[inset_0_1px_0_rgba(255,255,255,0.2)] hover:bg-primary-hover transition-colors text-xs font-bold uppercase whitespace-nowrap shrink-0 hidden sm:block">GO PRO</button>
+
+        <button type="button" class="text-outline hover:text-hermes-orange transition-colors p-2 shrink-0">
+          <span class="material-symbols-outlined" aria-hidden="true">notifications</span>
+          <span class="sr-only">알림</span>
+        </button>
+        <button type="button" class="text-outline hover:text-hermes-orange transition-colors p-2 shrink-0 hidden 2xl:block">
+          <span class="material-symbols-outlined" aria-hidden="true">settings</span>
+          <span class="sr-only">설정</span>
+        </button>
+
+        <div class="w-8 h-8 rounded-pill bg-surface-variant overflow-hidden border-2 border-outline-variant shrink-0">
+          <img class="w-full h-full object-cover" src="assets/img/avatar.svg" alt="내 계정" width="32" height="32">
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ── 메인 ── -->
+  <main id="main" class="flex-1 p-margin-mobile md:p-gutter w-full max-w-container-max mx-auto pb-section-gap">
+
+    <!-- 히어로 -->
+    <section class="mt-stack-lg mb-section-gap relative rounded-xl overflow-hidden glass-card" aria-labelledby="hero-title">
+      <div class="bg-cover bg-center w-full h-[420px] md:h-[716px] relative flex items-end"
+           style="background-image:url('assets/img/hero-match.jpg')" role="img"
+           aria-label="야간 조명이 켜진 축구 경기장">
+        <div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent"></div>
+        <div class="relative z-10 p-stack-lg md:p-section-gap w-full">
+          <p class="flex items-center gap-2 mb-4">
+            <span class="w-2 h-2 rounded-pill bg-error pulse-live" aria-hidden="true"></span>
+            <span data-role="hero-label" class="font-label-caps text-label-caps tracking-widest text-white uppercase">Live Now • Champions League</span>
+          </p>
+          <!-- 🔴 규칙 ② — 64px(`text-display-lg`)를 `md`(768) 에 켜면 제목칸이 255px 인데
+               `Chicago` 한 낱말이 269px 이라 **어절 중간에서 끊긴다**(`Chicag / o`).
+               제목칸 ≈ 뷰포트 − 545px 이므로 1024px 에서 479px 이 되어 들어간다.
+               그래서 `md:` → **`lg:`**. 그 아래는 38px 를 유지한다 (38px 는 160px).
+               (2026-08-21, 5차 · BD 승인) -->
+          <h1 id="hero-title" data-role="hero-title" class="font-display-lg text-display-lg-mobile lg:text-display-lg text-white mb-stack-md leading-tight max-w-3xl">
+            마드리드 더비: 레알 vs 아틀레티코
+          </h1>
+          <div class="flex gap-4 mt-stack-lg flex-wrap">
+            <a data-role="hero-action" href="match-center.html" class="bg-primary-container text-on-primary font-label-caps text-label-caps px-8 py-4 rounded font-bold hover:opacity-90 transition-opacity flex items-center gap-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.2)]">
+              <span class="material-symbols-outlined" aria-hidden="true">play_arrow</span> 중계 보기
+            </a>
+            <a href="schedule.html" class="border border-white/50 bg-white/10 backdrop-blur-sm text-white font-label-caps text-label-caps px-8 py-4 rounded font-bold hover:bg-white/20 transition-colors">경기 일정</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 리그 탭 -->
+    <section class="depth-panel mb-section-gap" aria-labelledby="leagues-title">
+      <h2 id="leagues-title" class="font-headline-md text-headline-md mb-stack-md text-on-surface">Top Leagues</h2>
+      <div class="flex overflow-x-auto pb-4 gap-stack-md snap-x no-scrollbar" role="tablist" aria-label="리그 선택">
+        <button type="button" role="tab" aria-selected="true"  class="league-chip snap-start shrink-0 px-6 py-3 rounded-pill font-label-caps text-label-caps whitespace-nowrap transition-colors">Premier League</button>
+        <button type="button" role="tab" aria-selected="false" class="league-chip snap-start shrink-0 px-6 py-3 rounded-pill glass-card hover:border-hermes-orange text-on-surface font-label-caps text-label-caps whitespace-nowrap transition-colors">NBA</button>
+        <button type="button" role="tab" aria-selected="false" class="league-chip snap-start shrink-0 px-6 py-3 rounded-pill glass-card hover:border-hermes-orange text-on-surface font-label-caps text-label-caps whitespace-nowrap transition-colors">La Liga</button>
+        <button type="button" role="tab" aria-selected="false" class="league-chip snap-start shrink-0 px-6 py-3 rounded-pill glass-card hover:border-hermes-orange text-on-surface font-label-caps text-label-caps whitespace-nowrap transition-colors">K-League</button>
+        <button type="button" role="tab" aria-selected="false" class="league-chip snap-start shrink-0 px-6 py-3 rounded-pill glass-card hover:border-hermes-orange text-on-surface font-label-caps text-label-caps whitespace-nowrap transition-colors">NFL</button>
+      </div>
+    </section>
+
+    <!-- 진행 중인 경기 -->
+    <section class="depth-panel mb-section-gap" aria-labelledby="live-title">
+      <div class="flex items-center justify-between mb-stack-lg gap-4 flex-wrap">
+        <div class="flex items-center gap-3">
+          <h2 id="live-title" data-role="live-heading" class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-surface">Currently Live</h2>
+          <span data-role="live-badge" class="bg-error-container text-on-error-container px-3 py-1 rounded-pill font-label-data text-label-data flex items-center gap-2">
+            <span class="w-1.5 h-1.5 rounded-pill bg-error pulse-live" aria-hidden="true"></span><span data-role="live-count"> 12 MATCHES</span>
+          </span>
+        </div>
+        <a class="text-primary font-label-caps text-label-caps border-b border-transparent hover:border-hermes-orange transition-colors uppercase tracking-widest" href="schedule.html">View All</a>
+      </div>
+
+      <!-- 🔴 규칙 ② — 가용폭은 뷰포트 − 사이드바 256px 이다.
+           예전 주석은 「한 장당 300px」로 잡았지만 그것도 모자랐다. 실측한 소요폭은
+           약칭 배지 48 + 팀명 + 점수판(112~148, 점수 자릿수에 따라 변함) + 팀명 + 배지 48.
+           실측 기준 두 개다 — **겹치지 않을 최소 292px**(48+148+48 + 좌우 여백 48),
+           **팀명이 읽힐 최소 약 380px**. 300px 로 잡았더니 점수판이 배지를 8.3px 덮었다
+           (2026-08-21, 5차).
+           그래서 2열은 `lg`→`xl`, 3열은 `xl`→`2xl` 로 한 단계씩 올렸다.
+
+           ⚠️ 3열을 `min-[1400px]` 로 앞당겨 보았으나 **되돌렸다.** 1400px 에서 카드는
+           301px 인데, 농구처럼 **세 자리 점수**(`108 - 102`)가 오면 점수판이 172px 로
+           커져 268px 를 요구한다 → 배지를 7.3px 덮었다. `2xl`(1536) 에서는 카드가
+           346px 이라 최악값에도 여유가 있다.
+           대신 1280~1535px 구간에서는 3장이 **2+1** 로 앉는다 (BD 판단 대기). -->
+      <div data-home-live class="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-stack-lg">
+
+        <article class="match-card glass-card rounded-xl p-gutter hover:border-hermes-orange transition-all cursor-pointer flex flex-col justify-between min-h-[160px]">
+          <!-- 카드 전체를 덮는 링크 하나. 읽을 이름은 .sr-only 가 준다 (app.css `.card-link`) -->
+          <a class="card-link" data-role="card-link" href="match-center.html"><span class="sr-only" data-role="card-label">프리미어리그 아스날 2 대 1 첼시, 72분 진행 중</span></a>
+          <div class="flex justify-between items-center mb-4 text-secondary text-sm">
+            <span data-role="league" class="font-label-caps text-label-caps uppercase">Premier League</span>
+            <span class="text-primary font-label-data text-label-data flex items-center gap-1">
+              <span class="material-symbols-outlined text-[14px]" aria-hidden="true">schedule</span><span data-role="clock" data-clock>72'</span>
+            </span>
+          </div>
+          <!-- 🔴 폰(<640px)에서는 「배지+팀명 · 점수판 · 팀명+배지」가 한 줄에 안 들어간다.
+               카드 내부 가용폭 191px 인데 배지 48+48 + 점수판 112~172 = 208~268px 을 요구한다.
+               그래서 폰에서만 점수판을 팀 줄 **아래**로 내린다 (`order-last` + `basis-full`).
+               ⚠️ 팀 칸이 `flex-1`(= basis 0) 이면 줄바꿈이 **안 일어난다** — 줄 나눔은
+                  flex-basis 로 계산하므로 0 이면 다 한 줄에 들어간다고 본다.
+                  그래서 폰에서만 `basis-1/2`, `sm` 이상은 `sm:basis-0` 이다 (5차에 물렸다).
+               `sm` 이상에서는 지금까지처럼 가운데에 둔다. -->
+          <div class="flex flex-wrap sm:flex-nowrap justify-between items-center gap-y-3">
+            <div class="flex flex-col items-center gap-2 grow basis-1/2 sm:basis-0 min-w-0">
+              <div data-role="home-abbr" class="w-12 h-12 rounded-pill bg-surface-container-highest flex items-center justify-center font-bold border border-outline-variant shadow-sm text-shadow-navy">ARS</div>
+              <span class="font-body-md text-body-md font-semibold text-center truncate w-full"><span data-role="home">아스날</span></span>
+            </div>
+            <!-- 폰에서만 자기 줄로 내려간다. `sm:contents` 라서 sm 이상에서는 이 칸이 사라지고
+                 점수판이 다시 행의 직접 자녀(가운데)가 된다.
+                 ⚠️ 점수판에 `basis-full max-w-max` 를 같이 주면 max-width 가 이겨
+                    줄바꿈이 아예 일어나지 않는다 (5차에 물렸다). -->
+            <div class="basis-full flex justify-center order-last sm:contents">
+              <p class="font-label-data text-3xl font-bold flex gap-3 shrink-0 px-4 py-2 bg-surface-container-highest rounded-lg shadow-sm border border-outline-variant text-on-surface">
+              <span data-role="home-score">2</span><span data-role="score-sep">-</span><span data-role="away-score">1</span>
+            </p>
+            </div>
+            <div class="flex flex-col items-center gap-2 grow basis-1/2 sm:basis-0 min-w-0">
+              <div data-role="away-abbr" class="w-12 h-12 rounded-pill bg-surface-container-highest flex items-center justify-center font-bold border border-outline-variant shadow-sm text-shadow-navy">CHE</div>
+              <span class="font-body-md text-body-md font-semibold text-center truncate w-full"><span data-role="away">첼시</span></span>
+            </div>
+          </div>
+        </article>
+
+        <article class="match-card glass-card rounded-xl p-gutter hover:border-hermes-orange transition-all cursor-pointer flex flex-col justify-between min-h-[160px]">
+          <!-- 카드 전체를 덮는 링크 하나. 읽을 이름은 .sr-only 가 준다 (app.css `.card-link`) -->
+          <a class="card-link" data-role="card-link" href="match-center.html"><span class="sr-only" data-role="card-label">NBA 레이커스 88 대 82 워리어스, 3쿼터 4분 12초 남음</span></a>
+          <div class="flex justify-between items-center mb-4 text-secondary text-sm">
+            <span data-role="league" class="font-label-caps text-label-caps uppercase">NBA</span>
+            <span class="text-primary font-label-data text-label-data flex items-center gap-1">
+              <span class="material-symbols-outlined text-[14px]" aria-hidden="true">schedule</span><span data-role="clock">Q3 4:12</span>
+            </span>
+          </div>
+          <!-- 🔴 폰(<640px)에서는 「배지+팀명 · 점수판 · 팀명+배지」가 한 줄에 안 들어간다.
+               카드 내부 가용폭 191px 인데 배지 48+48 + 점수판 112~172 = 208~268px 을 요구한다.
+               그래서 폰에서만 점수판을 팀 줄 **아래**로 내린다 (`order-last` + `basis-full`).
+               ⚠️ 팀 칸이 `flex-1`(= basis 0) 이면 줄바꿈이 **안 일어난다** — 줄 나눔은
+                  flex-basis 로 계산하므로 0 이면 다 한 줄에 들어간다고 본다.
+                  그래서 폰에서만 `basis-1/2`, `sm` 이상은 `sm:basis-0` 이다 (5차에 물렸다).
+               `sm` 이상에서는 지금까지처럼 가운데에 둔다. -->
+          <div class="flex flex-wrap sm:flex-nowrap justify-between items-center gap-y-3">
+            <div class="flex flex-col items-center gap-2 grow basis-1/2 sm:basis-0 min-w-0">
+              <div data-role="home-abbr" class="w-12 h-12 rounded-pill bg-surface-container-highest flex items-center justify-center font-bold border border-outline-variant shadow-sm text-shadow-navy">LAL</div>
+              <span class="font-body-md text-body-md font-semibold text-center truncate w-full"><span data-role="home">레이커스</span></span>
+            </div>
+            <!-- 폰에서만 자기 줄로 내려간다. `sm:contents` 라서 sm 이상에서는 이 칸이 사라지고
+                 점수판이 다시 행의 직접 자녀(가운데)가 된다.
+                 ⚠️ 점수판에 `basis-full max-w-max` 를 같이 주면 max-width 가 이겨
+                    줄바꿈이 아예 일어나지 않는다 (5차에 물렸다). -->
+            <div class="basis-full flex justify-center order-last sm:contents">
+              <p class="font-label-data text-3xl font-bold flex gap-3 shrink-0 px-4 py-2 bg-surface-container-highest rounded-lg shadow-sm border border-outline-variant text-on-surface">
+              <span data-role="home-score">88</span><span data-role="score-sep">-</span><span data-role="away-score">82</span>
+            </p>
+            </div>
+            <div class="flex flex-col items-center gap-2 grow basis-1/2 sm:basis-0 min-w-0">
+              <div data-role="away-abbr" class="w-12 h-12 rounded-pill bg-surface-container-highest flex items-center justify-center font-bold border border-outline-variant shadow-sm text-shadow-navy">GSW</div>
+              <span class="font-body-md text-body-md font-semibold text-center truncate w-full"><span data-role="away">워리어스</span></span>
+            </div>
+          </div>
+        </article>
+
+        <article class="match-card glass-card rounded-xl p-gutter hover:border-hermes-orange transition-all cursor-pointer flex flex-col justify-between min-h-[160px]">
+          <!-- 카드 전체를 덮는 링크 하나. 읽을 이름은 .sr-only 가 준다 (app.css `.card-link`) -->
+          <a class="card-link" data-role="card-link" href="match-center.html"><span class="sr-only" data-role="card-label">라리가 바르셀로나 0 대 0 세비야, 전반 45분 추가시간</span></a>
+          <div class="flex justify-between items-center mb-4 text-secondary text-sm">
+            <span data-role="league" class="font-label-caps text-label-caps uppercase">La Liga</span>
+            <span class="text-primary font-label-data text-label-data flex items-center gap-1">
+              <span class="material-symbols-outlined text-[14px]" aria-hidden="true">schedule</span><span data-role="clock">45+2'</span>
+            </span>
+          </div>
+          <!-- 🔴 폰(<640px)에서는 「배지+팀명 · 점수판 · 팀명+배지」가 한 줄에 안 들어간다.
+               카드 내부 가용폭 191px 인데 배지 48+48 + 점수판 112~172 = 208~268px 을 요구한다.
+               그래서 폰에서만 점수판을 팀 줄 **아래**로 내린다 (`order-last` + `basis-full`).
+               ⚠️ 팀 칸이 `flex-1`(= basis 0) 이면 줄바꿈이 **안 일어난다** — 줄 나눔은
+                  flex-basis 로 계산하므로 0 이면 다 한 줄에 들어간다고 본다.
+                  그래서 폰에서만 `basis-1/2`, `sm` 이상은 `sm:basis-0` 이다 (5차에 물렸다).
+               `sm` 이상에서는 지금까지처럼 가운데에 둔다. -->
+          <div class="flex flex-wrap sm:flex-nowrap justify-between items-center gap-y-3">
+            <div class="flex flex-col items-center gap-2 grow basis-1/2 sm:basis-0 min-w-0">
+              <div data-role="home-abbr" class="w-12 h-12 rounded-pill bg-surface-container-highest flex items-center justify-center font-bold border border-outline-variant shadow-sm text-shadow-navy">FCB</div>
+              <span class="font-body-md text-body-md font-semibold text-center truncate w-full"><span data-role="home">바르셀로나</span></span>
+            </div>
+            <!-- 폰에서만 자기 줄로 내려간다. `sm:contents` 라서 sm 이상에서는 이 칸이 사라지고
+                 점수판이 다시 행의 직접 자녀(가운데)가 된다.
+                 ⚠️ 점수판에 `basis-full max-w-max` 를 같이 주면 max-width 가 이겨
+                    줄바꿈이 아예 일어나지 않는다 (5차에 물렸다). -->
+            <div class="basis-full flex justify-center order-last sm:contents">
+              <p class="font-label-data text-3xl font-bold flex gap-3 shrink-0 px-4 py-2 bg-surface-container-highest rounded-lg shadow-sm border border-outline-variant text-on-surface">
+              <span data-role="home-score">0</span><span data-role="score-sep">-</span><span data-role="away-score">0</span>
+            </p>
+            </div>
+            <div class="flex flex-col items-center gap-2 grow basis-1/2 sm:basis-0 min-w-0">
+              <div data-role="away-abbr" class="w-12 h-12 rounded-pill bg-surface-container-highest flex items-center justify-center font-bold border border-outline-variant shadow-sm text-shadow-navy">SEV</div>
+              <span class="font-body-md text-body-md font-semibold text-center truncate w-full"><span data-role="away">세비야</span></span>
+            </div>
+          </div>
+        </article>
+
+      </div>
+    </section>
+
+    <!-- 최신 뉴스 -->
+    <section class="depth-panel" aria-labelledby="news-title">
+      <div class="flex items-center justify-between mb-stack-lg gap-4 flex-wrap">
+        <h2 id="news-title" class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-surface">Latest News</h2>
+        <a class="text-primary font-label-caps text-label-caps border-b border-transparent hover:border-hermes-orange transition-colors uppercase tracking-widest" href="news.html">More News</a>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-stack-lg">
+
+        <article class="lg:col-span-8 group relative overflow-hidden rounded-xl glass-card hover:border-hermes-orange transition-all">
+          <div class="aspect-video relative overflow-hidden">
+            <img class="object-cover w-full h-full transform group-hover:scale-105 transition-transform duration-500" loading="lazy"
+                 src="assets/img/news-main.jpg" alt="야간 조명이 켜진 축구 경기장 전경" width="1200" height="675">
+            <div class="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors"></div>
+            <span class="absolute top-4 left-4 bg-primary-container text-on-primary font-label-caps text-label-caps px-3 py-1 rounded shadow-[inset_0_1px_0_rgba(255,255,255,0.2)]">BREAKING</span>
+          </div>
+          <div class="p-gutter">
+            <p class="flex items-center gap-2 mb-3 text-secondary font-label-caps text-label-caps uppercase">
+              <span>Football</span><span class="w-1 h-1 rounded-pill bg-secondary-fixed-dim" aria-hidden="true"></span>
+              <time datetime="2026-08-18T15:00+09:00">2시간 전</time>
+            </p>
+            <h3 class="font-headline-md text-headline-md font-bold mb-3 text-on-surface">
+              <a href="#" class="group-hover:text-hermes-orange transition-colors after:absolute after:inset-0">사무국, 다음 시즌 대회 방식 전면 개편 발표</a>
+            </h3>
+            <p class="font-body-lg text-body-lg text-on-surface-variant line-clamp-2">경쟁 구도와 팬 참여를 높이기 위한 조치로, 포스트시즌 구조를 대폭 손질하는 안이 승인됐다.</p>
+          </div>
+        </article>
+
+        <div class="lg:col-span-4 flex flex-col gap-stack-lg">
+
+          <article class="group relative flex gap-4 glass-card rounded-xl hover:border-hermes-orange transition-colors p-2">
+            <div class="w-1/3 aspect-square rounded-lg overflow-hidden shrink-0">
+              <img class="object-cover w-full h-full transform group-hover:scale-110 transition-transform duration-300" loading="lazy"
+                   src="assets/img/news-1.jpg" alt="실내 체육관의 농구 골대" width="400" height="400">
+            </div>
+            <div class="w-2/3 flex flex-col justify-center">
+              <span class="text-primary font-label-caps text-label-caps uppercase mb-1">NBA</span>
+              <h4 class="font-body-md text-body-md font-semibold line-clamp-3 text-on-surface">
+                <a href="#" class="group-hover:text-primary transition-colors after:absolute after:inset-0">주전 포인트가드, 발목 부상으로 4~6주 결장</a>
+              </h4>
+            </div>
+          </article>
+
+          <article class="group relative flex gap-4 glass-card rounded-xl hover:border-hermes-orange transition-colors p-2">
+            <div class="w-1/3 aspect-square rounded-lg overflow-hidden shrink-0">
+              <img class="object-cover w-full h-full transform group-hover:scale-110 transition-transform duration-300" loading="lazy"
+                   src="assets/img/news-2.jpg" alt="테니스 코트 네트 앞에 놓인 테니스공" width="400" height="400">
+            </div>
+            <div class="w-2/3 flex flex-col justify-center">
+              <span class="text-primary font-label-caps text-label-caps uppercase mb-1">Tennis</span>
+              <h4 class="font-body-md text-body-md font-semibold line-clamp-3 text-on-surface">
+                <a href="#" class="group-hover:text-primary transition-colors after:absolute after:inset-0">최대 이변: 무시드 신인이 세계 1위를 꺾다</a>
+              </h4>
+            </div>
+          </article>
+
+          <article class="group relative flex gap-4 glass-card rounded-xl hover:border-hermes-orange transition-colors p-2">
+            <div class="w-1/3 aspect-square rounded-lg overflow-hidden shrink-0">
+              <img class="object-cover w-full h-full transform group-hover:scale-110 transition-transform duration-300" loading="lazy"
+                   src="assets/img/news-3.jpg" alt="야간 조명 아래의 축구장 잔디" width="400" height="400">
+            </div>
+            <div class="w-2/3 flex flex-col justify-center">
+              <span class="text-primary font-label-caps text-label-caps uppercase mb-1">Analysis</span>
+              <h4 class="font-body-md text-body-md font-semibold line-clamp-3 text-on-surface">
+                <a href="#" class="group-hover:text-primary transition-colors after:absolute after:inset-0">전술 분석: 새 미드필드 3인이 바꾼 경기 양상</a>
+              </h4>
+            </div>
+          </article>
+
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- SEO 본문 블록 -->
+  <section class="mb-section-gap px-margin-mobile md:px-gutter max-w-container-max mx-auto w-full">
+    <div class="glass-card rounded-xl overflow-hidden border border-outline-variant">
+      <details class="group" open>
+        <summary class="flex items-center justify-between p-6 cursor-pointer list-none hover:bg-surface-container-highest transition-colors">
+          <h2 class="font-headline-md text-on-surface">ARENA LIVE 소개 — 프리미엄 스포츠 중계</h2>
+          <span class="material-symbols-outlined text-hermes-orange transition-transform group-open:rotate-180" aria-hidden="true">expand_more</span>
+        </summary>
+        <div class="p-6 pt-0 border-t border-outline-variant/20">
+          <div class="space-y-4 text-on-surface-variant font-body-md">
+            <p><strong class="text-primary">ARENA LIVE</strong>는 <strong class="text-on-surface">실시간 중계</strong>와 <strong class="text-on-surface">실시간 스코어</strong>를 제공하는 스포츠 중계 플랫폼입니다. NBA·NFL·EPL·라리가를 비롯한 주요 리그 경기를 한 곳에서 확인할 수 있습니다.</p>
+            <p>저지연 <strong class="text-on-surface">라이브 스트리밍</strong>과 고화질 화면으로 경기를 시청하고, <strong class="text-on-surface">실시간 기록</strong>과 매치 센터에서 경기 흐름을 자세히 살펴보세요.</p>
+            <p>여러 대륙과 종목을 아우르는 <strong class="text-on-surface">폭넓은 커버리지</strong>로 놓치는 경기가 없도록 합니다. 속보부터 전문 분석까지, 스포츠 팬을 위한 기준점이 되겠습니다.</p>
+          </div>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <!-- ── 푸터 ── -->
+  <footer class="w-full mt-auto bg-surface-container-highest border-t-2 border-hermes-orange">
+    <div class="flex flex-col md:flex-row justify-between items-center px-margin-mobile md:px-gutter py-6 max-w-container-max mx-auto gap-4">
+      <p class="font-label-caps text-on-surface-variant text-center">© 2026 ARENA LIVE BROADCASTING. ALL RIGHTS RESERVED.</p>
+      <nav class="flex items-center gap-4 md:gap-6 flex-wrap justify-center" aria-label="푸터 메뉴">
+        <a class="font-label-caps text-on-surface-variant hover:text-primary transition-colors uppercase" href="#">About Us</a>
+        <a class="font-label-caps text-on-surface-variant hover:text-primary transition-colors uppercase" href="#">Terms of Service</a>
+        <a class="font-label-caps text-on-surface-variant hover:text-primary transition-colors uppercase" href="#">Privacy Policy</a>
+        <a class="font-label-caps text-on-surface-variant hover:text-primary transition-colors uppercase" href="#">Help Center</a>
+        <a class="font-label-caps text-on-surface-variant hover:text-primary transition-colors uppercase" href="#">Careers</a>
+      </nav>
+    </div>
+  </footer>
+</div>
+
+<script src="assets/teams.js"></script>
+<script src="assets/app.js"></script>
+<script src="assets/search.js"></script>
+<script src="assets/user.js"></script>
+<script src="assets/seo.js"></script>
+<script src="assets/data.js"></script>
+<script src="assets/data-pages.js"></script>
+</body>
+</html>

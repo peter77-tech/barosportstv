@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>내 대시보드 — ARENA LIVE</title>
+<meta name="description" content="팔로우한 팀의 경기 일정과 알림을 한 곳에서 관리하세요. ARENA LIVE 개인 대시보드입니다.">
+<link rel="canonical" href="https://example.com/dashboard">
+
+<!-- Open Graph : 커뮤니티 공유 시 링크 미리보기 -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="내 대시보드 — ARENA LIVE">
+<meta property="og:description" content="팔로우한 팀의 경기 일정과 알림을 한 곳에서 관리하세요. ARENA LIVE 개인 대시보드입니다.">
+<meta property="og:image" content="assets/img/news-main.svg">
+<meta property="og:locale" content="ko_KR">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#E85110">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap">
+
+<!-- ⚠️ 개발용 CDN. 프로덕션 전환 시 빌드된 CSS로 교체할 것 (README 참조) -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script src="assets/theme.js"></script>
+<link rel="stylesheet" href="assets/app.css">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "ARENA LIVE",
+  "url": "https://example.com/",
+  "potentialAction": {
+    "@type": "SearchAction",
+    "target": "https://example.com/search?q={search_term_string}",
+    "query-input": "required name=search_term_string"
+  }
+}
+</script>
+</head>
+
+<body class="bg-background text-on-surface font-body-md antialiased overflow-x-hidden flex min-h-screen">
+
+<a class="skip-link" href="#main">본문으로 건너뛰기</a>
+<div class="scrim md:hidden" id="scrim" aria-hidden="true"></div>
+
+<!-- ══════════════════ 사이드바 ══════════════════ -->
+<aside class="sidebar flex flex-col h-screen py-8 left-0 fixed border-r border-outline-variant bg-shadow-navy z-50 overflow-y-auto overflow-x-hidden"
+       aria-label="종목 탐색">
+  <div class="carbon-texture absolute inset-0 pointer-events-none"></div>
+
+  <div class="px-6 mb-8 relative z-10 flex items-center gap-3">
+    <div class="w-10 h-10 bg-surface-container-highest rounded-pill flex items-center justify-center shrink-0">
+      <span class="material-symbols-outlined text-shadow-navy" style="font-variation-settings:'FILL' 1" aria-hidden="true">dashboard</span>
+    </div>
+    <div class="sidebar-header-text whitespace-nowrap">
+      <p class="font-headline-lg text-body-md font-bold text-on-primary">DASHBOARD</p>
+      <p class="font-label-caps text-[10px] text-surface-variant/70">v4.2.0-STABLE</p>
+    </div>
+  </div>
+
+  <div class="px-4 mb-8 relative z-10">
+    <button type="button" class="sidebar-switch-btn w-full bg-hermes-orange hover:bg-primary-container text-on-primary font-label-caps py-3 px-4 rounded shadow-[inset_0_1px_0_rgba(255,255,255,0.2)] transition-colors flex justify-center items-center gap-2">
+      <span class="sidebar-switch-text whitespace-nowrap">SWITCH MODE</span>
+      <span class="material-symbols-outlined sidebar-switch-icon hidden" aria-hidden="true">swap_horiz</span>
+    </button>
+  </div>
+
+  <nav class="flex-1 relative z-10 space-y-1">
+    <a class="sidebar-link flex items-center gap-3 px-6 py-3 hover:bg-white/10 transition-all group" href="#">
+      <span class="material-symbols-outlined text-outline group-hover:text-hermes-orange shrink-0" aria-hidden="true">sports_basketball</span>
+      <span class="sidebar-label font-label-caps text-surface-variant group-hover:text-hermes-orange whitespace-nowrap">NBA</span>
+    </a>
+    <a class="sidebar-link flex items-center gap-3 px-6 py-3 hover:bg-white/10 transition-all group" href="#">
+      <span class="material-symbols-outlined text-outline group-hover:text-hermes-orange shrink-0" aria-hidden="true">sports_football</span>
+      <span class="sidebar-label font-label-caps text-surface-variant group-hover:text-hermes-orange whitespace-nowrap">NFL</span>
+    </a>
+    <a class="sidebar-link flex items-center gap-3 px-6 py-3 hover:bg-white/10 transition-all group" href="#">
+      <span class="material-symbols-outlined text-outline group-hover:text-hermes-orange shrink-0" aria-hidden="true">sports_soccer</span>
+      <span class="sidebar-label font-label-caps text-surface-variant group-hover:text-hermes-orange whitespace-nowrap">EPL</span>
+    </a>
+    <a class="sidebar-link flex items-center gap-3 px-6 py-3 hover:bg-white/10 transition-all group" href="#">
+      <span class="material-symbols-outlined text-outline group-hover:text-hermes-orange shrink-0" aria-hidden="true">sports_baseball</span>
+      <span class="sidebar-label font-label-caps text-surface-variant group-hover:text-hermes-orange whitespace-nowrap">MLB</span>
+    </a>
+    <a class="sidebar-link flex items-center gap-3 px-6 py-3 hover:bg-white/10 transition-all group" href="#">
+      <span class="material-symbols-outlined text-outline group-hover:text-hermes-orange shrink-0" aria-hidden="true">settings_input_antenna</span>
+      <span class="sidebar-label font-label-caps text-surface-variant group-hover:text-hermes-orange whitespace-nowrap">F1</span>
+    </a>
+  </nav>
+
+  <div class="px-6 mt-auto relative z-10 border-t border-surface-variant/20 pt-6 space-y-3">
+    <p class="sidebar-status-container flex items-center gap-2">
+      <span class="material-symbols-outlined text-emerald-400 text-sm shrink-0" style="font-variation-settings:'FILL' 1" aria-hidden="true">check_circle</span>
+      <span class="sidebar-status-text font-label-caps text-[10px] text-surface-variant whitespace-nowrap">Status: Online</span>
+    </p>
+    <p class="sidebar-status-container flex items-center gap-2">
+      <span class="material-symbols-outlined text-apex-blue text-sm shrink-0" aria-hidden="true">speed</span>
+      <span class="sidebar-status-text font-label-caps text-[10px] text-surface-variant whitespace-nowrap">Latency: 24ms</span>
+    </p>
+  </div>
+</aside>
+
+<!-- ══════════════════ 본문 래퍼 ══════════════════ -->
+<div class="main-wrap flex-1 flex flex-col md:pl-64 min-h-screen relative w-full">
+  <div class="absolute inset-0 technical-grid pointer-events-none -z-10"></div>
+
+  <!-- ── 상단 바 ── -->
+  <header class="w-full top-0 sticky bg-surface/90 backdrop-blur border-b-2 border-hermes-orange z-40">
+    <div class="flex justify-between items-center px-margin-mobile md:px-gutter py-4 max-w-container-max mx-auto">
+
+      <div class="flex items-center gap-3 lg:gap-6 xl:gap-10 min-w-0">
+        <button type="button" id="sidebar-toggle" aria-expanded="true" aria-controls="sidebar"
+                class="cursor-pointer text-on-surface hover:text-hermes-orange transition-colors p-2 rounded-pill hover:bg-surface-container-highest shrink-0">
+          <span class="material-symbols-outlined block" aria-hidden="true">menu</span>
+          <span class="sr-only">메뉴 열기·닫기</span>
+        </button>
+
+        <a href="./index.html" class="font-display-lg text-[22px] sm:text-[26px] font-bold tracking-tighter text-on-surface flex items-center gap-2 whitespace-nowrap shrink-0">
+          ARENA <span class="font-medium text-hermes-orange">LIVE</span>
+        </a>
+
+        <!-- 🔴 브레이크포인트 주의: Tailwind의 lg/xl은 "화면 폭" 기준인데, 이 헤더가 쓰는
+             실제 폭은 사이드바 256px을 뺀 값이다. 그래서 판단 기준을 한 단계씩 올려 잡는다.
+             (예: 가용폭 1024px가 필요하면 xl=1280 이 아니라 2xl=1536에서 켠다)
+             Command Center는 가장 길어 2xl에서만 노출하고, 그 아래에서는 사이드바로 접근한다. -->
+        <nav class="hidden md:flex items-center gap-4 xl:gap-8 overflow-hidden" aria-label="주 메뉴">
+          <a class="text-on-surface-variant font-medium hover:text-hermes-orange transition-colors font-label-caps text-label-caps uppercase whitespace-nowrap" href="index.html">Home</a>
+          <a class="text-on-surface-variant font-medium hover:text-hermes-orange transition-colors font-label-caps text-label-caps uppercase whitespace-nowrap" href="schedule.html">Schedule</a>
+          <a class="text-on-surface-variant font-medium hover:text-hermes-orange transition-colors font-label-caps text-label-caps uppercase whitespace-nowrap" href="match-center.html">Live</a>
+          <a class="text-on-surface-variant font-medium hover:text-hermes-orange transition-colors font-label-caps text-label-caps uppercase whitespace-nowrap" href="news.html">News</a>
+          <a class="hidden 2xl:inline text-hermes-orange font-bold border-b-2 border-hermes-orange pb-1 font-label-caps text-label-caps uppercase whitespace-nowrap" href="dashboard.html" aria-current="page">Command Center</a>
+        </nav>
+      </div>
+
+      <div class="flex items-center gap-1 sm:gap-2 xl:gap-4 shrink-0">
+        <!-- 검색: xl에서 좁게, 2xl 이상에서 넉넉하게. 그 아래는 아이콘 버튼으로 대체 -->
+        <form class="relative hidden xl:block" role="search" onsubmit="return false">
+          <label class="sr-only" for="site-search">경기·팀 검색</label>
+          <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline-variant text-sm" aria-hidden="true">search</span>
+          <input id="site-search" type="search" placeholder="경기, 팀 검색…"
+                 class="bg-surface-container pl-9 pr-3 py-2 rounded-pill text-sm font-body-sm border-none focus:ring-1 focus:ring-hermes-orange w-40 2xl:w-56 inset-panel">
+        </form>
+        <button type="button" class="xl:hidden text-outline hover:text-hermes-orange transition-colors p-2 shrink-0">
+          <span class="material-symbols-outlined" aria-hidden="true">search</span>
+          <span class="sr-only">검색</span>
+        </button>
+
+        <button type="button" class="bg-hermes-orange text-on-primary font-label-caps px-4 py-2 rounded shadow-[inset_0_1px_0_rgba(255,255,255,0.2)] hover:bg-primary-container transition-colors text-xs font-bold uppercase whitespace-nowrap shrink-0 hidden sm:block">GO PRO</button>
+
+        <button type="button" class="text-outline hover:text-hermes-orange transition-colors p-2 shrink-0">
+          <span class="material-symbols-outlined" aria-hidden="true">notifications</span>
+          <span class="sr-only">알림</span>
+        </button>
+        <button type="button" class="text-outline hover:text-hermes-orange transition-colors p-2 shrink-0 hidden 2xl:block">
+          <span class="material-symbols-outlined" aria-hidden="true">settings</span>
+          <span class="sr-only">설정</span>
+        </button>
+
+        <div class="w-8 h-8 rounded-pill bg-surface-variant overflow-hidden border-2 border-outline-variant shrink-0">
+          <img class="w-full h-full object-cover" src="assets/img/avatar.svg" alt="내 계정" width="32" height="32">
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ── 메인 ── -->
+  <main id="main" class="flex-1 p-margin-mobile md:p-gutter w-full max-w-container-max mx-auto pb-section-gap">
+
+    <header class="mt-stack-lg mb-stack-lg flex items-end justify-between gap-4 flex-wrap">
+      <div>
+        <p class="font-label-caps text-label-caps text-hermes-orange uppercase mb-2">Command Center</p>
+        <h1 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-surface">내 대시보드</h1>
+      </div>
+      <p class="font-label-data text-[11px] text-outline">마지막 접속 10.24 19:32</p>
+    </header>
+
+    <!-- 요약 -->
+    <section class="mb-section-gap" aria-labelledby="kpi-title">
+      <h2 id="kpi-title" class="sr-only">요약</h2>
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-stack-md">
+        <div class="glass-card rounded p-gutter">
+          <div class="flex items-center gap-2 mb-3">
+            <span class="material-symbols-outlined text-[18px] text-hermes-orange" aria-hidden="true">groups</span>
+            <span class="font-label-caps text-[10px] text-outline uppercase">팔로우 팀</span>
+          </div>
+          <p class="font-label-data text-3xl font-bold text-on-surface">4</p>
+          <p class="font-body-sm text-on-surface-variant mt-1">축구 3 · 농구 1</p>
+        </div>
+        <div class="glass-card rounded p-gutter">
+          <div class="flex items-center gap-2 mb-3">
+            <span class="material-symbols-outlined text-[18px] text-hermes-orange" aria-hidden="true">notifications_active</span>
+            <span class="font-label-caps text-[10px] text-outline uppercase">예정 알림</span>
+          </div>
+          <p class="font-label-data text-3xl font-bold text-on-surface">7</p>
+          <p class="font-body-sm text-on-surface-variant mt-1">이번 주</p>
+        </div>
+        <div class="glass-card rounded p-gutter">
+          <div class="flex items-center gap-2 mb-3">
+            <span class="material-symbols-outlined text-[18px] text-hermes-orange" aria-hidden="true">play_circle</span>
+            <span class="font-label-caps text-[10px] text-outline uppercase">시청 경기</span>
+          </div>
+          <p class="font-label-data text-3xl font-bold text-on-surface">23</p>
+          <p class="font-body-sm text-on-surface-variant mt-1">최근 30일</p>
+        </div>
+        <div class="glass-card rounded p-gutter">
+          <div class="flex items-center gap-2 mb-3">
+            <span class="material-symbols-outlined text-[18px] text-hermes-orange" aria-hidden="true">schedule</span>
+            <span class="font-label-caps text-[10px] text-outline uppercase">시청 시간</span>
+          </div>
+          <p class="font-label-data text-3xl font-bold text-on-surface">18h</p>
+          <p class="font-body-sm text-on-surface-variant mt-1">최근 30일</p>
+        </div></div>
+    </section>
+
+    <div class="grid grid-cols-1 xl:grid-cols-12 gap-stack-lg">
+
+      <!-- 좌 -->
+      <div class="xl:col-span-8 min-w-0 flex flex-col gap-section-gap">
+
+        <section aria-labelledby="myteam-title">
+          <div class="flex items-center justify-between mb-stack-md gap-4 flex-wrap">
+            <h2 id="myteam-title" class="font-headline-md text-headline-md text-on-surface">내 팀</h2>
+            <button type="button" class="text-hermes-orange font-label-caps text-label-caps uppercase tracking-widest border-b border-transparent hover:border-hermes-orange transition-colors">팀 추가</button>
+          </div>
+          <ul class="grid grid-cols-1 lg:grid-cols-2 gap-stack-md">
+            <li class="glass-card rounded p-gutter flex items-center gap-4 hover:border-hermes-orange transition-colors">
+              <span class="w-12 h-12 rounded-pill bg-surface-container-highest flex items-center justify-center font-bold border border-outline-variant text-shadow-navy shrink-0">ARS</span>
+              <span class="min-w-0 flex-1">
+                <a class="block font-body-md font-semibold text-on-surface truncate hover:text-hermes-orange transition-colors" href="team-hub.html">아스날</a>
+                <span class="block font-body-sm text-on-surface-variant truncate">Premier League · 2위</span>
+              </span>
+              <span class="font-label-data text-[11px] text-hermes-orange shrink-0 whitespace-nowrap">10.28</span>
+            </li>
+            <li class="glass-card rounded p-gutter flex items-center gap-4 hover:border-hermes-orange transition-colors">
+              <span class="w-12 h-12 rounded-pill bg-surface-container-highest flex items-center justify-center font-bold border border-outline-variant text-shadow-navy shrink-0">FCB</span>
+              <span class="min-w-0 flex-1">
+                <a class="block font-body-md font-semibold text-on-surface truncate hover:text-hermes-orange transition-colors" href="team-hub.html">바르셀로나</a>
+                <span class="block font-body-sm text-on-surface-variant truncate">La Liga · 1위</span>
+              </span>
+              <span class="font-label-data text-[11px] text-hermes-orange shrink-0 whitespace-nowrap">진행 중</span>
+            </li>
+            <li class="glass-card rounded p-gutter flex items-center gap-4 hover:border-hermes-orange transition-colors">
+              <span class="w-12 h-12 rounded-pill bg-surface-container-highest flex items-center justify-center font-bold border border-outline-variant text-shadow-navy shrink-0">LAL</span>
+              <span class="min-w-0 flex-1">
+                <a class="block font-body-md font-semibold text-on-surface truncate hover:text-hermes-orange transition-colors" href="team-hub.html">레이커스</a>
+                <span class="block font-body-sm text-on-surface-variant truncate">NBA · 5위</span>
+              </span>
+              <span class="font-label-data text-[11px] text-hermes-orange shrink-0 whitespace-nowrap">진행 중</span>
+            </li>
+            <li class="glass-card rounded p-gutter flex items-center gap-4 hover:border-hermes-orange transition-colors">
+              <span class="w-12 h-12 rounded-pill bg-surface-container-highest flex items-center justify-center font-bold border border-outline-variant text-shadow-navy shrink-0">LG</span>
+              <span class="min-w-0 flex-1">
+                <a class="block font-body-md font-semibold text-on-surface truncate hover:text-hermes-orange transition-colors" href="team-hub.html">LG 트윈스</a>
+                <span class="block font-body-sm text-on-surface-variant truncate">KBO · 3위</span>
+              </span>
+              <span class="font-label-data text-[11px] text-hermes-orange shrink-0 whitespace-nowrap">3.28</span>
+            </li></ul>
+        </section>
+
+        <section aria-labelledby="watch-title">
+          <h2 id="watch-title" class="font-headline-md text-headline-md text-on-surface mb-stack-md">관심 경기</h2>
+          <div class="glass-card rounded-xl px-gutter">
+            <ul>
+              <li class="flex items-center justify-between gap-4 py-gutter border-b border-outline-variant/40 last:border-b-0">
+                <span class="flex items-center gap-3 min-w-0">
+                  <span class="font-label-data text-label-data text-hermes-orange w-14 shrink-0">72'</span>
+                  <span class="font-body-md font-semibold text-on-surface truncate">아스날 vs 첼시</span>
+                </span>
+                <a href="match-center.html" class="font-label-caps text-[11px] px-4 py-2 rounded border border-outline-variant text-on-surface-variant hover:border-hermes-orange hover:text-hermes-orange transition-colors whitespace-nowrap shrink-0">보기</a>
+              </li>
+              <li class="flex items-center justify-between gap-4 py-gutter border-b border-outline-variant/40 last:border-b-0">
+                <span class="flex items-center gap-3 min-w-0">
+                  <span class="font-label-data text-label-data text-hermes-orange w-14 shrink-0">Q3</span>
+                  <span class="font-body-md font-semibold text-on-surface truncate">레이커스 vs 워리어스</span>
+                </span>
+                <a href="match-center.html" class="font-label-caps text-[11px] px-4 py-2 rounded border border-outline-variant text-on-surface-variant hover:border-hermes-orange hover:text-hermes-orange transition-colors whitespace-nowrap shrink-0">보기</a>
+              </li>
+              <li class="flex items-center justify-between gap-4 py-gutter border-b border-outline-variant/40 last:border-b-0">
+                <span class="flex items-center gap-3 min-w-0">
+                  <span class="font-label-data text-label-data text-hermes-orange w-14 shrink-0">21:00</span>
+                  <span class="font-body-md font-semibold text-on-surface truncate">리버풀 vs 맨시티</span>
+                </span>
+                <a href="match-center.html" class="font-label-caps text-[11px] px-4 py-2 rounded border border-outline-variant text-on-surface-variant hover:border-hermes-orange hover:text-hermes-orange transition-colors whitespace-nowrap shrink-0">알림</a>
+              </li>
+              <li class="flex items-center justify-between gap-4 py-gutter border-b border-outline-variant/40 last:border-b-0">
+                <span class="flex items-center gap-3 min-w-0">
+                  <span class="font-label-data text-label-data text-hermes-orange w-14 shrink-0">10.28</span>
+                  <span class="font-body-md font-semibold text-on-surface truncate">아스날 vs 토트넘</span>
+                </span>
+                <a href="match-center.html" class="font-label-caps text-[11px] px-4 py-2 rounded border border-outline-variant text-on-surface-variant hover:border-hermes-orange hover:text-hermes-orange transition-colors whitespace-nowrap shrink-0">알림</a>
+              </li></ul>
+          </div>
+        </section>
+      </div>
+
+      <!-- 우 -->
+      <aside class="xl:col-span-4 min-w-0 flex flex-col gap-section-gap">
+        <section aria-labelledby="notif-title">
+          <h2 id="notif-title" class="font-headline-md text-headline-md text-on-surface mb-stack-md">알림 설정</h2>
+          <div class="glass-card rounded-xl px-gutter py-2">
+            <ul>
+          <li class="flex items-center justify-between gap-4 py-4 border-b border-outline-variant/40 last:border-b-0">
+            <span class="min-w-0">
+              <span class="block font-body-md font-semibold text-on-surface truncate">경기 시작</span>
+              <span class="block font-body-sm text-on-surface-variant">킥오프 10분 전에 알립니다</span>
+            </span>
+            <button type="button" role="switch" aria-checked="true" class="notif-toggle w-12 h-7 rounded-pill bg-hermes-orange relative transition-colors shrink-0">
+              <span class="sr-only">경기 시작 알림</span>
+              <span class="absolute top-1 left-0 w-5 h-5 rounded-pill bg-white transition-transform translate-x-6" aria-hidden="true"></span>
+            </button>
+          </li>
+          <li class="flex items-center justify-between gap-4 py-4 border-b border-outline-variant/40 last:border-b-0">
+            <span class="min-w-0">
+              <span class="block font-body-md font-semibold text-on-surface truncate">득점</span>
+              <span class="block font-body-sm text-on-surface-variant">내 팀 경기의 득점 소식</span>
+            </span>
+            <button type="button" role="switch" aria-checked="true" class="notif-toggle w-12 h-7 rounded-pill bg-hermes-orange relative transition-colors shrink-0">
+              <span class="sr-only">득점 알림</span>
+              <span class="absolute top-1 left-0 w-5 h-5 rounded-pill bg-white transition-transform translate-x-6" aria-hidden="true"></span>
+            </button>
+          </li>
+          <li class="flex items-center justify-between gap-4 py-4 border-b border-outline-variant/40 last:border-b-0">
+            <span class="min-w-0">
+              <span class="block font-body-md font-semibold text-on-surface truncate">경기 종료</span>
+              <span class="block font-body-sm text-on-surface-variant">최종 스코어를 알립니다</span>
+            </span>
+            <button type="button" role="switch" aria-checked="false" class="notif-toggle w-12 h-7 rounded-pill bg-surface-container-highest relative transition-colors shrink-0">
+              <span class="sr-only">경기 종료 알림</span>
+              <span class="absolute top-1 left-0 w-5 h-5 rounded-pill bg-white transition-transform translate-x-1" aria-hidden="true"></span>
+            </button>
+          </li>
+          <li class="flex items-center justify-between gap-4 py-4 border-b border-outline-variant/40 last:border-b-0">
+            <span class="min-w-0">
+              <span class="block font-body-md font-semibold text-on-surface truncate">팀 뉴스</span>
+              <span class="block font-body-sm text-on-surface-variant">이적·부상 등 주요 소식</span>
+            </span>
+            <button type="button" role="switch" aria-checked="true" class="notif-toggle w-12 h-7 rounded-pill bg-hermes-orange relative transition-colors shrink-0">
+              <span class="sr-only">팀 뉴스 알림</span>
+              <span class="absolute top-1 left-0 w-5 h-5 rounded-pill bg-white transition-transform translate-x-6" aria-hidden="true"></span>
+            </button>
+          </li></ul>
+          </div>
+        </section>
+
+        <section aria-labelledby="recent-title">
+          <h2 id="recent-title" class="font-headline-md text-headline-md text-on-surface mb-stack-md">최근 시청</h2>
+          <ul class="glass-card rounded-xl px-gutter py-2">
+            <li class="flex items-center gap-3 py-3 border-b border-outline-variant/40 last:border-b-0">
+              <span class="material-symbols-outlined text-[18px] text-outline shrink-0" aria-hidden="true">play_circle</span>
+              <span class="min-w-0 flex-1">
+                <span class="block font-body-sm font-semibold text-on-surface truncate">바르셀로나 vs 세비야</span>
+                <span class="block font-label-data text-[10px] text-outline">10.23 · 92분 시청</span>
+              </span>
+            </li>
+            <li class="flex items-center gap-3 py-3 border-b border-outline-variant/40 last:border-b-0">
+              <span class="material-symbols-outlined text-[18px] text-outline shrink-0" aria-hidden="true">play_circle</span>
+              <span class="min-w-0 flex-1">
+                <span class="block font-body-sm font-semibold text-on-surface truncate">레이커스 vs 셀틱스</span>
+                <span class="block font-label-data text-[10px] text-outline">10.22 · 48분 시청</span>
+              </span>
+            </li>
+            <li class="flex items-center gap-3 py-3 border-b border-outline-variant/40 last:border-b-0">
+              <span class="material-symbols-outlined text-[18px] text-outline shrink-0" aria-hidden="true">play_circle</span>
+              <span class="min-w-0 flex-1">
+                <span class="block font-body-sm font-semibold text-on-surface truncate">리버풀 vs 아스날</span>
+                <span class="block font-label-data text-[10px] text-outline">10.20 · 90분 시청</span>
+              </span>
+            </li></ul>
+        </section>
+      </aside>
+    </div>
+  </main>
+<!-- ── 푸터 ── -->
+  <footer class="w-full mt-auto bg-surface-container-highest border-t-2 border-hermes-orange">
+    <div class="flex flex-col md:flex-row justify-between items-center px-margin-mobile md:px-gutter py-6 max-w-container-max mx-auto gap-4">
+      <p class="font-label-caps text-outline text-center">© 2026 ARENA LIVE BROADCASTING. ALL RIGHTS RESERVED.</p>
+      <nav class="flex items-center gap-4 md:gap-6 flex-wrap justify-center" aria-label="푸터 메뉴">
+        <a class="font-label-caps text-outline hover:text-hermes-orange transition-colors uppercase" href="#">About Us</a>
+        <a class="font-label-caps text-outline hover:text-hermes-orange transition-colors uppercase" href="#">Terms of Service</a>
+        <a class="font-label-caps text-outline hover:text-hermes-orange transition-colors uppercase" href="#">Privacy Policy</a>
+        <a class="font-label-caps text-outline hover:text-hermes-orange transition-colors uppercase" href="#">Help Center</a>
+        <a class="font-label-caps text-outline hover:text-hermes-orange transition-colors uppercase" href="#">Careers</a>
+      </nav>
+    </div>
+  </footer>
+</div>
+
+<script src="assets/app.js"></script>
+</body>
+</html>
