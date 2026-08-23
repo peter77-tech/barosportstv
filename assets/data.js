@@ -83,6 +83,14 @@
   var FINISHED = ['FT', 'AET', 'PEN', 'AOT', 'FINAL', 'MATCH FINISHED', 'GAME FINISHED', 'ENDED'];
   var NOT_STARTED = ['NS', 'TBD', 'SCHEDULED', ''];
 
+  /* 열리지 않은 경기. 이걸 '예정' 으로 두면 원래 시각이 그대로 떠서 거짓말이 된다
+     (실측 2026-08-23: 1군에 POST 5건). 뜻이 다르므로 라벨도 나눈다. */
+  var POSTPONED = {
+    'POST': '연기', 'PPD': '연기', 'POSTPONED': '연기', 'DELAYED': '연기',
+    'CANC': '취소', 'CANCL': '취소', 'CANCELLED': '취소', 'CANCELED': '취소',
+    'ABD': '중단', 'ABANDONED': '중단', 'AWD': '몰수', 'AWARDED': '몰수'
+  };
+
   var WEEKDAY = ['일', '월', '화', '수', '목', '금', '토'];
 
   /* ── 날짜·시각 ─────────────────────────────────────────── */
@@ -128,14 +136,27 @@
     var st = String(ev.strStatus || '').trim().toUpperCase();
     var scored = ev.intHomeScore !== null && ev.intHomeScore !== '' &&
                  ev.intAwayScore !== null && ev.intAwayScore !== '';
+    if (POSTPONED[st]) return 'postponed';
     if (FINISHED.indexOf(st) >= 0) return 'finished';
     if (NOT_STARTED.indexOf(st) >= 0) return scored ? 'finished' : 'upcoming';
     return scored ? 'live' : 'upcoming';
   }
 
+  /* API 가 시각을 모를 때 `00:00:00` 을 준다 (실측 39건 — 대개 남미 하부리그).
+     `strTimestamp` 는 그 값으로 채워져 오므로 그대로 쓰면 화면에 00:00(현지 09:00)이
+     찍힌다 — BD 가 지적한 그 증상이다. 이때는 시각을 보여주지 않는다.
+     ⚠️ 진짜로 UTC 자정에 열리는 경기는 「시간 미정」으로 보이지만, 틀린 시각을
+       보여주는 것보다 낫다고 판단했다. */
+  function timeUnknown(ev) {
+    var raw = String(ev && ev.strTime || '');
+    return !raw || raw.slice(0, 5) === '00:00';
+  }
+
   function clockText(ev) {
     var state = statusOf(ev);
     if (state === 'live') return ev.strProgress || String(ev.strStatus || '진행');
+    if (state === 'postponed') return POSTPONED[String(ev.strStatus || '').trim().toUpperCase()];
+    if (timeUnknown(ev)) return '시간 미정';
     var t = localTime(ev);
     if (t) return hhmm(t);
     return (ev.strTime || '').slice(0, 5) || '시간 미정';
@@ -271,7 +292,7 @@
   }
 
   function byInterest(events) {
-    var rank = { live: 0, upcoming: 1, finished: 2 };
+    var rank = { live: 0, upcoming: 1, postponed: 2, finished: 3 };
     return events.slice().sort(function (a, b) {
       var t = leagueTier(a) - leagueTier(b);
       if (t) return t;
@@ -325,7 +346,10 @@
 
   function buildRow(ev) {
     var state = statusOf(ev);
-    var li = (state === 'upcoming' ? upcomingTpl : liveTpl).cloneNode(true);
+    /* 연기·취소는 **예정 템플릿**을 쓴다. 진행중 템플릿에는 하드코딩 점수가 있어
+       그대로 쓰면 열리지도 않은 경기에 「2 - 1」 이 남는다 (실측으로 실제로 물렸다 —
+       연기·취소 11건의 점수는 API 에서 전부 null 로 온다). */
+    var li = (state === 'upcoming' || state === 'postponed' ? upcomingTpl : liveTpl).cloneNode(true);
     var league = ev.strLeague || '';
 
     li.setAttribute('data-league', leagueSlug(league));
@@ -361,7 +385,7 @@
     if (homeLink && homeLink.tagName === 'A') homeLink.href = teamHref(ev.strHomeTeam);
     if (awayLink && awayLink.tagName === 'A') awayLink.href = teamHref(ev.strAwayTeam);
 
-    if (state !== 'upcoming') {
+    if (state === 'live' || state === 'finished') {
       set('home-score', ev.intHomeScore);
       set('away-score', ev.intAwayScore);
     }
@@ -369,7 +393,15 @@
     var action = q('action');
     if (action && action.tagName === 'A') action.href = matchHref(ev);
 
-    // 끝난 경기에 빨간 '진행 중' 배지를 붙이면 안 된다 (실제로 물렸습니다)
+    // 끝난 경기·열리지 않은 경기에 빨간 '진행 중' 배지를 붙이면 안 된다 (실제로 물렸습니다)
+    if (state === 'postponed') {
+      var pbadge = q('status');
+      if (pbadge) {
+        pbadge.className = 'font-label-data text-[11px] text-secondary whitespace-nowrap';
+        pbadge.textContent = clockText(ev);      // 연기 · 취소 · 중단
+      }
+    }
+
     if (state === 'finished') {
       var badge = q('status');
       if (badge) {
