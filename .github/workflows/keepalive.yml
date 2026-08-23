@@ -1,0 +1,34 @@
+# 크론 자동 정지 방지
+#
+# GitHub 은 저장소에 커밋이 60일간 없으면 스케줄 워크플로를 끈다.
+# 크론이 도는 것은 활동으로 세지 않으므로, 사이트를 한동안 손대지 않으면
+# deploy.yml 이 조용히 멈춘다. 주 1회 커밋을 만들어 그것을 막는다.
+name: keepalive
+
+on:
+  schedule:
+    - cron: '17 3 * * 1'      # 매주 월요일 03:17 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  touch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 마지막 확인 시각을 적는다
+        run: |
+          mkdir -p .github
+          date -u '+%Y-%m-%dT%H:%M:%SZ' > .github/last-alive
+          cat .github/last-alive
+
+      - name: 커밋
+        run: |
+          git config user.name  'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git add .github/last-alive
+          git diff --staged --quiet || git commit -m "chore: keepalive (크론 자동 정지 방지)"
+          git push
