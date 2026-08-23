@@ -202,10 +202,22 @@
           <div class="relative rounded-xl overflow-hidden glass-card">
             <div class="aspect-video bg-shadow-navy relative flex items-center justify-center">
               <div class="carbon-texture absolute inset-0" aria-hidden="true"></div>
-              <button type="button" class="relative z-10 w-20 h-20 rounded-pill bg-hermes-orange text-on-primary flex items-center justify-center hover:scale-105 transition-transform shadow-[inset_0_1px_0_rgba(255,255,255,0.2)]">
+              <!-- 재생 버튼. 실제 중계 스트림은 방송권 계약 사안이라 아직 없다.
+                   TheSportsDB 가 주는 하이라이트(strVideo, 실측 139/3,960경기)가 있으면
+                   아래 링크를 대신 보여준다. 둘 다 없으면 「중계 준비 중」을 보여준다.
+                   ⚠️ 눌러도 아무 일이 없는 버튼을 남기지 마십시오 — 신뢰를 깎습니다. -->
+              <button type="button" data-role="play-btn" hidden class="relative z-10 w-20 h-20 rounded-pill bg-hermes-orange text-on-primary flex items-center justify-center hover:scale-105 transition-transform shadow-[inset_0_1px_0_rgba(255,255,255,0.2)]">
                 <span class="material-symbols-outlined text-[40px]" aria-hidden="true">play_arrow</span>
                 <span class="sr-only">중계 재생</span>
               </button>
+              <a data-role="play-link" href="#" hidden target="_blank" rel="noopener noreferrer"
+                 class="relative z-10 flex flex-col items-center gap-3 text-on-primary">
+                <span class="w-20 h-20 rounded-pill bg-hermes-orange flex items-center justify-center hover:scale-105 transition-transform shadow-[inset_0_1px_0_rgba(255,255,255,0.2)]">
+                  <span class="material-symbols-outlined text-[40px]" aria-hidden="true">play_arrow</span>
+                </span>
+                <span class="font-label-caps text-label-caps uppercase">하이라이트 보기</span>
+              </a>
+              <p data-role="no-stream" class="relative z-10 font-label-caps text-label-caps uppercase text-white/70">중계 준비 중</p>
               <span data-role="player-badge" class="absolute top-4 left-4 z-10 inline-flex items-center gap-2 bg-error text-on-error px-3 py-1.5 rounded-pill font-label-caps text-[11px]">
                 <span class="w-1.5 h-1.5 rounded-pill bg-white pulse-live" aria-hidden="true"></span>LIVE</span>
               <span data-role="player-viewers" class="absolute top-4 right-4 z-10 font-label-data text-[11px] text-white/70 bg-black/40 px-3 py-1.5 rounded-pill">시청 12,481</span>

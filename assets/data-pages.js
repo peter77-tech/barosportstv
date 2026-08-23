@@ -231,11 +231,28 @@
         var pb = q(doc, 'player-badge');
         if (pb) {
           pb.className = 'absolute top-4 left-4 z-10 inline-flex items-center gap-2 bg-black/50 text-white px-3 py-1.5 rounded-pill font-label-caps text-[11px]';
-          pb.textContent = state === 'finished' ? '종료' : '예정';
+          pb.textContent = state === 'finished' ? '종료'
+            : state === 'postponed' ? A.clockText(ev)   // 연기 · 취소 · 중단
+            : '예정';
         }
-        var pv = q(doc, 'player-viewers');
-        if (pv) pv.hidden = true;
       }
+
+      /* 🔴 시청자 수는 **언제나 감춘다.** 우리에게 그 숫자가 없다.
+         마크업의 「시청 12,481」 은 디자인 시안값이고, 진행 중일 때 그대로 두면
+         지어낸 수치를 사실처럼 보여주게 된다. 실제 수치가 생기면 그때 살린다. */
+      var pv = q(doc, 'player-viewers');
+      if (pv) pv.hidden = true;
+
+      /* 하이라이트 영상이 있으면 그 링크를, 없으면 「중계 준비 중」을 보여준다.
+         눌러도 아무 일이 없는 재생 버튼은 두지 않는다. */
+      var link = q(doc, 'play-link');
+      var none = q(doc, 'no-stream');
+      var hasVideo = !!(ev.strVideo && /^https?:\/\//.test(ev.strVideo));
+      if (link) {
+        link.hidden = !hasVideo;
+        if (hasVideo) link.href = ev.strVideo;
+      }
+      if (none) none.hidden = hasVideo;
 
       // 상태 배지: 진행 중이 아니면 빨간 배지·깜빡이는 점을 쓰지 않는다
       var clock = q(doc, 'clock');
