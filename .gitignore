@@ -13,3 +13,6 @@ _site/
 # (코드는 .env 를 읽지 않는다 — 키는 CI 는 Secret, 로컬은 `SPORTSDB_KEY=... npm run prebake` 로 준다)
 .env
 .env.*
+# 양식은 저장소에 남긴다 (키가 없다). ⚠️ .gitignore 는 줄 끝 주석을 못 읽는다 —
+# 주석을 이 줄처럼 따로 떼어야 아래 예외가 먹는다.
+!.env.example
