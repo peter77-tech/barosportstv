@@ -54,6 +54,18 @@
   // (한 번 담아두면 새로 그린 행에는 필터가 걸리지 않는다 — 실제로 물렸습니다)
   function currentRows() { return document.querySelectorAll('li[data-league]'); }
 
+  /* 이 행을 보여줄지 판정한다 — **유일한 출처**다.
+     data.js 가 행을 만들 때도 이걸 불러 처음부터 hidden 으로 그린다.
+     다 그린 뒤에 숨기면 998줄이 사라지며 화면이 밀린다 (실측 CLS 0.06 → 0.136).
+
+     'top' = 주요 리그(1군)만. 하루 1,101경기가 오는 날 「전체」는 사실상 못 쓸
+     목록이 되므로 이것을 기본값으로 둔다. 「전체」는 그대로 전부 보여준다. */
+  function matches(league, rowLeague, rowTier) {
+    if (league === 'all') return true;
+    if (league === 'top') return rowTier === '1';
+    return rowLeague === league;
+  }
+
   function applyLeague(league) {
     selected = league;
     Array.prototype.forEach.call(chips, function (c) {
@@ -61,7 +73,7 @@
     });
 
     Array.prototype.forEach.call(currentRows(), function (row) {
-      row.hidden = !(league === 'all' || row.getAttribute('data-league') === league);
+      row.hidden = !matches(league, row.getAttribute('data-league'), row.getAttribute('data-tier'));
     });
 
     // 구역별로 남은 경기가 없으면 안내문을 띄우고 LIVE 개수를 다시 센다
@@ -92,8 +104,9 @@
   // data.js 가 경기 목록을 다시 그린 뒤 현재 선택을 다시 걸기 위해 노출한다.
   window.ArenaLeagueFilter = {
     apply: applyLeague,
-    reapply: function () { if (filterable) applyLeague(selected); },
-    selected: function () { return selected; }
+    matches: matches,
+    selected: function () { return selected; },
+    reapply: function () { if (filterable) applyLeague(selected); }
   };
 
   Array.prototype.forEach.call(chips, function (chip) {
@@ -111,9 +124,9 @@
   });
 
   if (filterable) {
-    var wanted = (new URLSearchParams(location.search).get('sport') || 'all').toLowerCase();
+    var wanted = (new URLSearchParams(location.search).get('sport') || 'top').toLowerCase();
     var known = Array.prototype.some.call(chips, function (c) { return c.getAttribute('data-league') === wanted; });
-    applyLeague(known ? wanted : 'all');
+    applyLeague(known ? wanted : 'top');
   }
 
   /* ── 날짜 탭 (경기 일정) ──────────────────────────────── */

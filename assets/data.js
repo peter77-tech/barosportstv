@@ -329,6 +329,14 @@
     var league = ev.strLeague || '';
 
     li.setAttribute('data-league', leagueSlug(league));
+    /* 「주요 리그」 칩이 이 값으로 걸러낸다 (app.js). 1=주요 · 2=보통 · 3=하부 */
+    var tier = String(window.ArenaLeagues ? window.ArenaLeagues.tier(league) : 2);
+    li.setAttribute('data-tier', tier);
+
+    /* 처음부터 숨긴 상태로 그린다 — 다 그린 뒤 숨기면 화면이 밀린다.
+       판정 규칙은 app.js 의 matches() 가 유일한 출처다. */
+    var F = window.ArenaLeagueFilter;
+    if (F && F.matches) li.hidden = !F.matches(F.selected(), leagueSlug(league), tier);
     li.hidden = false;
 
     /* 「알림」 버튼이 어느 경기인지 기억할 열쇠.
@@ -384,8 +392,10 @@
     var list = section.querySelector('ul');
     if (!list) return;
 
+    /* ⚠️ 정렬을 반드시 거친다. 유료급 키는 하루 1,101경기를 준다(실측) —
+       원본 순서로 그리면 파로제도 2부·러시아 FNL2 가 맨 앞에 온다. */
     list.innerHTML = '';
-    events.forEach(function (ev) { list.appendChild(buildRow(ev)); });
+    byInterest(events).forEach(function (ev) { list.appendChild(buildRow(ev)); });
   }
 
   /* 날짜 칩의 숫자는 **응답이 온 뒤에** 실제 날짜로 바꾼다.
