@@ -853,3 +853,23 @@ background     #FBF9F9   surface-dim #DBDAD9
 
 단, **접근성 사유로는 조정이 필요합니다** — 위 「성능·접근성 감사」 항의
 「주황 버튼의 글자 대비」를 보십시오 (색을 버리는 게 아니라 버튼 배경만 한 톤 내린 것 — 2026-08-21 적용 완료).
+
+## API 키 다루는 법
+
+키는 **브라우저 코드에 절대 들어가지 않습니다.** 빌드할 때 `tools/prebake.mjs` 만
+API 를 부르고, 브라우저는 그 결과인 `data/**.json` 만 읽습니다.
+
+| 어디서 | 주는 방법 |
+|---|---|
+| 배포 (GitHub Actions) | 저장소 Secret `SPORTSDB_KEY` — 워크플로가 env 로 넘긴다 |
+| 로컬 — 한 번만 | `SPORTSDB_KEY=키 npm run prebake` |
+| 로컬 — 저장해 두고 쓰기 | 폴더에 `.env` 를 만들고 `SPORTSDB_KEY=키` 한 줄 |
+
+`npm run prebake` 는 `node --env-file-if-exists=.env` 로 돌기 때문에 `.env` 가 있으면
+읽고, 없으면 그냥 넘어갑니다. **환경변수가 `.env` 보다 우선**이므로 CI 의 Secret 이
+언제나 이깁니다.
+
+> 🔴 **`.env` 는 커밋하지 마십시오.** 저장소가 공개입니다. `.gitignore` 로 막아 뒀지만
+> `-f` 로 강제 추가하면 뚫립니다. 키가 새면 TheSportsDB 에서 새 키를 발급받으십시오.
+> 무료 테스트 키 `3` 은 공개돼도 무해합니다 (누적 쿼터가 있어 데이터가 들쭉날쭉합니다).
+
