@@ -81,7 +81,7 @@ var SOURCE = {
 | 호출 | 파일 |
 |---|---|
 | `eventsday.php?d=<날짜>&s=<종목>` | `data/eventsday/<날짜>_<종목에서 공백을 _ 로>.json` |
-| `searchteams.php?t=<팀명>` | `data/teams/<팀명 소문자·공백제거>.json` |
+| `searchteams.php?t=<팀명>` | `data/teams/<팀명>.json` (`Manchester City` → `manchester_city.json`) |
 | `eventsnext.php?id=<팀id>` | `data/eventsnext/<팀id>.json` |
 | `lookuptable.php?l=<리그id>&s=<시즌>` | `data/table/<리그id>_<시즌>.json` |
 | `lookupevent.php?id=<경기id>` | `data/events/<경기id>.json` |
@@ -182,6 +182,17 @@ GitHub Pages 는 파일 그대로 `/schedule.html` 을 내보냅니다. 그대�
 - 저장소 루트에 `CNAME` 파일 (`barosportstv.com` 한 줄)
 - `example.com` → `barosportstv.com` **18곳** 치환 (6장 × canonical·og:image·JSON-LD `url`)
 - DNS 설정값은 별도 안내서로 남깁니다. **BD 가 도메인 등록기관에서 직접 넣어야 합니다** — AI 가 대신 할 수 없습니다
+
+## 7.1 배포 산출물에 넣지 않는 것
+
+저장소에는 `_백업_수정전/`(수정 전 백업)과 `_검토_스크린샷/`(검토용 스크린샷)이 있습니다.
+그대로 올리면 **`barosportstv.com/_검토_스크린샷/…` 로 누구나 볼 수 있게 됩니다.**
+
+지우지 않습니다(BD 자산입니다). 대신 배포할 것만 골라 담습니다.
+
+| 담는다 | 담지 않는다 |
+|---|---|
+| `*.html` 6장 · `CNAME` · `assets/` · `data/` | `_백업_수정전/` · `_검토_스크린샷/` · `docs/` · `tools/` · `tests/` · `src/` · `node_modules/` · `package*.json` · `assets/img/출처.md` |
 
 ## 8. 키 노출 방지 장치
 
