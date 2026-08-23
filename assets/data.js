@@ -260,10 +260,21 @@
     });
   }
 
-  /* 진행 중 → 예정 → 종료 순으로 늘어놓는다 (화면에 먼저 보여줄 순서) */
+  /* 리그 등급 → 진행 중/예정/종료 → 시각 순으로 늘어놓는다 (화면에 먼저 보여줄 순서).
+
+     ⚠️ 등급을 맨 앞에 두는 이유: 유료급 키는 그날 전 세계 경기를 다 준다
+       (실측 3,960경기 · 337리그). 등급이 없으면 호주 3부리그가 EPL·KBO 보다
+       앞에 와서 홈 헤드라인을 차지한다(실측으로 실제로 그렇게 됐다). */
+  function leagueTier(ev) {
+    var L = window.ArenaLeagues;
+    return L ? L.tier(ev && ev.strLeague) : 2;
+  }
+
   function byInterest(events) {
     var rank = { live: 0, upcoming: 1, finished: 2 };
     return events.slice().sort(function (a, b) {
+      var t = leagueTier(a) - leagueTier(b);
+      if (t) return t;
       var d = rank[statusOf(a)] - rank[statusOf(b)];
       if (d) return d;
       var ta = localTime(a), tb = localTime(b);
