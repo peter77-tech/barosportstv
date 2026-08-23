@@ -20,6 +20,7 @@ import { withRetry } from './lib/retry.mjs';
 const require = createRequire(import.meta.url);
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const ArenaPath = require(join(ROOT, 'assets/apipath.js'));
+const ArenaLeagues = require(join(ROOT, 'assets/leagues.js'));   // 리그 등급 — 굽는 범위를 좁히는 데 쓴다
 
 const OUT = join(ROOT, 'data');
 const SPORTS = ['Soccer', 'Basketball', 'Baseball', 'American Football'];
@@ -89,15 +90,64 @@ async function bake(path) {
   }
 }
 
+/* V2 는 키를 URL 이 아니라 헤더로 받는다. 경기 기록·주요 장면은 V1 이 어떤 경기에도
+   주지 않아(실측 6건 전부 null) V2 로만 받을 수 있다.
+   파일 이름은 apipath 가 정한 그대로다 — 브라우저는 지금처럼 V1 형태 키로 부른다. */
+const V2 = 'https://www.thesportsdb.com/api/v2/json/';
+
+async function bake2(v2path, keyPath) {
+  const file = ArenaPath.fileFor(keyPath);
+  if (!file) throw new Error(`프리베이크하지 않는 엔드포인트: ${keyPath}`);
+  try {
+    const json = await withRetry(() => limit(async () => {
+      const res = await fetch(V2 + v2path, { headers: { 'X-API-KEY': KEY } });
+      if (!res.ok) {
+        const err = new Error(`HTTP ${res.status}`);
+        err.status = res.status;
+        throw err;
+      }
+      return res.json();
+    }), { baseMs: Number(process.env.PREBAKE_RETRY_MS || 3000) });
+    /* 데이터가 없는 경기는 `{"Message":"No data found"}` 를 준다 — 파일을 만들지 않는다.
+       브라우저는 404 를 받고 그 구역을 감춘다. */
+    const rows = json && Array.isArray(json.lookup) ? json.lookup : null;
+    if (!rows || !rows.length) return null;
+    await write(file, { rows: rows });
+    return rows;
+  } catch (err) {
+    failed.push(`${v2path} → ${err.message}`);
+    return null;
+  }
+}
+
 async function write(file, json) {
   const full = join(OUT, file);
   await mkdir(dirname(full), { recursive: true });
   await writeFile(full, JSON.stringify(json), 'utf8');
 }
 
+/* ── 회차 모드 ─────────────────────────────────────────
+   full  : 전부 굽는다. 호출 약 1,900건 · 실측 29분.
+   quick : 경기·기록만 굽고 **팀·순위표는 지난 회차 파일을 그대로 쓴다.**
+           호출 약 650건 · 실측 6분대.
+
+   왜 나눴나: 팀 로고·이름·순위는 30분마다 바뀌는 값이 아니다. 그런데 사전이
+   208팀으로 늘면서 팀 단계만 1,216건(608팀 × 2)이 되어 회차가 29분이 됐고
+   30분 크론과 겹쳤다. 자주 바뀌는 것(점수·기록)만 자주 굽는다.
+
+   ⚠️ quick 은 팀·순위표 폴더를 **지우지 않는다.** 배포 워크플로가 캐시에서
+     되살려 주지 않으면 그 화면들이 하드코딩으로 돌아간다. */
+const MODE = process.argv.includes('--quick') ? 'quick' : 'full';
+const FRESH = ['eventsday', 'events', 'stats', 'timeline'];   // 매 회차 다시 굽는 것
+
 /* ── 본체 ─────────────────────────────────────────────── */
-await rm(OUT, { recursive: true, force: true });   // 지난 회차 잔재를 남기지 않는다
+if (MODE === 'full') {
+  await rm(OUT, { recursive: true, force: true });   // 지난 회차 잔재를 남기지 않는다
+} else {
+  for (const dir of FRESH) await rm(join(OUT, dir), { recursive: true, force: true });
+}
 await mkdir(OUT, { recursive: true });
+console.log(`회차 모드: ${MODE}`);
 
 /* 경기 일정 화면은 날짜 칩 5개(오늘~+4일)를 쓰고, 한 번에 이틀씩 그린다(offset, offset+1).
    현지 하루는 UTC 사흘에 걸치므로 마지막 칩까지 누르면 UTC +6일까지 필요하다.
@@ -135,10 +185,11 @@ for (const ev of events) {
 }
 console.log(`③ 경기 상세 ${events.length}건 (추가 호출 0건)`);
 
-/* ④ 팀 허브 — searchteams → eventsnext, 그리고 리그 순위표 */
+/* ④ 팀 허브 — searchteams → eventsnext, 그리고 리그 순위표.
+   quick 회차에서는 건너뛰고 지난 회차 파일을 그대로 쓴다. */
 const leagues = new Map();
 let teamHit = 0;
-for (const name of teams) {
+for (const name of (MODE === 'quick' ? [] : teams)) {
   const json = await bake(`searchteams.php?t=${encodeURIComponent(name)}`);
   const team = json && json.teams && json.teams[0];
   if (!team) continue;
@@ -146,7 +197,9 @@ for (const name of teams) {
   if (team.idTeam) await bake(`eventsnext.php?id=${team.idTeam}`);
   if (team.idLeague && !leagues.has(team.idLeague)) leagues.set(team.idLeague, true);
 }
-console.log(`④ 팀 ${teamHit}/${teams.length}팀 · 리그 ${leagues.size}개`);
+console.log(MODE === 'quick'
+  ? '④⑤ 팀·순위표 — 건너뜀 (지난 회차 파일을 그대로 쓴다)'
+  : `④ 팀 ${teamHit}/${teams.length}팀 · 리그 ${leagues.size}개`);
 
 /* ⑤ 리그 순위표. 시즌 추정값은 data-pages.js:334 의 기존 로직과 같게 둔다. */
 const year = new Date().getUTCFullYear();
@@ -168,11 +221,40 @@ for (const leagueId of leagues.keys()) {
     await write(ArenaPath.fileFor(`lookuptable.php?l=${leagueId}&s=${season}`), body);
   }
 }
-console.log(`⑤ 순위표 ${tableHit}/${leagues.size}개`);
+if (MODE !== 'quick') console.log(`⑤ 순위표 ${tableHit}/${leagues.size}개`);
+
+/* ⑥ 경기 기록·주요 장면 (V2). 축구에만 있고 유럽 리그 위주다 —
+   K리그·MLB·NPB 는 「No data found」 다(실측). 그래서 굽는 대상을 좁힌다:
+     · 축구
+     · 이미 열린 경기(진행 중·종료) — 시작 전에는 기록이 없다
+     · 리그 등급 1~2군 (3군 하부리그까지 굽으면 호출이 수백 건 늘고 대개 비어 있다)
+   경기당 2건을 부르므로 상한을 둔다. 넘치면 그 사실을 로그에 남긴다. */
+const statsCap = Number(process.env.PREBAKE_STATS_CAP || 150);
+const played = ['FT', 'AET', 'PEN', 'AOT', 'FINAL', 'MATCH FINISHED', 'ENDED'];
+const detailTargets = events.filter((ev) =>
+  ev.strSport === 'Soccer' &&
+  (played.includes(String(ev.strStatus)) || (ev.intHomeScore !== null && ev.intHomeScore !== '')) &&
+  ArenaLeagues.tier(ev.strLeague) <= 2
+);
+const detailPick = detailTargets.slice(0, statsCap);
+if (detailTargets.length > detailPick.length) {
+  console.log(`   ⚠️ 기록 대상 ${detailTargets.length}건 중 ${detailPick.length}건만 굽는다 (PREBAKE_STATS_CAP)`);
+}
+let statHit = 0, lineHit = 0;
+const statIds = [], lineIds = [];
+for (const ev of detailPick) {
+  if (await bake2(`lookup/event_stats/${ev.idEvent}`, `lookupeventstats.php?id=${ev.idEvent}`)) { statHit++; statIds.push(String(ev.idEvent)); }
+  if (await bake2(`lookup/event_timeline/${ev.idEvent}`, `lookuptimeline.php?id=${ev.idEvent}`)) { lineHit++; lineIds.push(String(ev.idEvent)); }
+}
+/* 있는 것만 브라우저가 요청하도록 목록을 남긴다. 대상이 0건이어도 **반드시** 쓴다 —
+   이 파일이 없으면 브라우저가 목록부터 404 를 받는다. */
+await write(ArenaPath.fileFor('detailindex.php?x=1'), { stats: statIds, timeline: lineIds });
+console.log(`⑥ 경기 기록 ${statHit}건 · 주요 장면 ${lineHit}건 (대상 ${detailPick.length}경기)`);
 
 /* ⑥ manifest — 못 구운 것을 반드시 남긴다 */
 await write('manifest.json', {
   generatedAt: new Date().toISOString(),
+  mode: MODE,
   days,
   counts: {
     eventsday: lists.filter((l) => l.length).length,

@@ -263,17 +263,21 @@
         <!-- 기록 -->
         <section class="depth-panel mb-stack-lg" aria-labelledby="stats-title">
           <h2 id="stats-title" class="font-headline-md text-headline-md text-on-surface mb-stack-md">경기 기록</h2>
-          <div class="glass-card rounded-xl px-gutter py-2">
-          <div class="py-4 border-b border-outline-variant/40 last:border-b-0">
+          <!-- 하드코딩 행은 **템플릿**이다. data-pages.js 가 첫 행을 복제해 실제 기록으로
+               채운다. 기록이 없는 경기(축구 외 · 시작 전)는 이 구역을 감추고 아래
+               안내문만 남긴다 — 남의 경기 기록을 그대로 두면 거짓 정보가 된다. -->
+          <p data-role="stats-empty" hidden class="font-body-sm text-on-surface-variant">이 경기의 기록은 제공되지 않습니다.</p>
+          <div data-role="stats-list" class="glass-card rounded-xl px-gutter py-2">
+          <div data-role="stat-row" class="py-4 border-b border-outline-variant/40 last:border-b-0">
             <div class="flex items-center justify-between mb-2">
-              <span class="font-label-data text-label-data text-on-surface">58%</span>
-              <span class="font-label-caps text-[10px] text-secondary uppercase">점유율</span>
-              <span class="font-label-data text-label-data text-on-surface">42%</span>
+              <span data-role="stat-home" class="font-label-data text-label-data text-on-surface">58%</span>
+              <span data-role="stat-name" class="font-label-caps text-[10px] text-secondary uppercase">점유율</span>
+              <span data-role="stat-away" class="font-label-data text-label-data text-on-surface">42%</span>
             </div>
-            <div class="flex gap-1 h-2" role="img" aria-label="점유율: 홈 58%, 원정 42%">
-              <div class="bg-surface-container-highest rounded-l-pill overflow-hidden flex justify-end" style="width:58%">
+            <div data-role="stat-bar" class="flex gap-1 h-2" role="img" aria-label="점유율: 홈 58%, 원정 42%">
+              <div data-role="stat-bar-home" class="bg-surface-container-highest rounded-l-pill overflow-hidden flex justify-end" style="width:58%">
                 <div class="bg-hermes-orange w-full h-full"></div></div>
-              <div class="bg-surface-container-highest rounded-r-pill overflow-hidden" style="width:42%">
+              <div data-role="stat-bar-away" class="bg-surface-container-highest rounded-r-pill overflow-hidden" style="width:42%">
                 <div class="bg-apex-blue h-full" style="width:100%"></div></div>
             </div>
           </div>
@@ -334,12 +338,15 @@
         <!-- 타임라인 -->
         <section class="depth-panel" aria-labelledby="timeline-title">
           <h2 id="timeline-title" class="font-headline-md text-headline-md text-on-surface mb-stack-md">주요 장면</h2>
-          <div class="glass-card rounded-xl px-gutter py-2">
-            <ul>
-          <li class="flex flex-row items-start gap-3 py-3 border-b border-outline-variant/40 last:border-b-0">
-            <span class="font-label-data text-label-data text-primary w-10 shrink-0">12'</span>
-            <span class="material-symbols-outlined text-[18px] text-on-surface-variant shrink-0" aria-hidden="true">sports_soccer</span>
-            <span class="font-body-sm text-on-surface flex-1"><strong>사카</strong> 선제골 — 아스날 1-0</span>
+          <!-- 첫 <li> 가 템플릿이다. 실제 장면이 없으면 구역을 감추고 안내문만 남긴다 —
+               모든 경기에 「사카 선제골 — 아스날 1-0」 이 뜨던 자리다. -->
+          <p data-role="timeline-empty" hidden class="font-body-sm text-on-surface-variant">이 경기의 주요 장면은 제공되지 않습니다.</p>
+          <div data-role="timeline-box" class="glass-card rounded-xl px-gutter py-2">
+            <ul data-role="timeline-list">
+          <li data-role="timeline-item" class="flex flex-row items-start gap-3 py-3 border-b border-outline-variant/40 last:border-b-0">
+            <span data-role="tl-min" class="font-label-data text-label-data text-primary w-10 shrink-0">12'</span>
+            <span data-role="tl-icon" class="material-symbols-outlined text-[18px] text-on-surface-variant shrink-0" aria-hidden="true">sports_soccer</span>
+            <span data-role="tl-text" class="font-body-sm text-on-surface flex-1"><strong>사카</strong> 선제골 — 아스날 1-0</span>
           </li>
           <li class="flex flex-row-reverse text-right items-start gap-3 py-3 border-b border-outline-variant/40 last:border-b-0">
             <span class="font-label-data text-label-data text-primary w-10 shrink-0">34'</span>

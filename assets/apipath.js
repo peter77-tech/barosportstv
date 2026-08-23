@@ -61,6 +61,23 @@
       if (!q.l || !q.s) return null;
       return 'table/' + safe(q.l) + '_' + safe(q.s) + '.json';
     }
+    /* 경기 기록·주요 장면. V1 은 어떤 경기에도 안 주고 V2 에만 있다(실측).
+       프리베이크가 V2 로 받아 오지만 파일 이름 규칙은 여기 그대로다 —
+       브라우저는 V1 형태의 키로 부르고 이 파일을 읽는다. */
+    /* 기록·장면이 **있는 경기 목록**. 없는 경기를 요청하면 콘솔에 404 가 쌓여
+       Lighthouse Best Practices 가 떨어진다(실측 100 → 96). 목록을 먼저 읽고
+       있는 것만 요청한다. 프리베이크는 이 파일을 **항상** 만든다(빈 목록이라도). */
+    if (endpoint === 'detailindex') {
+      return 'stats/index.json';
+    }
+    if (endpoint === 'lookupeventstats') {
+      if (!q.id) return null;
+      return 'stats/' + safe(q.id) + '.json';
+    }
+    if (endpoint === 'lookuptimeline') {
+      if (!q.id) return null;
+      return 'timeline/' + safe(q.id) + '.json';
+    }
     if (endpoint === 'lookupevent') {
       if (!q.id) return null;
       return 'events/' + safe(q.id) + '.json';

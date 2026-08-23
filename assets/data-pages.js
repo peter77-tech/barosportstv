@@ -264,6 +264,12 @@
         status.textContent = state === 'finished' ? '종료' : A.clockText(ev) + ' 예정';
       }
 
+      /* 경기 기록·주요 장면. V2 에만 있고 축구 위주다 — 없으면 구역을 감춘다.
+         하드코딩 행을 남겨 두면 **남의 경기 기록**이 그대로 보인다
+         (모든 경기에 「사카 선제골 — 아스날 1-0」 이 떴다). */
+      fillStats(doc, ev);
+      fillTimeline(doc, ev);
+
       // 다른 경기 목록
       var others = res.others.filter(function (o) { return String(o.idEvent) !== String(ev.idEvent); });
       var box = document.querySelector('[data-other-matches]');
@@ -287,6 +293,143 @@
   }
 
   /* ══════════════════ 팀 허브 ══════════════════ */
+  /* 화면에 보여 줄 기록만 고른다. API 는 18항목을 주는데 그대로 늘어놓으면
+     읽히지 않는다. 이름은 한글로 바꾼다. */
+  var STAT_LABEL = {
+    'Ball Possession': '점유율',
+    'Total Shots': '슈팅',
+    'Shots on Goal': '유효 슈팅',
+    'Corner Kicks': '코너킥',
+    'Fouls': '파울',
+    'Yellow Cards': '경고',
+    'Red Cards': '퇴장',
+    'Passes %': '패스 성공률',
+    'Offsides': '오프사이드'
+  };
+  var STAT_ORDER = ['Ball Possession', 'Total Shots', 'Shots on Goal', 'Corner Kicks', 'Passes %', 'Fouls', 'Yellow Cards'];
+
+  function num(v) {
+    var n = parseFloat(String(v == null ? '' : v).replace('%', ''));
+    return isNaN(n) ? 0 : n;
+  }
+
+  /* 기록·장면이 있는 경기 목록. 한 번만 읽고 캐시한다.
+     목록에 없으면 요청하지 않는다 — 404 를 콘솔에 쌓지 않기 위해서다. */
+  var detailIndex = null;
+  function hasDetail(kind, id) {
+    if (!detailIndex) detailIndex = A.getJson('detailindex.php?x=1');
+    return detailIndex.then(function (j) {
+      var list = (j && j[kind]) || [];
+      return list.indexOf(String(id)) >= 0;
+    });
+  }
+
+  function fillStats(doc, ev) {
+    var list = q(doc, 'stats-list');
+    var empty = q(doc, 'stats-empty');
+    var tpl = q(doc, 'stat-row');
+    if (!list || !tpl) return;
+    var template = tpl.cloneNode(true);
+
+    hasDetail('stats', ev.idEvent).then(function (yes) {
+      return yes ? A.getJson('lookupeventstats.php?id=' + encodeURIComponent(ev.idEvent)) : null;
+    }).then(function (j) {
+      var rows = (j && j.rows) || [];
+      var byName = {};
+      rows.forEach(function (r) { byName[r.strStat] = r; });
+
+      var picked = STAT_ORDER.filter(function (name) { return byName[name]; });
+      if (!picked.length) {
+        list.hidden = true;
+        if (empty) empty.hidden = false;
+        return;
+      }
+
+      list.innerHTML = '';
+      picked.forEach(function (name) {
+        var r = byName[name];
+        var row = template.cloneNode(true);
+        var ko = STAT_LABEL[name] || name;
+        /* API 는 점유율을 「28」 처럼 % 없이 준다 (실측). 이름으로 판단한다. */
+        var pct = name === 'Ball Possession' || name.indexOf('%') >= 0 ||
+                  String(r.intHome || '').indexOf('%') >= 0;
+        var h = num(r.intHome), a2 = num(r.intAway), sum = h + a2;
+        var hw = sum ? Math.round((h / sum) * 100) : 50;
+
+        set(row, 'stat-name', ko);
+        set(row, 'stat-home', pct ? h + '%' : String(h));
+        set(row, 'stat-away', pct ? a2 + '%' : String(a2));
+
+        var bar = q(row, 'stat-bar');
+        if (bar) bar.setAttribute('aria-label', ko + ': 홈 ' + h + ', 원정 ' + a2);
+        var bh = q(row, 'stat-bar-home'), ba = q(row, 'stat-bar-away');
+        if (bh) bh.style.width = hw + '%';
+        if (ba) ba.style.width = (100 - hw) + '%';
+
+        list.appendChild(row);
+      });
+    });
+  }
+
+  /* 장면 종류 → 아이콘. 마크업의 아이콘 이름과 같은 집합을 쓴다. */
+  var TL_ICON = { 'Goal': 'sports_soccer', 'Card': 'style', 'subst': 'swap_horiz', 'Var': 'videocam' };
+  var TL_KO = {
+    'Normal Goal': '골', 'Own Goal': '자책골', 'Penalty': '페널티골',
+    'Yellow Card': '경고', 'Red Card': '퇴장', 'Substitution': '교체'
+  };
+
+  function fillTimeline(doc, ev) {
+    var list = q(doc, 'timeline-list');
+    var box = q(doc, 'timeline-box');
+    var empty = q(doc, 'timeline-empty');
+    var tpl = q(doc, 'timeline-item');
+    if (!list || !tpl) return;
+    var template = tpl.cloneNode(true);
+
+    hasDetail('timeline', ev.idEvent).then(function (yes) {
+      return yes ? A.getJson('lookuptimeline.php?id=' + encodeURIComponent(ev.idEvent)) : null;
+    }).then(function (j) {
+      var rows = (j && j.rows) || [];
+      if (!rows.length) {
+        if (box) box.hidden = true;
+        if (empty) empty.hidden = false;
+        return;
+      }
+
+      list.innerHTML = '';
+      rows.forEach(function (r) {
+        var item = template.cloneNode(true);
+        var home = String(r.strHome) === 'Yes';
+
+        /* 홈은 왼쪽, 원정은 오른쪽. 마크업에 이미 있는 두 배치를 그대로 쓴다. */
+        item.className = home
+          ? 'flex flex-row items-start gap-3 py-3 border-b border-outline-variant/40 last:border-b-0'
+          : 'flex flex-row-reverse text-right items-start gap-3 py-3 border-b border-outline-variant/40 last:border-b-0';
+
+        set(item, 'tl-min', (r.intTime || '') + "'");
+        var icon = q(item, 'tl-icon');
+        if (icon) icon.textContent = TL_ICON[r.strTimeline] || 'radio_button_checked';
+
+        /* detail 은 「Substitution 1」 처럼 번호가 붙어 온다 (실측) — 앞부분으로 본다. */
+        var detail = String(r.strTimelineDetail || '');
+        var what = TL_KO[detail] || TL_KO[detail.replace(/\s+\d+$/, '')] || detail || r.strTimeline || '';
+        var who = r.strPlayer || r.strTeam || '';
+        var text = q(item, 'tl-text');
+        if (text) {
+          text.textContent = '';
+          if (who) {
+            var strong = doc.createElement('strong');
+            strong.textContent = who;     // 사람 이름이다 — 팀 사전을 거치지 않는다
+            text.appendChild(strong);
+            text.appendChild(doc.createTextNode(' '));
+          }
+          text.appendChild(doc.createTextNode(what));
+        }
+        list.appendChild(item);
+      });
+    });
+  }
+
   function initTeamHub() {
     /* ⚠️ `[data-role="team-name"]` 만 보고 판단하면 안 된다 — 대시보드의 「내 팀」 카드도
        같은 자리 이름을 쓰기 때문에 팀 허브 코드가 대시보드에서 돌아 카드와 문서 제목을

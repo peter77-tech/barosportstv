@@ -6,12 +6,22 @@ name: deploy
 
 on:
   schedule:
-    # 10분마다. 크론 최소 간격은 5분이지만 GitHub 부하로 10분 이상 밀리는
-    # 일이 흔해, 5분으로 잡아도 실측 지연은 비슷하면서 실행 횟수만 두 배가 된다.
-    - cron: '*/30 * * * *'   # 팀 400팀을 구우면 한 회차가 10분 가까이 걸린다
+    # 두 종류로 나눠 돈다 (실측 근거).
+    #  · quick 30분마다 — 경기·점수·기록만. 호출 약 650건 · 6분대.
+    #  · full  하루 2회  — 팀·순위표까지. 호출 약 1,900건 · 29분.
+    # 왜: 팀 로고·이름·순위는 30분마다 바뀌는 값이 아니다. 그런데 사전이 208팀으로
+    # 늘면서 팀 단계만 1,216건(608팀 × 2)이 되어 회차가 29분이 됐고 30분 크론과
+    # 겹쳤다. 자주 바뀌는 것만 자주 굽는다.
+    - cron: '*/30 * * * *'
+    - cron: '5 0,12 * * *'
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      full:
+        description: '팀·순위표까지 다시 굽는다 (29분)'
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -45,10 +55,59 @@ jobs:
       - name: Tailwind 빌드
         run: npm run build:css
 
+      # quick 회차는 팀·순위표를 굽지 않고 지난 회차 파일을 쓴다.
+      # 캐시에서 되살리지 못하면 그 화면들이 하드코딩으로 돌아간다.
+      - name: 팀·순위표 캐시 복원
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            data/teams
+            data/eventsnext
+            data/table
+          key: prebake-slow-${{ github.run_id }}
+          restore-keys: prebake-slow-
+
+      - name: 회차 종류 결정
+        id: mode
+        run: |
+          # full 로 도는 경우: 하루 2회 크론 · 손으로 full 을 고른 경우 · push
+          if [ "${{ github.event.schedule }}" = "5 0,12 * * *" ]              || [ "${{ inputs.full }}" = "true" ]              || [ "${{ github.event_name }}" = "push" ]; then
+            echo "quick=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "quick=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: 프리베이크 (API 를 부르는 유일한 곳)
         env:
           SPORTSDB_KEY: ${{ secrets.SPORTSDB_KEY }}
-        run: npm run prebake
+        run: |
+          if [ "${{ steps.mode.outputs.quick }}" = "true" ]; then
+            npm run prebake:quick
+          else
+            npm run prebake
+          fi
+
+      # full 회차에서만 저장한다. 키에 run_id 를 넣어 매번 새 항목이 되고,
+      # quick 회차는 restore-keys 로 가장 최근 것을 집어 온다.
+      - name: 팀·순위표 캐시 저장
+        if: steps.mode.outputs.quick != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            data/teams
+            data/eventsnext
+            data/table
+          key: prebake-slow-${{ github.run_id }}
+
+      - name: 데이터가 비어 있지 않은지 확인
+        # quick 회차인데 캐시가 비었으면 팀·순위표 화면이 조용히 하드코딩으로
+        # 돌아간다. 조용히 넘기지 않고 로그에 남긴다.
+        run: |
+          for d in eventsday events teams table; do
+            n=$(ls data/$d 2>/dev/null | wc -l)
+            echo "data/$d: $n 개"
+            if [ "$n" -eq 0 ]; then echo "::warning::data/$d 가 비었다"; fi
+          done
 
       - name: 배포할 것만 모은다
         # 백업(_백업_수정전)·검토 스크린샷(_검토_스크린샷)·설계 문서·빌드 도구는

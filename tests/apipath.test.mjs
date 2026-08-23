@@ -59,7 +59,21 @@ test('lookupevent 매핑', () => {
 });
 
 test('모르는 엔드포인트는 null — 부르는 쪽이 하드코딩으로 되돌아간다', () => {
-  assert.equal(ArenaPath.fileFor('lookuptimeline.php?id=1'), null);
+  assert.equal(ArenaPath.fileFor('lookuplineup.php?id=1'), null);
   assert.equal(ArenaPath.fileFor('eventsday.php'), null);
   assert.equal(ArenaPath.fileFor(''), null);
+});
+
+/* 경기 기록·주요 장면. V1 은 어떤 경기에도 데이터를 주지 않았고(실측 6건 전부 null),
+   V2 에만 있다(실측: 헐 시티 vs 맨유 기록 18항목·장면 15건). 그래서 프리베이크는
+   V2 로 받아 오지만, **파일 이름은 V1 형태의 키로 정한다** — 브라우저는 지금처럼
+   `lookupeventstats.php?id=` 를 부르고 파일을 읽는다. */
+test('경기 기록·주요 장면도 파일 경로가 정해진다', () => {
+  assert.equal(ArenaPath.fileFor('lookupeventstats.php?id=2494001'), 'stats/2494001.json');
+  assert.equal(ArenaPath.fileFor('lookuptimeline.php?id=2494001'), 'timeline/2494001.json');
+});
+
+test('id 가 없으면 경로를 만들지 않는다', () => {
+  assert.equal(ArenaPath.fileFor('lookupeventstats.php?x=1'), null);
+  assert.equal(ArenaPath.fileFor('lookuptimeline.php?x=1'), null);
 });

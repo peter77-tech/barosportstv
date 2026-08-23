@@ -71,7 +71,7 @@ test('경기 목록도 프리베이크 파일로 나간다 — 진입점이 하�
 
 test('굽지 않는 엔드포인트는 아예 네트워크로 안 나간다', async () => {
   const { win, urls } = await loadDataJs();
-  const r = await win.ArenaData.getJson('lookuptimeline.php?id=1');
+  const r = await win.ArenaData.getJson('lookuplineup.php?id=1');
   assert.equal(r, null);
   assert.deepEqual(urls, [], '굽지 않는 엔드포인트인데 요청을 보냈다');
 });
