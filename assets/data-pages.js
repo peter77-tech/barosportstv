@@ -1,4 +1,4 @@
-/* ARENA LIVE — 홈 · 중계 화면 · 팀 허브 · 대시보드 데이터 연동
+/* 바로스포츠티비 — 홈 · 중계 화면 · 팀 허브 · 대시보드 데이터 연동
    ==================================================================
    공용 코드는 `assets/data.js` 의 `window.ArenaData` 를 쓴다.
    이 파일은 화면마다 "채울 자리(data-role)"를 찾아서 값을 넣기만 한다.
@@ -192,7 +192,7 @@
       set(doc, 'away-abbr', A.abbrOf(ev.strAwayTeam));
       href(doc, 'home-link', A.teamHref(ev.strHomeTeam));
       href(doc, 'away-link', A.teamHref(ev.strAwayTeam));
-      document.title = homeKo + ' vs ' + awayKo + ' 실시간 중계 — ARENA LIVE';
+      document.title = homeKo + ' vs ' + awayKo + ' 실시간 중계 — 바로스포츠티비';
 
       var hs = q(doc, 'home-score'), as = q(doc, 'away-score');
       var msep = q(doc, 'score-sep');
@@ -298,7 +298,7 @@
       var alt = String(team.strTeamAlternate || '').split(',')[0].trim();
       set(doc, 'team-meta', [alt || team.strTeam, team.strLocation, team.strStadium]
         .filter(Boolean).join(' · '));
-      document.title = teamKo + ' — 일정·기록·선수단 | ARENA LIVE';
+      document.title = teamKo + ' — 일정·기록·선수단 | 바로스포츠티비';
 
       // 구조화 데이터 — 이 화면이 다루는 팀
       if (window.ArenaSeo) window.ArenaSeo.sportsTeam('team', team);

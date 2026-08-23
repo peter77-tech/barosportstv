@@ -1,4 +1,4 @@
-/* ARENA LIVE — 디자인 토큰
+/* 바로스포츠티비 — 디자인 토큰
  * 출처: Google Stitch / Hermes Orange Sports > "Arena Live - Home (SEO Content)"
  * 시안의 tailwind.config를 그대로 옮기되, 시안에 없어서 무효였던 토큰을 보완했다.
  *

@@ -1,4 +1,4 @@
-/* ARENA LIVE — 데이터 연동 공용 부분 + 경기 일정 화면
+/* 바로스포츠티비 — 데이터 연동 공용 부분 + 경기 일정 화면
    ==================================================================
    이 파일은 두 가지를 한다.
      ① 공용 코드를 `window.ArenaData` 로 내놓는다 (다른 화면은 data-pages.js)
@@ -423,7 +423,7 @@
         var listed = res[0].concat(res[1]).map(function (ev) {
           return { ev: ev, state: statusOf(ev), url: matchHref(ev) };
         });
-        window.ArenaSeo.eventList('schedule', listed, 'ARENA LIVE 경기 일정');
+        window.ArenaSeo.eventList('schedule', listed, '바로스포츠티비 경기 일정');
       }
       loading = false;
     }).catch(function (e) {
