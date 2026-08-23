@@ -15,6 +15,7 @@ import vm from 'node:vm';
 
 import { createLimiter } from './lib/limiter.mjs';
 import { collectTargets } from './lib/collect.mjs';
+import { withRetry } from './lib/retry.mjs';
 
 const require = createRequire(import.meta.url);
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -68,11 +69,18 @@ async function bake(path) {
   const file = ArenaPath.fileFor(path);
   if (!file) throw new Error(`프리베이크하지 않는 엔드포인트: ${path}`);
   try {
-    const json = await limit(async () => {
+    /* 429 는 기다리면 풀리므로 두 번까지 다시 부른다.
+       재시도도 호출이니 제한기 **안쪽**에서 센다 — 바깥에 두면 재시도가
+       분당 한도를 넘겨 429 를 더 부른다. */
+    const json = await withRetry(() => limit(async () => {
       const res = await fetch(BASE + path);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) {
+        const err = new Error(`HTTP ${res.status}`);
+        err.status = res.status;
+        throw err;
+      }
       return res.json();
-    });
+    }), { baseMs: Number(process.env.PREBAKE_RETRY_MS || 3000) });
     await write(file, json);
     return json;
   } catch (err) {
@@ -112,7 +120,10 @@ if (!gotAny) {
 }
 
 const dict = await dictionaryTeams();
-const cap = Number(process.env.PREBAKE_TEAM_CAP || 60);
+/* 팀 상한. 유료급 키로는 등장 팀이 4,700팀을 넘으므로 상한이 실제로 물린다.
+   여기서 잘린 팀은 로고·한글명·순위가 없어 영문 그대로 나온다.
+   올릴 때는 호출 수(팀당 2건: searchteams + eventsnext)와 크론 주기를 함께 본다. */
+const cap = Number(process.env.PREBAKE_TEAM_CAP || 400);
 const { events, teams, skippedTeams } = collectTargets(lists, dict, cap);
 console.log(`② 경기 ${events.length}건 · 구울 팀 ${teams.length}팀 (사전 ${dict.length} + 등장 ${teams.length - dict.length}) · 상한 초과 ${skippedTeams.length}팀`);
 
