@@ -33,8 +33,25 @@
 (function () {
   'use strict';
 
-  var KEY = '3';                 // 무료 테스트 키. 발급받은 키로 바꾸면 건수 제한이 풀린다
-  var BASE = 'https://www.thesportsdb.com/api/v1/json/' + KEY + '/';
+  /* ── 데이터 출처 ─────────────────────────────────────────
+     ⚠️ 여기 두 줄이 프리베이크 ↔ 실시간 프록시를 가른다.
+       부르는 쪽(data-pages.js 5곳)은 한 글자도 바꿀 필요가 없다.
+
+     · 'prebake' — GitHub Actions 가 10분마다 구워둔 data/**.json 을 읽는다.
+                   브라우저에 API 키가 나가지 않고 429 가 나지 않는다.
+                   대가: 점수가 10~25분 늦는다.
+     · 'live'    — Cloudflare Workers 프록시를 직접 부른다. 실시간이 필요해지면
+                   아래 두 줄을 이렇게 바꾸는 것이 전부다:
+                     mode: 'live', base: 'https://api.barosportstv.com/'
+                   (설계 문서 docs/superpowers/specs/2026-08-23-… 11.1절)
+
+     ⛔ API 키를 이 파일에 넣지 마십시오. 정적 사이트라 브라우저 소스에
+       그대로 보입니다. 키는 GitHub Secret `SPORTSDB_KEY` 에만 둡니다. */
+  var SOURCE = {
+    mode: 'prebake',
+    base: './data/'
+  };
+
   var SPORTS = ['Soccer', 'Basketball', 'Baseball', 'American Football'];
   var DAYS = 5;                  // 경기 일정 화면의 날짜 칩 개수
 
@@ -179,10 +196,8 @@
   function fetchUtcDay(utcKey) {
     if (cache[utcKey]) return cache[utcKey];
     cache[utcKey] = Promise.all(SPORTS.map(function (sport) {
-      return fetch(BASE + 'eventsday.php?d=' + utcKey + '&s=' + encodeURIComponent(sport))
-        .then(function (r) { return r.ok ? r.json() : { events: null }; })
-        .then(function (j) { return j.events || []; })
-        .catch(function () { return []; });
+      return getJson('eventsday.php?d=' + utcKey + '&s=' + encodeURIComponent(sport))
+        .then(function (j) { return (j && j.events) || []; });
     })).then(function (lists) {
       var events = [];
       lists.forEach(function (l) { events = events.concat(l); });
@@ -191,8 +206,18 @@
     return cache[utcKey];
   }
 
+  /* 유일한 네트워크 진입점. 실패하면 null 을 돌려주고, 부르는 쪽은
+     하드코딩 내용을 그대로 남긴다 (이 파일 첫 주석의 점진적 향상 원칙). */
   function getJson(path) {
-    return fetch(BASE + path)
+    var url;
+    if (SOURCE.mode === 'prebake') {
+      var file = window.ArenaPath && window.ArenaPath.fileFor(path);
+      if (!file) return Promise.resolve(null);   // 굽지 않는 엔드포인트
+      url = SOURCE.base + file;
+    } else {
+      url = SOURCE.base + path;
+    }
+    return fetch(url)
       .then(function (r) { return r.ok ? r.json() : null; })
       .catch(function () { return null; });
   }
