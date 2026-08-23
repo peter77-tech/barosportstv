@@ -72,11 +72,22 @@
       c.setAttribute('aria-selected', String(c.getAttribute('data-league') === league));
     });
 
-    Array.prototype.forEach.call(currentRows(), function (row) {
-      row.hidden = !matches(league, row.getAttribute('data-league'), row.getAttribute('data-tier'));
-    });
+    /* 일정 화면은 **보이는 행만 다시 만든다** (data.js 의 ArenaSchedule.render).
+       숨김 토글로는 DOM 에 1,101줄이 그대로 남아 렌더가 15초 걸렸다(실측).
+       아직 응답이 없으면 false 가 오므로, 그때는 하드코딩 행을 숨겨서 걸러낸다. */
+    var S = window.ArenaSchedule;
+    if (!(S && S.render && S.render())) {
+      Array.prototype.forEach.call(currentRows(), function (row) {
+        row.hidden = !matches(league, row.getAttribute('data-league'), row.getAttribute('data-tier'));
+      });
+    }
 
-    // 구역별로 남은 경기가 없으면 안내문을 띄우고 LIVE 개수를 다시 센다
+    refreshDays();
+  }
+
+  /* 구역별로 남은 경기가 없으면 안내문을 띄우고 LIVE 개수를 다시 센다.
+     data.js 가 목록을 다시 그린 뒤에도 이것만 따로 부른다. */
+  function refreshDays() {
     Array.prototype.forEach.call(document.querySelectorAll('[data-schedule-day]'), function (day) {
       var visible = Array.prototype.filter.call(day.querySelectorAll('li[data-league]'), function (r) {
         return !r.hidden;
@@ -106,7 +117,7 @@
     apply: applyLeague,
     matches: matches,
     selected: function () { return selected; },
-    reapply: function () { if (filterable) applyLeague(selected); }
+    refresh: refreshDays
   };
 
   Array.prototype.forEach.call(chips, function (chip) {

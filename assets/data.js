@@ -303,11 +303,25 @@
     });
   }
 
+  /* 화면에 그릴 경기만 골라낸다.
+     ⚠️ 다 그린 뒤 숨기지 않는다. 하루 1,101경기가 오는 날 「주요 리그」 기본값에서
+       보이는 것은 103경기인데, 예전에는 1,101줄을 만들고 998줄을 숨겼다(렌더 15초).
+     판정 규칙은 app.js 의 matches() 가 유일한 출처다 — 여기서 다시 쓰지 않는다. */
+  function visibleEvents(events, league) {
+    var F = window.ArenaLeagueFilter;
+    if (!F || !F.matches) return events.slice();
+    return events.filter(function (ev) {
+      var name = ev && ev.strLeague ? ev.strLeague : '';
+      return F.matches(league, leagueSlug(name), String(leagueTier(ev)));
+    });
+  }
+
   /* ── 다른 화면(data-pages.js)이 쓰는 공용 창구 ─────────── */
   window.ArenaData = {
     getJson: getJson,
     eventsForLocalDay: eventsForLocalDay,
     byInterest: byInterest,
+    visibleEvents: visibleEvents,
     statusOf: statusOf,
     clockText: clockText,
     leagueLabel: leagueLabel,
@@ -344,6 +358,12 @@
 
   if (!liveTpl || !upcomingTpl) return;   // 마크업이 바뀌었다면 손대지 않는다
 
+  /* ⚠️ 본을 뜨는 시점에 app.js 가 이미 하드코딩 행에 hidden 을 걸어 뒀을 수 있다.
+     그대로 복제하면 만든 행이 전부 숨은 채로 붙어 화면이 텅 빈다 (실제로 물렸습니다).
+     이제 행은 보일 것만 만드므로 본에서 hidden 을 떼어 둔다. */
+  liveTpl.hidden = false;
+  upcomingTpl.hidden = false;
+
   function buildRow(ev) {
     var state = statusOf(ev);
     /* 연기·취소는 **예정 템플릿**을 쓴다. 진행중 템플릿에는 하드코딩 점수가 있어
@@ -357,11 +377,8 @@
     var tier = String(window.ArenaLeagues ? window.ArenaLeagues.tier(league) : 2);
     li.setAttribute('data-tier', tier);
 
-    /* 처음부터 숨긴 상태로 그린다 — 다 그린 뒤 숨기면 화면이 밀린다.
-       판정 규칙은 app.js 의 matches() 가 유일한 출처다. */
-    var F = window.ArenaLeagueFilter;
-    if (F && F.matches) li.hidden = !F.matches(F.selected(), leagueSlug(league), tier);
-    li.hidden = false;
+    /* 여기 오는 경기는 이미 visibleEvents() 를 통과한 것뿐이다.
+       그래서 hidden 을 만지지 않는다 — 그리지 않은 행은 밀 화면도 없다. */
 
     /* 「알림」 버튼이 어느 경기인지 기억할 열쇠.
        화면에 보이는 대결 이름은 필터·재조회로 바뀔 수 있으므로 `idEvent` 를 쓴다.
@@ -425,10 +442,38 @@
     if (!list) return;
 
     /* ⚠️ 정렬을 반드시 거친다. 유료급 키는 하루 1,101경기를 준다(실측) —
-       원본 순서로 그리면 파로제도 2부·러시아 FNL2 가 맨 앞에 온다. */
+       원본 순서로 그리면 파로제도 2부·러시아 FNL2 가 맨 앞에 온다.
+       그리고 **지금 칩에서 보일 경기만** 만든다 (visibleEvents). */
+    var F = window.ArenaLeagueFilter;
+    var shown = visibleEvents(byInterest(events), F && F.selected ? F.selected() : 'all');
+
+    /* 조각에 모아 한 번에 붙인다 — 행마다 붙이면 그때마다 화면을 다시 계산한다. */
+    var frag = document.createDocumentFragment();
+    shown.forEach(function (ev) { frag.appendChild(buildRow(ev)); });
     list.innerHTML = '';
-    byInterest(events).forEach(function (ev) { list.appendChild(buildRow(ev)); });
+    list.appendChild(frag);
   }
+
+  /* 지금 그려 둔 날짜와 그날 경기. 리그 칩이 바뀌면 이걸로 **다시 그린다** —
+     경기 목록이 이미 여기 있으므로 네트워크 호출은 없다. */
+  var drawn = [];
+
+  function repaint() {
+    drawn.forEach(function (d) { fillSection(d.section, d.events, d.offset, d.date); });
+    // 새로 그린 행의 「알림」 버튼에 저장해 둔 켬/끔 상태를 다시 입힌다
+    if (window.ArenaUser && window.ArenaUser.repaintNotify) window.ArenaUser.repaintNotify();
+  }
+
+  /* app.js 의 리그 칩이 부르는 창구.
+     아직 응답이 없으면 false 를 돌려준다 — 그때는 app.js 가 하드코딩 행을
+     숨김으로 걸러낸다(그리지 않은 행을 다시 그릴 수는 없다). */
+  window.ArenaSchedule = {
+    render: function () {
+      if (!drawn.length) return false;
+      repaint();
+      return true;
+    }
+  };
 
   /* 날짜 칩의 숫자는 **응답이 온 뒤에** 실제 날짜로 바꾼다.
      먼저 바꾸면 연동 실패 시 칩은 오늘인데 목록은 하드코딩 날짜라 어긋나 보인다. */
@@ -464,14 +509,18 @@
         return;
       }
       fillChipDates();
-      fillSection(sections[0], res[0], offset, first);
-      fillSection(sections[1], res[1], offset + 1, second);
-      if (window.ArenaLeagueFilter) window.ArenaLeagueFilter.reapply();
-      // 새로 그린 행의 「알림」 버튼에 저장해 둔 켬/끔 상태를 다시 입힌다
-      if (window.ArenaUser && window.ArenaUser.repaintNotify) window.ArenaUser.repaintNotify();
+      drawn = [
+        { section: sections[0], events: res[0], offset: offset, date: first },
+        { section: sections[1], events: res[1], offset: offset + 1, date: second }
+      ];
+      repaint();
+      // 구역별 「경기가 없습니다」 안내와 LIVE 개수를 다시 센다 (행은 이미 걸러져 있다)
+      if (window.ArenaLeagueFilter) window.ArenaLeagueFilter.refresh();
 
-      /* 구조화 데이터 — **화면에 실제로 그린 경기만** 내보낸다.
-         하드코딩 경기를 넣으면 검색엔진에 없는 경기를 알려주게 된다. */
+      /* 구조화 데이터 — **응답으로 받은 실제 경기만** 내보낸다.
+         하드코딩 경기를 넣으면 검색엔진에 없는 경기를 알려주게 된다.
+         리그 칩으로 걸러 낸 경기도 그날 실제로 열리는 경기이므로 그대로 남긴다.
+         (화면에 그린 행만 넣으면 「주요 리그」 기본값 탓에 구조화 데이터가 103건으로 줄어든다) */
       if (window.ArenaSeo) {
         var listed = res[0].concat(res[1]).map(function (ev) {
           return { ev: ev, state: statusOf(ev), url: matchHref(ev) };
