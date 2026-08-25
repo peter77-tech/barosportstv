@@ -185,15 +185,21 @@
 
     <!-- ════════════════════════════════════════════════════════════════
          K-22 (BD 결정 D-24 · 2026-08-25) — 뉴스 처리 규칙
-         ① 개별 기사 페이지를 만들지 않는다. 본문은 원문 매체로 보낸다.
-         ② 묶음 단위는 「리그」다. 종목이 아니다 (종목은 종목 허브 소관).
-         ③ 🔴 각 묶음에 그 주 중계 편성 데이터를 반드시 함께 싣는다.
-            없으면 발행 3조건 ①②를 통과하지 못한다 (P07-006 §4-2).
-         ④ 🔴 출처 매체명 표기는 필수다 (U-18 ⑦ 선행 조건).
-         ⑤ 🔴 U-18 ⑦(타사 기사 인용 범위) 법률 회신 전까지는
-            「제목 + 출처 링크」 수준으로만 운영한다. 요약문을 넣지 않는다.
-         ⑥ noindex 를 걸지 않는다. 성과 판정은 K-09 ⓑ 8주 회수 기준.
-         ⚠️ 아래 기사 제목·매체명은 전부 자리표시자다. 실제 출처는 미정.
+         (1) 개별 기사 페이지를 만들지 않는다. 본문은 원문 매체로 보낸다.
+         (2) 묶음 단위는 「리그」다. 종목이 아니다 (종목은 종목 허브 소관).
+         (3) 각 묶음에 그 주 중계 편성 데이터를 반드시 함께 싣는다.
+             없으면 발행 3조건 (1)(2)를 통과하지 못한다 (P07-006 §4-2).
+         (4) 출처 매체명 표기는 필수다 (U-18 (7) 선행 조건).
+         (5) U-18 (7)(타사 기사 인용 범위) 법률 회신 전까지는
+             「제목 + 출처 링크」 수준으로만 운영한다. 요약문을 넣지 않는다.
+         (6) noindex 를 걸지 않는다. 성과 판정은 K-09 (b) 8주 회수 기준.
+
+         ⚠️ 아래 기사·출처는 전부 예시 데이터다. 뉴스 출처가 아직 미정이다.
+            출처를 실제 언론사명으로 적지 않았다 — 없는 기사를 실제 매체에
+            잘못 귀속시키게 되기 때문이다. 실데이터로 통째 교체할 자리다.
+
+         ⚠️ 클래스를 새로 쓰지 마라. 이 저장소는 빌드된 tailwind.css 를 쓴다.
+            (다음세션_재개.md 규칙 10)
          ════════════════════════════════════════════════════════════════ -->
 
     <header class="mt-stack-lg mb-stack-lg">
@@ -206,6 +212,7 @@
         <strong class="text-on-surface">기사 제목과 출처만 제공합니다.</strong>
         본문은 원문 매체에서 확인해 주세요. 링크를 누르면 해당 매체로 이동합니다.
       </p>
+      <p class="font-label-caps text-[10px] text-hermes-orange mt-2 uppercase">예시 데이터 — 뉴스 출처 확정 후 교체</p>
     </div>
 
     <section class="mb-stack-lg" aria-labelledby="lg-title">
@@ -220,68 +227,77 @@
       </div>
     </section>
 
-    <!-- ══════ 리그 묶음 1 · EPL ══════ -->
+    <!-- ══════ 리그 묶음 · EPL ══════ -->
     <section class="depth-panel mb-section-gap" aria-labelledby="dg-epl">
       <div class="flex flex-wrap items-end justify-between gap-4 mb-stack-md">
         <div>
           <h2 id="dg-epl" class="font-headline-md text-headline-md text-on-surface">EPL(프리미어리그) 이번 주 소식</h2>
-          <p class="font-body-sm text-on-surface-variant mt-1"><time datetime="2026-08-25">8월 25일</time> 정리 · 기사 6건</p>
+          <p class="font-body-sm text-on-surface-variant mt-1"><time datetime="2026-08-25">8월 25일</time> 정리 · 기사 5건 · 중계 4경기</p>
         </div>
         <a class="font-label-caps text-label-caps text-hermes-orange whitespace-nowrap" href="team-hub.html">리그 페이지로 이동</a>
       </div>
-
       <div class="grid grid-cols-1 xl:grid-cols-12 gap-stack-lg">
-
         <div class="xl:col-span-8 min-w-0">
           <h3 class="font-label-caps text-label-caps text-secondary mb-3 uppercase">기사</h3>
           <ul class="glass-card rounded-xl px-gutter py-2">
             <li class="flex items-start gap-3 py-4 border-b border-outline-variant/40 last:border-b-0">
               <div class="min-w-0 flex-1">
                 <a class="font-body-md font-semibold text-on-surface hover:text-hermes-orange transition-colors line-clamp-2" href="#" rel="nofollow noopener" target="_blank">사무국, 다음 시즌 대회 방식 개편안 승인</a>
-                <p class="font-label-data text-[11px] text-secondary mt-1"><span class="text-on-surface-variant">출처</span> 매체명 · <time datetime="2026-08-25T13:00+09:00">2시간 전</time></p>
+                <p class="font-label-data text-[11px] text-secondary mt-1"><span class="text-on-surface-variant">출처</span> 매체 A · <time datetime="2026-08-25T13:00+09:00">2시간 전</time></p>
               </div>
               <span class="material-symbols-outlined text-secondary text-[18px] shrink-0" aria-hidden="true">open_in_new</span>
             </li>
             <li class="flex items-start gap-3 py-4 border-b border-outline-variant/40 last:border-b-0">
               <div class="min-w-0 flex-1">
                 <a class="font-body-md font-semibold text-on-surface hover:text-hermes-orange transition-colors line-clamp-2" href="#" rel="nofollow noopener" target="_blank">주말 3경기 심판 배정 발표</a>
-                <p class="font-label-data text-[11px] text-secondary mt-1"><span class="text-on-surface-variant">출처</span> 매체명 · <time datetime="2026-08-25T10:30+09:00">5시간 전</time></p>
+                <p class="font-label-data text-[11px] text-secondary mt-1"><span class="text-on-surface-variant">출처</span> 매체 B · <time datetime="2026-08-25T10:30+09:00">5시간 전</time></p>
               </div>
               <span class="material-symbols-outlined text-secondary text-[18px] shrink-0" aria-hidden="true">open_in_new</span>
             </li>
             <li class="flex items-start gap-3 py-4 border-b border-outline-variant/40 last:border-b-0">
               <div class="min-w-0 flex-1">
                 <a class="font-body-md font-semibold text-on-surface hover:text-hermes-orange transition-colors line-clamp-2" href="#" rel="nofollow noopener" target="_blank">주요 공격수 부상 복귀 일정 공개</a>
-                <p class="font-label-data text-[11px] text-secondary mt-1"><span class="text-on-surface-variant">출처</span> 매체명 · <time datetime="2026-08-24T21:00+09:00">어제</time></p>
+                <p class="font-label-data text-[11px] text-secondary mt-1"><span class="text-on-surface-variant">출처</span> 매체 C · <time datetime="2026-08-24T21:00+09:00">어제</time></p>
               </div>
               <span class="material-symbols-outlined text-secondary text-[18px] shrink-0" aria-hidden="true">open_in_new</span>
             </li>
             <li class="flex items-start gap-3 py-4 border-b border-outline-variant/40 last:border-b-0">
               <div class="min-w-0 flex-1">
                 <a class="font-body-md font-semibold text-on-surface hover:text-hermes-orange transition-colors line-clamp-2" href="#" rel="nofollow noopener" target="_blank">이적 마감일까지 남은 협상 3건</a>
-                <p class="font-label-data text-[11px] text-secondary mt-1"><span class="text-on-surface-variant">출처</span> 매체명 · <time datetime="2026-08-24T18:00+09:00">어제</time></p>
+                <p class="font-label-data text-[11px] text-secondary mt-1"><span class="text-on-surface-variant">출처</span> 매체 A · <time datetime="2026-08-24T18:00+09:00">어제</time></p>
+              </div>
+              <span class="material-symbols-outlined text-secondary text-[18px] shrink-0" aria-hidden="true">open_in_new</span>
+            </li>
+            <li class="flex items-start gap-3 py-4 border-b border-outline-variant/40 last:border-b-0">
+              <div class="min-w-0 flex-1">
+                <a class="font-body-md font-semibold text-on-surface hover:text-hermes-orange transition-colors line-clamp-2" href="#" rel="nofollow noopener" target="_blank">승격 두 팀의 초반 일정 난이도 비교</a>
+                <p class="font-label-data text-[11px] text-secondary mt-1"><span class="text-on-surface-variant">출처</span> 매체 D · <time datetime="2026-08-24T09:00+09:00">어제</time></p>
               </div>
               <span class="material-symbols-outlined text-secondary text-[18px] shrink-0" aria-hidden="true">open_in_new</span>
             </li>
           </ul>
         </div>
-
         <div class="xl:col-span-4 min-w-0">
           <h3 class="font-label-caps text-label-caps text-hermes-orange mb-3 uppercase">이번 주 무료 중계 일정</h3>
           <ul class="glass-card rounded-xl px-gutter py-2" data-digest-fixtures="epl">
             <li class="flex items-center gap-3 py-4 border-b border-outline-variant/40 last:border-b-0">
-              <span class="font-label-data text-label-data text-secondary w-14 shrink-0">토 21:00</span>
+              <span class="font-label-data text-label-data text-secondary w-14 shrink-0">토<br>21:00</span>
               <a class="font-body-sm font-semibold text-on-surface hover:text-hermes-orange transition-colors min-w-0 flex-1 line-clamp-2" href="match-center.html">토트넘 vs 아스널</a>
               <span class="font-label-caps text-[10px] text-hermes-orange shrink-0">무료</span>
             </li>
             <li class="flex items-center gap-3 py-4 border-b border-outline-variant/40 last:border-b-0">
-              <span class="font-label-data text-label-data text-secondary w-14 shrink-0">일 23:30</span>
+              <span class="font-label-data text-label-data text-secondary w-14 shrink-0">일<br>23:30</span>
               <a class="font-body-sm font-semibold text-on-surface hover:text-hermes-orange transition-colors min-w-0 flex-1 line-clamp-2" href="match-center.html">맨시티 vs 첼시</a>
               <span class="font-label-caps text-[10px] text-hermes-orange shrink-0">무료</span>
             </li>
             <li class="flex items-center gap-3 py-4 border-b border-outline-variant/40 last:border-b-0">
-              <span class="font-label-data text-label-data text-secondary w-14 shrink-0">월 03:00</span>
+              <span class="font-label-data text-label-data text-secondary w-14 shrink-0">월<br>03:00</span>
               <a class="font-body-sm font-semibold text-on-surface hover:text-hermes-orange transition-colors min-w-0 flex-1 line-clamp-2" href="match-center.html">리버풀 vs 뉴캐슬</a>
+              <span class="font-label-caps text-[10px] text-hermes-orange shrink-0">무료</span>
+            </li>
+            <li class="flex items-center gap-3 py-4 border-b border-outline-variant/40 last:border-b-0">
+              <span class="font-label-data text-label-data text-secondary w-14 shrink-0">월<br>05:00</span>
+              <a class="font-body-sm font-semibold text-on-surface hover:text-hermes-orange transition-colors min-w-0 flex-1 line-clamp-2" href="match-center.html">애스턴빌라 vs 브라이턴</a>
               <span class="font-label-caps text-[10px] text-hermes-orange shrink-0">무료</span>
             </li>
           </ul>
@@ -293,16 +309,153 @@
       </div>
     </section>
 
-    <!-- ══════ 리그 묶음 2 · KBO ══════ -->
+    <!-- ══════ 리그 묶음 · 라리가 ══════ -->
+    <section class="depth-panel mb-section-gap" aria-labelledby="dg-laliga">
+      <div class="flex flex-wrap items-end justify-between gap-4 mb-stack-md">
+        <div>
+          <h2 id="dg-laliga" class="font-headline-md text-headline-md text-on-surface">라리가 이번 주 소식</h2>
+          <p class="font-body-sm text-on-surface-variant mt-1"><time datetime="2026-08-25">8월 25일</time> 정리 · 기사 4건 · 중계 3경기</p>
+        </div>
+        <a class="font-label-caps text-label-caps text-hermes-orange whitespace-nowrap" href="team-hub.html">리그 페이지로 이동</a>
+      </div>
+      <div class="grid grid-cols-1 xl:grid-cols-12 gap-stack-lg">
+        <div class="xl:col-span-8 min-w-0">
+          <h3 class="font-label-caps text-label-caps text-secondary mb-3 uppercase">기사</h3>
+          <ul class="glass-card rounded-xl px-gutter py-2">
+            <li class="flex items-start gap-3 py-4 border-b border-outline-variant/40 last:border-b-0">
+              <div class="min-w-0 flex-1">
+                <a class="font-body-md font-semibold text-on-surface hover:text-hermes-orange transition-colors line-clamp-2" href="#" rel="nofollow noopener" target="_blank">마드리드 더비 선발 명단 예상</a>
+                <p class="font-label-data text-[11px] text-secondary mt-1"><span class="text-on-surface-variant">출처</span> 매체 B · <time datetime="2026-08-25T12:30+09:00">3시간 전</time></p>
+              </div>
+              <span class="material-symbols-outlined text-secondary text-[18px] shrink-0" aria-hidden="true">open_in_new</span>
+            </li>
+            <li class="flex items-start gap-3 py-4 border-b border-outline-variant/40 last:border-b-0">
+              <div class="min-w-0 flex-1">
+                <a class="font-body-md font-semibold text-on-surface hover:text-hermes-orange transition-colors line-clamp-2" href="#" rel="nofollow noopener" target="_blank">신임 감독 첫 원정 3연전 계획</a>
+                <p class="font-label-data text-[11px] text-secondary mt-1"><span class="text-on-surface-variant">출처</span> 매체 E · <time datetime="2026-08-25T08:00+09:00">7시간 전</time></p>
+              </div>
+              <span class="material-symbols-outlined text-secondary text-[18px] shrink-0" aria-hidden="true">open_in_new</span>
+            </li>
+            <li class="flex items-start gap-3 py-4 border-b border-outline-variant/40 last:border-b-0">
+              <div class="min-w-0 flex-1">
+                <a class="font-body-md font-semibold text-on-surface hover:text-hermes-orange transition-colors line-clamp-2" href="#" rel="nofollow noopener" target="_blank">중원 보강 협상 최종 단계</a>
+                <p class="font-label-data text-[11px] text-secondary mt-1"><span class="text-on-surface-variant">출처</span> 매체 C · <time datetime="2026-08-24T22:00+09:00">어제</time></p>
+              </div>
+              <span class="material-symbols-outlined text-secondary text-[18px] shrink-0" aria-hidden="true">open_in_new</span>
+            </li>
+            <li class="flex items-start gap-3 py-4 border-b border-outline-variant/40 last:border-b-0">
+              <div class="min-w-0 flex-1">
+                <a class="font-body-md font-semibold text-on-surface hover:text-hermes-orange transition-colors line-clamp-2" href="#" rel="nofollow noopener" target="_blank">승점 자동 삭감 규정 개정 논의</a>
+                <p class="font-label-data text-[11px] text-secondary mt-1"><span class="text-on-surface-variant">출처</span> 매체 F · <time datetime="2026-08-24T14:00+09:00">어제</time></p>
+              </div>
+              <span class="material-symbols-outlined text-secondary text-[18px] shrink-0" aria-hidden="true">open_in_new</span>
+            </li>
+          </ul>
+        </div>
+        <div class="xl:col-span-4 min-w-0">
+          <h3 class="font-label-caps text-label-caps text-hermes-orange mb-3 uppercase">이번 주 무료 중계 일정</h3>
+          <ul class="glass-card rounded-xl px-gutter py-2" data-digest-fixtures="laliga">
+            <li class="flex items-center gap-3 py-4 border-b border-outline-variant/40 last:border-b-0">
+              <span class="font-label-data text-label-data text-secondary w-14 shrink-0">토<br>23:00</span>
+              <a class="font-body-sm font-semibold text-on-surface hover:text-hermes-orange transition-colors min-w-0 flex-1 line-clamp-2" href="match-center.html">바르셀로나 vs 세비야</a>
+              <span class="font-label-caps text-[10px] text-hermes-orange shrink-0">무료</span>
+            </li>
+            <li class="flex items-center gap-3 py-4 border-b border-outline-variant/40 last:border-b-0">
+              <span class="font-label-data text-label-data text-secondary w-14 shrink-0">일<br>02:00</span>
+              <a class="font-body-sm font-semibold text-on-surface hover:text-hermes-orange transition-colors min-w-0 flex-1 line-clamp-2" href="match-center.html">레알 vs 아틀레티코</a>
+              <span class="font-label-caps text-[10px] text-hermes-orange shrink-0">무료</span>
+            </li>
+            <li class="flex items-center gap-3 py-4 border-b border-outline-variant/40 last:border-b-0">
+              <span class="font-label-data text-label-data text-secondary w-14 shrink-0">일<br>21:00</span>
+              <a class="font-body-sm font-semibold text-on-surface hover:text-hermes-orange transition-colors min-w-0 flex-1 line-clamp-2" href="match-center.html">발렌시아 vs 빌바오</a>
+              <span class="font-label-caps text-[10px] text-hermes-orange shrink-0">무료</span>
+            </li>
+          </ul>
+          <a class="mt-stack-md flex items-center justify-center gap-2 w-full bg-primary-container hover:bg-primary-hover text-on-primary font-label-caps py-3 px-4 rounded shadow-[inset_0_1px_0_rgba(255,255,255,0.2)] transition-colors" href="schedule.html">
+            <span class="material-symbols-outlined text-[18px]" aria-hidden="true">calendar_month</span>
+            전체 일정 보기
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════ 리그 묶음 · K리그 ══════ -->
+    <section class="depth-panel mb-section-gap" aria-labelledby="dg-kleague">
+      <div class="flex flex-wrap items-end justify-between gap-4 mb-stack-md">
+        <div>
+          <h2 id="dg-kleague" class="font-headline-md text-headline-md text-on-surface">K리그 이번 주 소식</h2>
+          <p class="font-body-sm text-on-surface-variant mt-1"><time datetime="2026-08-25">8월 25일</time> 정리 · 기사 3건 · 중계 4경기</p>
+        </div>
+        <a class="font-label-caps text-label-caps text-hermes-orange whitespace-nowrap" href="team-hub.html">리그 페이지로 이동</a>
+      </div>
+      <div class="grid grid-cols-1 xl:grid-cols-12 gap-stack-lg">
+        <div class="xl:col-span-8 min-w-0">
+          <h3 class="font-label-caps text-label-caps text-secondary mb-3 uppercase">기사</h3>
+          <ul class="glass-card rounded-xl px-gutter py-2">
+            <li class="flex items-start gap-3 py-4 border-b border-outline-variant/40 last:border-b-0">
+              <div class="min-w-0 flex-1">
+                <a class="font-body-md font-semibold text-on-surface hover:text-hermes-orange transition-colors line-clamp-2" href="#" rel="nofollow noopener" target="_blank">상위 스플릿 경쟁, 남은 5경기 변수</a>
+                <p class="font-label-data text-[11px] text-secondary mt-1"><span class="text-on-surface-variant">출처</span> 매체 A · <time datetime="2026-08-25T14:00+09:00">1시간 전</time></p>
+              </div>
+              <span class="material-symbols-outlined text-secondary text-[18px] shrink-0" aria-hidden="true">open_in_new</span>
+            </li>
+            <li class="flex items-start gap-3 py-4 border-b border-outline-variant/40 last:border-b-0">
+              <div class="min-w-0 flex-1">
+                <a class="font-body-md font-semibold text-on-surface hover:text-hermes-orange transition-colors line-clamp-2" href="#" rel="nofollow noopener" target="_blank">주중 경기 잔디 상태 점검 결과</a>
+                <p class="font-label-data text-[11px] text-secondary mt-1"><span class="text-on-surface-variant">출처</span> 매체 D · <time datetime="2026-08-25T09:30+09:00">6시간 전</time></p>
+              </div>
+              <span class="material-symbols-outlined text-secondary text-[18px] shrink-0" aria-hidden="true">open_in_new</span>
+            </li>
+            <li class="flex items-start gap-3 py-4 border-b border-outline-variant/40 last:border-b-0">
+              <div class="min-w-0 flex-1">
+                <a class="font-body-md font-semibold text-on-surface hover:text-hermes-orange transition-colors line-clamp-2" href="#" rel="nofollow noopener" target="_blank">유스 출신 미드필더 1군 승격</a>
+                <p class="font-label-data text-[11px] text-secondary mt-1"><span class="text-on-surface-variant">출처</span> 매체 B · <time datetime="2026-08-24T19:00+09:00">어제</time></p>
+              </div>
+              <span class="material-symbols-outlined text-secondary text-[18px] shrink-0" aria-hidden="true">open_in_new</span>
+            </li>
+          </ul>
+        </div>
+        <div class="xl:col-span-4 min-w-0">
+          <h3 class="font-label-caps text-label-caps text-hermes-orange mb-3 uppercase">이번 주 무료 중계 일정</h3>
+          <ul class="glass-card rounded-xl px-gutter py-2" data-digest-fixtures="kleague">
+            <li class="flex items-center gap-3 py-4 border-b border-outline-variant/40 last:border-b-0">
+              <span class="font-label-data text-label-data text-secondary w-14 shrink-0">수<br>19:30</span>
+              <a class="font-body-sm font-semibold text-on-surface hover:text-hermes-orange transition-colors min-w-0 flex-1 line-clamp-2" href="match-center.html">울산 vs 전북</a>
+              <span class="font-label-caps text-[10px] text-hermes-orange shrink-0">무료</span>
+            </li>
+            <li class="flex items-center gap-3 py-4 border-b border-outline-variant/40 last:border-b-0">
+              <span class="font-label-data text-label-data text-secondary w-14 shrink-0">목<br>19:30</span>
+              <a class="font-body-sm font-semibold text-on-surface hover:text-hermes-orange transition-colors min-w-0 flex-1 line-clamp-2" href="match-center.html">서울 vs 포항</a>
+              <span class="font-label-caps text-[10px] text-hermes-orange shrink-0">무료</span>
+            </li>
+            <li class="flex items-center gap-3 py-4 border-b border-outline-variant/40 last:border-b-0">
+              <span class="font-label-data text-label-data text-secondary w-14 shrink-0">토<br>17:00</span>
+              <a class="font-body-sm font-semibold text-on-surface hover:text-hermes-orange transition-colors min-w-0 flex-1 line-clamp-2" href="match-center.html">대구 vs 인천</a>
+              <span class="font-label-caps text-[10px] text-hermes-orange shrink-0">무료</span>
+            </li>
+            <li class="flex items-center gap-3 py-4 border-b border-outline-variant/40 last:border-b-0">
+              <span class="font-label-data text-label-data text-secondary w-14 shrink-0">일<br>19:00</span>
+              <a class="font-body-sm font-semibold text-on-surface hover:text-hermes-orange transition-colors min-w-0 flex-1 line-clamp-2" href="match-center.html">수원 vs 강원</a>
+              <span class="font-label-caps text-[10px] text-hermes-orange shrink-0">무료</span>
+            </li>
+          </ul>
+          <a class="mt-stack-md flex items-center justify-center gap-2 w-full bg-primary-container hover:bg-primary-hover text-on-primary font-label-caps py-3 px-4 rounded shadow-[inset_0_1px_0_rgba(255,255,255,0.2)] transition-colors" href="schedule.html">
+            <span class="material-symbols-outlined text-[18px]" aria-hidden="true">calendar_month</span>
+            전체 일정 보기
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════ 리그 묶음 · KBO ══════ -->
     <section class="depth-panel mb-section-gap" aria-labelledby="dg-kbo">
       <div class="flex flex-wrap items-end justify-between gap-4 mb-stack-md">
         <div>
           <h2 id="dg-kbo" class="font-headline-md text-headline-md text-on-surface">KBO 이번 주 소식</h2>
-          <p class="font-body-sm text-on-surface-variant mt-1"><time datetime="2026-08-25">8월 25일</time> 정리 · 기사 5건</p>
+          <p class="font-body-sm text-on-surface-variant mt-1"><time datetime="2026-08-25">8월 25일</time> 정리 · 기사 4건 · 중계 4경기</p>
         </div>
         <a class="font-label-caps text-label-caps text-hermes-orange whitespace-nowrap" href="team-hub.html">리그 페이지로 이동</a>
       </div>
-
       <div class="grid grid-cols-1 xl:grid-cols-12 gap-stack-lg">
         <div class="xl:col-span-8 min-w-0">
           <h3 class="font-label-caps text-label-caps text-secondary mb-3 uppercase">기사</h3>
@@ -310,43 +463,54 @@
             <li class="flex items-start gap-3 py-4 border-b border-outline-variant/40 last:border-b-0">
               <div class="min-w-0 flex-1">
                 <a class="font-body-md font-semibold text-on-surface hover:text-hermes-orange transition-colors line-clamp-2" href="#" rel="nofollow noopener" target="_blank">순위 경쟁 3파전, 남은 일정 비교</a>
-                <p class="font-label-data text-[11px] text-secondary mt-1"><span class="text-on-surface-variant">출처</span> 매체명 · <time datetime="2026-08-25T12:00+09:00">3시간 전</time></p>
+                <p class="font-label-data text-[11px] text-secondary mt-1"><span class="text-on-surface-variant">출처</span> 매체 C · <time datetime="2026-08-25T12:00+09:00">3시간 전</time></p>
               </div>
               <span class="material-symbols-outlined text-secondary text-[18px] shrink-0" aria-hidden="true">open_in_new</span>
             </li>
             <li class="flex items-start gap-3 py-4 border-b border-outline-variant/40 last:border-b-0">
               <div class="min-w-0 flex-1">
                 <a class="font-body-md font-semibold text-on-surface hover:text-hermes-orange transition-colors line-clamp-2" href="#" rel="nofollow noopener" target="_blank">선발 로테이션 조정 발표</a>
-                <p class="font-label-data text-[11px] text-secondary mt-1"><span class="text-on-surface-variant">출처</span> 매체명 · <time datetime="2026-08-25T09:00+09:00">6시간 전</time></p>
+                <p class="font-label-data text-[11px] text-secondary mt-1"><span class="text-on-surface-variant">출처</span> 매체 A · <time datetime="2026-08-25T09:00+09:00">6시간 전</time></p>
               </div>
               <span class="material-symbols-outlined text-secondary text-[18px] shrink-0" aria-hidden="true">open_in_new</span>
             </li>
             <li class="flex items-start gap-3 py-4 border-b border-outline-variant/40 last:border-b-0">
               <div class="min-w-0 flex-1">
                 <a class="font-body-md font-semibold text-on-surface hover:text-hermes-orange transition-colors line-clamp-2" href="#" rel="nofollow noopener" target="_blank">외국인 선수 교체 검토</a>
-                <p class="font-label-data text-[11px] text-secondary mt-1"><span class="text-on-surface-variant">출처</span> 매체명 · <time datetime="2026-08-24T20:00+09:00">어제</time></p>
+                <p class="font-label-data text-[11px] text-secondary mt-1"><span class="text-on-surface-variant">출처</span> 매체 E · <time datetime="2026-08-24T20:00+09:00">어제</time></p>
+              </div>
+              <span class="material-symbols-outlined text-secondary text-[18px] shrink-0" aria-hidden="true">open_in_new</span>
+            </li>
+            <li class="flex items-start gap-3 py-4 border-b border-outline-variant/40 last:border-b-0">
+              <div class="min-w-0 flex-1">
+                <a class="font-body-md font-semibold text-on-surface hover:text-hermes-orange transition-colors line-clamp-2" href="#" rel="nofollow noopener" target="_blank">불펜 과부하 지표 시즌 최고치</a>
+                <p class="font-label-data text-[11px] text-secondary mt-1"><span class="text-on-surface-variant">출처</span> 매체 F · <time datetime="2026-08-24T11:00+09:00">어제</time></p>
               </div>
               <span class="material-symbols-outlined text-secondary text-[18px] shrink-0" aria-hidden="true">open_in_new</span>
             </li>
           </ul>
         </div>
-
         <div class="xl:col-span-4 min-w-0">
           <h3 class="font-label-caps text-label-caps text-hermes-orange mb-3 uppercase">이번 주 무료 중계 일정</h3>
           <ul class="glass-card rounded-xl px-gutter py-2" data-digest-fixtures="kbo">
             <li class="flex items-center gap-3 py-4 border-b border-outline-variant/40 last:border-b-0">
-              <span class="font-label-data text-label-data text-secondary w-14 shrink-0">화 18:30</span>
+              <span class="font-label-data text-label-data text-secondary w-14 shrink-0">화<br>18:30</span>
               <a class="font-body-sm font-semibold text-on-surface hover:text-hermes-orange transition-colors min-w-0 flex-1 line-clamp-2" href="match-center.html">LG vs 두산</a>
               <span class="font-label-caps text-[10px] text-hermes-orange shrink-0">무료</span>
             </li>
             <li class="flex items-center gap-3 py-4 border-b border-outline-variant/40 last:border-b-0">
-              <span class="font-label-data text-label-data text-secondary w-14 shrink-0">수 18:30</span>
+              <span class="font-label-data text-label-data text-secondary w-14 shrink-0">수<br>18:30</span>
               <a class="font-body-sm font-semibold text-on-surface hover:text-hermes-orange transition-colors min-w-0 flex-1 line-clamp-2" href="match-center.html">KIA vs 삼성</a>
               <span class="font-label-caps text-[10px] text-hermes-orange shrink-0">무료</span>
             </li>
             <li class="flex items-center gap-3 py-4 border-b border-outline-variant/40 last:border-b-0">
-              <span class="font-label-data text-label-data text-secondary w-14 shrink-0">목 18:30</span>
+              <span class="font-label-data text-label-data text-secondary w-14 shrink-0">목<br>18:30</span>
               <a class="font-body-sm font-semibold text-on-surface hover:text-hermes-orange transition-colors min-w-0 flex-1 line-clamp-2" href="match-center.html">롯데 vs SSG</a>
+              <span class="font-label-caps text-[10px] text-hermes-orange shrink-0">무료</span>
+            </li>
+            <li class="flex items-center gap-3 py-4 border-b border-outline-variant/40 last:border-b-0">
+              <span class="font-label-data text-label-data text-secondary w-14 shrink-0">금<br>18:30</span>
+              <a class="font-body-sm font-semibold text-on-surface hover:text-hermes-orange transition-colors min-w-0 flex-1 line-clamp-2" href="match-center.html">한화 vs NC</a>
               <span class="font-label-caps text-[10px] text-hermes-orange shrink-0">무료</span>
             </li>
           </ul>
@@ -358,22 +522,67 @@
       </div>
     </section>
 
-    <section class="depth-panel" aria-labelledby="dg-more">
-      <h2 id="dg-more" class="font-headline-md text-headline-md text-on-surface mb-stack-md">다른 리그 주간 소식</h2>
-      <ul class="glass-card rounded-xl px-gutter py-2">
-        <li class="flex items-center justify-between py-4 border-b border-outline-variant/40 last:border-b-0">
-          <a class="font-body-md text-on-surface hover:text-hermes-orange transition-colors" href="#">라리가 이번 주 소식</a>
-          <span class="font-label-data text-[11px] text-secondary">기사 4 · 중계 3</span>
-        </li>
-        <li class="flex items-center justify-between py-4 border-b border-outline-variant/40 last:border-b-0">
-          <a class="font-body-md text-on-surface hover:text-hermes-orange transition-colors" href="#">K리그 이번 주 소식</a>
-          <span class="font-label-data text-[11px] text-secondary">기사 3 · 중계 4</span>
-        </li>
-        <li class="flex items-center justify-between py-4 border-b border-outline-variant/40 last:border-b-0">
-          <a class="font-body-md text-on-surface hover:text-hermes-orange transition-colors" href="#">NBA 이번 주 소식</a>
-          <span class="font-label-data text-[11px] text-secondary">기사 5 · 중계 6</span>
-        </li>
-      </ul>
+    <!-- ══════ 리그 묶음 · NBA ══════ -->
+    <section class="depth-panel mb-section-gap" aria-labelledby="dg-nba">
+      <div class="flex flex-wrap items-end justify-between gap-4 mb-stack-md">
+        <div>
+          <h2 id="dg-nba" class="font-headline-md text-headline-md text-on-surface">NBA 이번 주 소식</h2>
+          <p class="font-body-sm text-on-surface-variant mt-1"><time datetime="2026-08-25">8월 25일</time> 정리 · 기사 3건 · 중계 3경기</p>
+        </div>
+        <a class="font-label-caps text-label-caps text-hermes-orange whitespace-nowrap" href="team-hub.html">리그 페이지로 이동</a>
+      </div>
+      <div class="grid grid-cols-1 xl:grid-cols-12 gap-stack-lg">
+        <div class="xl:col-span-8 min-w-0">
+          <h3 class="font-label-caps text-label-caps text-secondary mb-3 uppercase">기사</h3>
+          <ul class="glass-card rounded-xl px-gutter py-2">
+            <li class="flex items-start gap-3 py-4 border-b border-outline-variant/40 last:border-b-0">
+              <div class="min-w-0 flex-1">
+                <a class="font-body-md font-semibold text-on-surface hover:text-hermes-orange transition-colors line-clamp-2" href="#" rel="nofollow noopener" target="_blank">프리시즌 로스터 15인 확정</a>
+                <p class="font-label-data text-[11px] text-secondary mt-1"><span class="text-on-surface-variant">출처</span> 매체 B · <time datetime="2026-08-25T11:00+09:00">4시간 전</time></p>
+              </div>
+              <span class="material-symbols-outlined text-secondary text-[18px] shrink-0" aria-hidden="true">open_in_new</span>
+            </li>
+            <li class="flex items-start gap-3 py-4 border-b border-outline-variant/40 last:border-b-0">
+              <div class="min-w-0 flex-1">
+                <a class="font-body-md font-semibold text-on-surface hover:text-hermes-orange transition-colors line-clamp-2" href="#" rel="nofollow noopener" target="_blank">가드 보강 트레이드 논의 진행</a>
+                <p class="font-label-data text-[11px] text-secondary mt-1"><span class="text-on-surface-variant">출처</span> 매체 D · <time datetime="2026-08-25T07:00+09:00">8시간 전</time></p>
+              </div>
+              <span class="material-symbols-outlined text-secondary text-[18px] shrink-0" aria-hidden="true">open_in_new</span>
+            </li>
+            <li class="flex items-start gap-3 py-4 border-b border-outline-variant/40 last:border-b-0">
+              <div class="min-w-0 flex-1">
+                <a class="font-body-md font-semibold text-on-surface hover:text-hermes-orange transition-colors line-clamp-2" href="#" rel="nofollow noopener" target="_blank">루키 서머리그 평가 정리</a>
+                <p class="font-label-data text-[11px] text-secondary mt-1"><span class="text-on-surface-variant">출처</span> 매체 C · <time datetime="2026-08-24T16:00+09:00">어제</time></p>
+              </div>
+              <span class="material-symbols-outlined text-secondary text-[18px] shrink-0" aria-hidden="true">open_in_new</span>
+            </li>
+          </ul>
+        </div>
+        <div class="xl:col-span-4 min-w-0">
+          <h3 class="font-label-caps text-label-caps text-hermes-orange mb-3 uppercase">이번 주 무료 중계 일정</h3>
+          <ul class="glass-card rounded-xl px-gutter py-2" data-digest-fixtures="nba">
+            <li class="flex items-center gap-3 py-4 border-b border-outline-variant/40 last:border-b-0">
+              <span class="font-label-data text-label-data text-secondary w-14 shrink-0">토<br>09:00</span>
+              <a class="font-body-sm font-semibold text-on-surface hover:text-hermes-orange transition-colors min-w-0 flex-1 line-clamp-2" href="match-center.html">레이커스 vs 셀틱스</a>
+              <span class="font-label-caps text-[10px] text-hermes-orange shrink-0">무료</span>
+            </li>
+            <li class="flex items-center gap-3 py-4 border-b border-outline-variant/40 last:border-b-0">
+              <span class="font-label-data text-label-data text-secondary w-14 shrink-0">일<br>08:30</span>
+              <a class="font-body-sm font-semibold text-on-surface hover:text-hermes-orange transition-colors min-w-0 flex-1 line-clamp-2" href="match-center.html">워리어스 vs 히트</a>
+              <span class="font-label-caps text-[10px] text-hermes-orange shrink-0">무료</span>
+            </li>
+            <li class="flex items-center gap-3 py-4 border-b border-outline-variant/40 last:border-b-0">
+              <span class="font-label-data text-label-data text-secondary w-14 shrink-0">월<br>10:00</span>
+              <a class="font-body-sm font-semibold text-on-surface hover:text-hermes-orange transition-colors min-w-0 flex-1 line-clamp-2" href="match-center.html">너기츠 vs 선즈</a>
+              <span class="font-label-caps text-[10px] text-hermes-orange shrink-0">무료</span>
+            </li>
+          </ul>
+          <a class="mt-stack-md flex items-center justify-center gap-2 w-full bg-primary-container hover:bg-primary-hover text-on-primary font-label-caps py-3 px-4 rounded shadow-[inset_0_1px_0_rgba(255,255,255,0.2)] transition-colors" href="schedule.html">
+            <span class="material-symbols-outlined text-[18px]" aria-hidden="true">calendar_month</span>
+            전체 일정 보기
+          </a>
+        </div>
+      </div>
     </section>
   </main>
 
