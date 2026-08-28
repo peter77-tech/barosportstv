@@ -462,8 +462,15 @@ li[hidden], .depth-panel [hidden] { display: none; }
   form[role='search'].search-open .search-results { width: 100%; max-width: none; }
 }
 
-/* 데이터 연동이 채우지 못하는 하드코딩 세부값은 감춘다 (data-pages.js) */
-[data-role="season-note"][hidden], [data-role="season-clean-sheet"][hidden], [data-role="player-viewers"][hidden] { display: none; }
+/* ───────────────────────────────────────────────────────────────
+   hidden 속성은 언제나 이긴다 — 2026-08-28
+   Tailwind 의 display 유틸(`flex`/`grid`/`block`/`inline-flex` …)은
+   브라우저 기본 `[hidden]{display:none}` 과 명시도가 같고 뒤에 오므로
+   **이긴다.** 그래서 `hidden` 을 달아 둔 요소가 그대로 보였다.
+   실제 사고: 경기 상세 플레이어에서 재생 버튼(hidden)·하이라이트 링크(hidden)가
+   「중계 준비 중」 위에 겹쳐 주황 원 두 개가 동시에 떴다.
+   ⚠️ 개별 선택자로 땜질하지 마십시오 — 새 요소마다 같은 버그가 재발합니다. */
+[hidden] { display: none !important; }
 
 /* ───────────────────────────────────────────────────────────────
    터치 대상 최소 크기 (WCAG 2.5.8 · 24×24px) — 2026-08-20 Lighthouse

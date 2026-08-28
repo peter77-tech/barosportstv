@@ -217,7 +217,15 @@
                 </span>
                 <span class="font-label-caps text-label-caps uppercase">하이라이트 보기</span>
               </a>
-              <p data-role="no-stream" class="relative z-10 font-label-caps text-label-caps uppercase text-white/70">중계 준비 중</p>
+              <!-- 중계도 하이라이트도 없을 때. 재생 가능한 상태(주황 원)와 **색으로 구분한다** —
+                   회색 유리 원 + 사선 그은 재생 아이콘. 주황을 쓰면 눌릴 것처럼 보인다. -->
+              <div data-role="no-stream" class="relative z-10 flex flex-col items-center gap-3 text-center">
+                <span class="w-20 h-20 rounded-pill bg-white/10 flex items-center justify-center" aria-hidden="true">
+                  <span class="material-symbols-outlined text-[40px] text-white/70">videocam_off</span>
+                </span>
+                <span class="font-label-caps text-label-caps uppercase text-white/70">중계 준비 중</span>
+                <span class="font-label-data text-[12px] text-white/70">경기 시작에 맞춰 중계가 열립니다</span>
+              </div>
               <span data-role="player-badge" class="absolute top-4 left-4 z-10 inline-flex items-center gap-2 bg-error text-on-error px-3 py-1.5 rounded-pill font-label-caps text-[11px]">
                 <span class="w-1.5 h-1.5 rounded-pill bg-white pulse-live" aria-hidden="true"></span>LIVE</span>
               <span data-role="player-viewers" class="absolute top-4 right-4 z-10 font-label-data text-[11px] text-white/70 bg-black/40 px-3 py-1.5 rounded-pill">시청 12,481</span>
