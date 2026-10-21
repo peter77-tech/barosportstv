@@ -59,6 +59,13 @@ add_action( 'after_setup_theme', 'bstv_setup' );
 require_once get_theme_file_path( 'inc/nav-walkers.php' );
 
 /**
+ * 경기 일정 — 화면 계산(순수 함수)과 데이터 받기·저장(크론).
+ * 페이지 템플릿 page-templates/schedule.php 가 쓴다.
+ */
+require_once get_theme_file_path( 'inc/schedule-view.php' );
+require_once get_theme_file_path( 'inc/schedule-data.php' );
+
+/**
  * 스타일·스크립트.
  *
  * 순서가 중요하다: tailwind.css 가 먼저, app.css 가 나중이다.
