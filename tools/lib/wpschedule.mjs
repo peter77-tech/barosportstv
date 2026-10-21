@@ -10,7 +10,7 @@
    ⚠️ 시간대는 Asia/Seoul 고정이다. data.js 는 「브라우저 현지 시각」으로 날짜를 나누므로
      돌리는 동안만 process.env.TZ 를 바꾸고 끝나면 되돌린다.
    ================================================================== */
-import { readFile, writeFile, mkdir } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import vm from 'node:vm';
 
@@ -56,10 +56,19 @@ async function loadArena(root, dataDir) {
   return win;
 }
 
+function hasScore(v) {
+  return v !== null && v !== undefined && v !== '';
+}
+
 function toRow(A, L, ev) {
   const state = A.statusOf(ev);
-  const scored = state === 'live' || state === 'finished';
-  const t = A.localTime(ev);
+  const clock = A.clockText(ev);
+  /* 종료로 판정돼도 점수가 비어 오는 경기가 있다 — String(null) 이 「null - null」 로 찍히지 않게 */
+  const scored = (state === 'live' || state === 'finished') &&
+                 hasScore(ev.intHomeScore) && hasScore(ev.intAwayScore);
+  /* 시각을 모르는 경기(「시간 미정」)와 연기·취소 경기는 시각을 내보내지 않는다.
+     API 는 00:00 을 채워 보내는데, 그대로 두면 <time>·JSON-LD 가 검색엔진에 거짓 시각을 알린다. */
+  const t = (state === 'postponed' || clock === '시간 미정') ? null : A.localTime(ev);
   return {
     id: String(ev.idEvent || ''),
     sport: ev.strSport || '',
@@ -68,7 +77,7 @@ function toRow(A, L, ev) {
     slug: A.leagueSlug(ev.strLeague),
     tier: L.tier(ev.strLeague),
     state,
-    clock: A.clockText(ev),
+    clock,
     home: A.teamName(ev.strHomeTeam),
     away: A.teamName(ev.strAwayTeam),
     homeScore: scored ? String(ev.intHomeScore) : null,
@@ -81,6 +90,24 @@ async function writeJson(file, json) {
   await writeFile(file, JSON.stringify(json), 'utf8');
 }
 
+/* 경기 목록(eventsday) 굽기가 하나라도 실패했으면 이번 회차는 워드프레스용을 만들지 않는다.
+   만들면 한 종목이 통째로 빠진 날 파일이 「정상」으로 넘어가 워드프레스의 멀쩡한 사본을 덮는다.
+   안 만들면 워드프레스는 index 404 를 받고 지난 데이터를 그대로 둔다(2시간이 지나면 안내를 띄운다). */
+export function incompleteInput(failed) {
+  const miss = (failed || []).filter((f) => String(f).startsWith('eventsday.php'));
+  return miss.length ? `eventsday 실패 ${miss.length}건` : null;
+}
+
+/* 프리베이크가 부르는 입구. 여기서 무엇이 터져도 배포 전체(정적 사이트·데이터)를 멈추지 않는다. */
+export async function tryBuildWpSchedule(opts) {
+  try {
+    return { ok: true, ...(await buildWpSchedule(opts)) };
+  } catch (err) {
+    await rm(join(opts.dataDir, 'wp'), { recursive: true, force: true });   // 반쪽 파일을 남기지 않는다
+    return { ok: false, error: String((err && err.message) || err), days: [], counts: [] };
+  }
+}
+
 export async function buildWpSchedule({ root, dataDir, now = new Date(), days = 5 }) {
   const before = process.env.TZ;
   process.env.TZ = TIMEZONE;
@@ -89,6 +116,7 @@ export async function buildWpSchedule({ root, dataDir, now = new Date(), days = 
     const A = win.ArenaData;
     const keys = kstDayKeys(now, days);
     const out = join(dataDir, 'wp');
+    await rm(out, { recursive: true, force: true });   // 지난 회차 날짜 파일을 남기지 않는다 (quick 회차는 data/ 를 통째로 지우지 않는다)
     await mkdir(out, { recursive: true });
 
     const counts = [];

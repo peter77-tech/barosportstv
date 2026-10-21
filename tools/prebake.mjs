@@ -16,7 +16,7 @@ import vm from 'node:vm';
 import { createLimiter } from './lib/limiter.mjs';
 import { collectTargets } from './lib/collect.mjs';
 import { withRetry } from './lib/retry.mjs';
-import { buildWpSchedule } from './lib/wpschedule.mjs';
+import { tryBuildWpSchedule, incompleteInput } from './lib/wpschedule.mjs';
 
 const require = createRequire(import.meta.url);
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -188,9 +188,19 @@ console.log(`③ 경기 상세 ${events.length}건 (추가 호출 0건)`);
 
 /* ③-2 워드프레스(barosportstv.com) 일정 화면용 JSON. ①의 파일만 읽는다(추가 호출 0건).
    판정은 data.js 실물이 한다 — tools/lib/wpschedule.mjs 첫 주석 참고.
-   quick·full 둘 다 돈다: 경기 목록은 매 회차 새로 굽기 때문이다. */
-const wp = await buildWpSchedule({ root: ROOT, dataDir: OUT });
-console.log(`③-2 WordPress 일정 ${wp.days.length}일 · ${wp.counts.reduce((a, b) => a + b, 0)}건 (${wp.days.map((d, i) => `${d.slice(5)} ${wp.counts[i]}`).join(', ')})`);
+   quick·full 둘 다 돈다: 경기 목록은 매 회차 새로 굽기 때문이다.
+   ⚠️ 여기서 실패해도 배포 전체를 멈추지 않는다 — data/wp 만 빠지고, 워드프레스는 index 404 를
+     받아 지난 데이터를 그대로 둔다. 실패는 manifest 의 failed 에 남긴다. */
+const wpSkip = incompleteInput(failed);
+const wp = wpSkip
+  ? { ok: false, error: `입력 불완전(${wpSkip}) — 이번 회차는 만들지 않는다`, days: [], counts: [] }
+  : await tryBuildWpSchedule({ root: ROOT, dataDir: OUT });
+if (wp.ok) {
+  console.log(`③-2 WordPress 일정 ${wp.days.length}일 · ${wp.counts.reduce((a, b) => a + b, 0)}건 (${wp.days.map((d, i) => `${d.slice(5)} ${wp.counts[i]}`).join(', ')})`);
+} else {
+  failed.push(`wp-schedule → ${wp.error}`);
+  console.log(`③-2 WordPress 일정 — 건너뜀: ${wp.error}`);
+}
 
 /* ④ 팀 허브 — searchteams → eventsnext, 그리고 리그 순위표.
    quick 회차에서는 건너뛰고 지난 회차 파일을 그대로 쓴다. */
