@@ -3,7 +3,7 @@ Theme Name: BaroSports TV
 Theme URI: https://barosportstv.com/
 Author: BaroSports TV
 Description: 바로스포츠티비 커스텀 테마. Arena Live 정적 사이트의 디자인을 그대로 이식했다. 디자인 토큰의 원본은 assets/theme.js 이며, 스타일은 assets/tailwind.css (빌드본) + assets/app.css 가 담당한다. 이 파일은 테마 식별용이므로 여기에 스타일을 추가하지 않는다.
-Version: 0.1.1
+Version: 0.2.0
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4

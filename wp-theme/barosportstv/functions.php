@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'BSTV_VERSION', '0.1.1' );
+define( 'BSTV_VERSION', '0.2.0' );
 
 /**
  * 파일 수정 시각을 버전으로 쓴다. 파일이 없으면 테마 버전으로 떨어진다.
