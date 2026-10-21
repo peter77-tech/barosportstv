@@ -1,0 +1,89 @@
+/* 워드프레스 전용 스타일.
+ *
+ * app.css 를 고치지 않는 이유: app.css 는 정적 사이트와 공유하는 파일이다.
+ * 여기에는 "워드프레스이기 때문에 필요한 것"만 넣는다 — 에디터가 만드는
+ * 마크업(본문 서식, 정렬, 캡션)이 전부다. 디자인 토큰은 여기 두지 않는다.
+ */
+
+/* ── 층별 폭 ── 2026-09-04
+ * 텍스트는 읽기 폭(65ch)으로 묶고, 데이터 영역과 표는 컨테이너 전체 폭을 쓴다.
+ * 이전에는 .bstv-prose 자체가 65ch였고 singular.php 의 article 이 max-w-3xl(768px)이라
+ * 데이터 자리(P07-009 §3-2 섹션 2 「진행 중 경기」 = 최대 전환 지점)까지 700px 로 묶였다.
+ * 경기 카드가 2개밖에 들어가지 않는 폭이었다.
+ * 🔴 max-w-3xl 은 모바일에 영향이 없다 — 데스크톱 전용 제약이었다.
+ * 🔴 폭 단위로 ch 를 쓰지 않는다 — ch 는 font-size 에 비례하므로 h2(1.5rem)의 65ch 가
+ * 문단(1rem)의 65ch 보다 1.5배 넓어져 제목이 문단보다 왼쪽으로 튀어나온다.
+ * rem 고정값을 쓴다.
+ */
+:root { --bstv-readw: 54rem; }   /* 864px — 한국어 본문 가독 폭 */
+
+.bstv-readwidth { max-width: var(--bstv-readw); margin-inline: auto; }
+
+/* ── 본문 서식 ── 에디터가 만든 <p><h2><ul> 등에 붙는다 */
+.bstv-prose { max-width: none; }
+.bstv-prose > * { max-width: var(--bstv-readw); margin-inline: auto; }
+.bstv-prose > * + * { margin-top: 1.15em; }
+
+/* 데이터 자리만 전체 폭을 쓴다 — 경기 카드 그리드가 들어올 자리다.
+ * 🔴 표는 제외한다 (2026-09-04 BD 지적) — 표는 본문의 일부이고 읽으면서 참조하는 것이므로
+ * 텍스트 폭에 맞춘다. 전체 폭으로 벌리면 3열짜리 표에서 셀 안 여백만 과해지고
+ * 본문 흐름에서 표만 튀어나와 보인다. */
+.bstv-prose > [data-bstv-section] { max-width: none; }
+
+.bstv-prose h2,
+.bstv-prose h3 {
+  font-family: var(--bstv-font-headline, inherit);
+  font-weight: 700;
+  line-height: 1.3;
+  margin-top: 2em;
+  text-wrap: balance;
+}
+.bstv-prose h2 { font-size: 1.5rem; }
+.bstv-prose h3 { font-size: 1.2rem; }
+
+.bstv-prose a {
+  color: #E85110;                 /* hermes-orange — theme.js 와 같은 값 */
+  text-underline-offset: 3px;
+  text-decoration: underline;
+}
+.bstv-prose a:hover { opacity: .85; }
+
+.bstv-prose ul,
+.bstv-prose ol { padding-left: 1.35em; }
+.bstv-prose ul { list-style: disc; }
+.bstv-prose ol { list-style: decimal; }
+.bstv-prose li + li { margin-top: .4em; }
+
+.bstv-prose blockquote {
+  border-left: 3px solid #E85110;
+  padding-left: 1em;
+  font-style: normal;
+}
+
+.bstv-prose img,
+.bstv-prose figure { max-width: 100%; height: auto; }
+/* 🔴 위 규칙(.bstv-prose figure)이 특이도 0,1,1 로 .bstv-prose > * (0,1,0) 을 덮는다.
+ * figure(표·이미지)를 본문 폭에 묶으려면 같은 특이도로 뒤에 다시 지정해야 한다. */
+.bstv-prose > figure { max-width: var(--bstv-readw); margin-inline: auto; }
+.bstv-prose figcaption { font-size: .85rem; opacity: .75; margin-top: .5em; }
+
+/* 표는 좁은 화면에서 페이지를 밀지 않고 자기 안에서 가로 스크롤한다 */
+.bstv-prose table { width: 100%; border-collapse: collapse; }
+.bstv-prose > table,
+.bstv-prose .wp-block-table { overflow-x: auto; display: block; }
+.bstv-prose th,
+.bstv-prose td { border: 1px solid currentColor; border-color: color-mix(in srgb, currentColor 20%, transparent); padding: .5em .7em; }
+
+/* ── 구텐베르크 정렬 ── */
+.alignwide  { max-width: min(100%, 68rem); margin-inline: auto; }
+.alignfull  { max-width: none; margin-inline: calc(50% - 50vw); }
+.alignleft  { float: left;  margin: 0 1.25em 1em 0; }
+.alignright { float: right; margin: 0 0 1em 1.25em; }
+.aligncenter{ margin-inline: auto; display: block; }
+
+/* ── 접근성 ── 워드프레스 관례 클래스 */
+.screen-reader-text {
+  position: absolute; width: 1px; height: 1px;
+  padding: 0; margin: -1px; overflow: hidden;
+  clip-path: inset(50%); white-space: nowrap; border: 0;
+}
