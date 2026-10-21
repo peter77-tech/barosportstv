@@ -116,6 +116,17 @@ check( 'jsonld: 최대 100건', 100 === count( $ld['itemListElement'] ) );
 check( 'jsonld: SportsEvent', 'SportsEvent' === $ld['itemListElement'][0]['item']['@type'] );
 check( 'jsonld: kickoff 없는 행 제외', '홈 vs 원정' === $ld['itemListElement'][0]['item']['name'] && '2026-10-21T10:05:00.000Z' === $ld['itemListElement'][0]['item']['startDate'] );
 
+/* ── template_globals ──────────────────────────────────
+ * 페이지 템플릿은 WordPress 가 전역 범위에서 include 한다. 거기서 $page 같은 이름을 쓰면
+ * the_post() → setup_postdata() 가 덮어써 목록이 통째로 사라진다(검토에서 실제로 잡힌 결함). */
+$reserved = array( 'page', 'pages', 'post', 'posts', 'more', 'numpages', 'multipage', 'wp_query', 'wp', 'id', 'authordata', 'currentday', 'currentmonth', 'paged', 'year', 'name', 'order', 's', 'm', 'p', 'w', 'cat', 'tag', 'day' );
+foreach ( array( 'page-templates/schedule.php', 'template-parts/schedule-row.php' ) as $tpl ) {
+	$src = file_get_contents( __DIR__ . '/../../wp-theme/barosportstv/' . $tpl );
+	preg_match_all( '/\$([A-Za-z_][A-Za-z0-9_]*)\s*=(?!=)/', $src, $m );
+	$hit = array_values( array_intersect( array_unique( $m[1] ), $reserved ) );
+	check( "template_globals: {$tpl} 가 WordPress 전역 이름에 쓰지 않는다" . ( $hit ? ' (' . implode( ',', $hit ) . ')' : '' ), ! $hit );
+}
+
 /* ── 데이터 받기·저장 (WordPress 스텁) ─────────────── */
 require __DIR__ . '/data.php';
 

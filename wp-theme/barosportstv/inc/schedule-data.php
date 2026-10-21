@@ -37,45 +37,86 @@ function bstv_schedule_fetch_json( $url ) {
 /**
  * index 와 5일치를 모두 받아, 전부 정상일 때만 한꺼번에 바꾼다.
  */
-function bstv_schedule_refresh() {
-	// 크론과 첫 방문이 겹쳐도 한 번만 받는다
-	if ( get_transient( 'bstv_schedule_lock' ) ) {
+/**
+ * 잠금 — 크론과 첫 방문이 겹쳐도 한 번만 받는다.
+ * add_option 은 INSERT 라 이미 있으면 실패한다(원자적). get→set 두 번으로 하면 그 사이에 둘 다 통과한다.
+ * 받기는 최대 30초(6건 × 5초)라 120초가 넘은 잠금은 죽은 실행의 것으로 보고 넘어간다.
+ *
+ * @return string|false 내 잠금 값 (풀 때 내 것인지 확인하는 데 쓴다)
+ */
+function bstv_schedule_lock() {
+	$mine = uniqid( '', true ) . '|' . time();
+	if ( add_option( 'bstv_schedule_lock', $mine, '', 'no' ) ) {
+		return $mine;
+	}
+	$held = (string) get_option( 'bstv_schedule_lock' );
+	$at   = (int) substr( strrchr( $held, '|' ), 1 );
+	if ( time() - $at <= 120 ) {
 		return false;
 	}
-	set_transient( 'bstv_schedule_lock', 1, MINUTE_IN_SECONDS );
+	delete_option( 'bstv_schedule_lock' );
+	return add_option( 'bstv_schedule_lock', $mine, '', 'no' ) ? $mine : false;
+}
+
+function bstv_schedule_unlock( $mine ) {
+	// 내가 오래 걸려 남이 잠금을 넘겨받았다면 그 잠금은 지우지 않는다
+	if ( get_option( 'bstv_schedule_lock' ) === $mine ) {
+		delete_option( 'bstv_schedule_lock' );
+	}
+}
+
+function bstv_schedule_refresh() {
+	$mine = bstv_schedule_lock();
+	if ( false === $mine ) {
+		return false;
+	}
 
 	try {
-		$base  = bstv_schedule_source();
-		$index = bstv_schedule_fetch_json( $base . 'index.json' );
-		if ( ! bstv_schedule_valid_index( $index ) ) {
+		$ok = bstv_schedule_refresh_locked();
+	} finally {
+		bstv_schedule_unlock( $mine );
+	}
+
+	/* 실패하면 5분간 방문자 경로(bstv_schedule_ensure)에서 다시 받지 않는다.
+	   이 페이지는 캐시를 끄므로, 막지 않으면 GitHub 이 느리거나 데이터가 깨진 동안
+	   방문자마다 최대 30초씩 기다리며 1~2MB 를 받는다. 크론은 이 표시를 보지 않는다. */
+	if ( $ok ) {
+		delete_transient( 'bstv_schedule_fail' );
+	} else {
+		set_transient( 'bstv_schedule_fail', 1, 5 * MINUTE_IN_SECONDS );
+	}
+	return $ok;
+}
+
+function bstv_schedule_refresh_locked() {
+	$base  = bstv_schedule_source();
+	$index = bstv_schedule_fetch_json( $base . 'index.json' );
+	if ( ! bstv_schedule_valid_index( $index ) ) {
+		return false;
+	}
+
+	$days = array();
+	foreach ( $index['days'] as $date ) {
+		$day = bstv_schedule_fetch_json( $base . 'day-' . $date . '.json' );
+		if ( ! bstv_schedule_valid_day( $day, $date ) ) {
 			return false;
 		}
-
-		$days = array();
-		foreach ( $index['days'] as $date ) {
-			$day = bstv_schedule_fetch_json( $base . 'day-' . $date . '.json' );
-			if ( ! bstv_schedule_valid_day( $day, $date ) ) {
-				return false;
-			}
-			$days[ $date ] = $day;
-		}
-
-		$old = bstv_schedule_meta();
-		foreach ( $days as $date => $day ) {
-			update_option( 'bstv_schedule_day_' . $date, $day, false );
-		}
-		update_option( 'bstv_schedule_meta', $index, false );
-
-		// 지난 날짜는 지운다 — 남겨 두면 옵션 테이블에 하루 수백 KB씩 쌓인다
-		if ( $old && ! empty( $old['days'] ) ) {
-			foreach ( array_diff( $old['days'], $index['days'] ) as $gone ) {
-				delete_option( 'bstv_schedule_day_' . $gone );
-			}
-		}
-		return true;
-	} finally {
-		delete_transient( 'bstv_schedule_lock' );
+		$days[ $date ] = $day;
 	}
+
+	$old = bstv_schedule_meta();
+	foreach ( $days as $date => $day ) {
+		update_option( 'bstv_schedule_day_' . $date, $day, false );
+	}
+	update_option( 'bstv_schedule_meta', $index, false );
+
+	// 지난 날짜는 지운다 — 남겨 두면 옵션 테이블에 하루 수백 KB씩 쌓인다
+	if ( $old && ! empty( $old['days'] ) ) {
+		foreach ( array_diff( $old['days'], $index['days'] ) as $gone ) {
+			delete_option( 'bstv_schedule_day_' . $gone );
+		}
+	}
+	return true;
 }
 
 function bstv_schedule_meta() {
@@ -92,7 +133,8 @@ function bstv_schedule_day( $date ) {
  * 한 번도 받은 적이 없으면 지금 받는다 (테마를 처음 켠 직후의 첫 방문).
  */
 function bstv_schedule_ensure() {
-	if ( ! bstv_schedule_meta() ) {
+	// 방금 실패했으면 5분은 기다린다 — 그동안은 크론만 다시 시도한다
+	if ( ! bstv_schedule_meta() && ! get_transient( 'bstv_schedule_fail' ) ) {
 		bstv_schedule_refresh();
 	}
 }
