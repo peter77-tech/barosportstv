@@ -114,7 +114,10 @@ jobs:
         # 공개 주소로 나가면 안 된다. 필요한 것만 골라 담는다.
         run: |
           mkdir -p _site
-          cp *.html CNAME _site/
+          # CNAME 은 넣지 않는다 — barosportstv.com 은 워드프레스(Cloudways)다.
+          # 넣으면 Pages 가 그 도메인으로 넘기려 해 github.io 데이터 주소가 끊길 수 있고,
+          # 워드프레스가 일정 데이터를 자기 자신에게서 찾다 404 를 받는다.
+          cp *.html _site/
           cp -r assets data _site/
           rm -f "_site/assets/img/출처.md"
           echo "담은 것:" && ls -la _site/

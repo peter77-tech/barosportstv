@@ -1,5 +1,11 @@
 # barosportstv.com 연결 — BD 가 직접 해야 하는 것
 
+> ⚠️ **2026-10 부로 이 문서의 A 레코드 절차는 쓰지 않습니다.**
+> barosportstv.com 은 Cloudways 의 워드프레스(앞단 Cloudflare)입니다. GitHub Pages 는
+> 경기 데이터 보관소(`peter77-tech.github.io/barosportstv/data/`)이며 커스텀 도메인을 쓰지 않습니다.
+> 저장소의 `CNAME` 과 배포 산출물의 CNAME 은 지웠습니다 — **되살리지 마십시오.**
+> 아래는 당시 기록으로 남겨 둡니다.
+
 > AI 가 대신 할 수 없는 부분입니다. GitHub 설정 화면과 도메인 등록기관 관리 화면에서
 > 직접 넣어야 합니다.
 >
