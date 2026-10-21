@@ -64,6 +64,7 @@ require_once get_theme_file_path( 'inc/nav-walkers.php' );
  */
 require_once get_theme_file_path( 'inc/schedule-view.php' );
 require_once get_theme_file_path( 'inc/schedule-data.php' );
+require_once get_theme_file_path( 'inc/schedule-page.php' );
 
 /**
  * 스타일·스크립트.

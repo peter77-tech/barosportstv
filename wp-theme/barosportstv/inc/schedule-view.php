@@ -120,7 +120,8 @@ function bstv_schedule_sanitize_request( array $get, array $days, array $leagues
 		$l = 'top';
 	}
 
-	$p = isset( $get['p'] ) && is_string( $get['p'] ) && ctype_digit( $get['p'] ) ? (int) $get['p'] : 1;
+	// 쪽 번호는 ?pg= 다. ?p= 는 WordPress 가 글 ID 로 가로채 다른 글로 보낸다.
+	$p = isset( $get['pg'] ) && is_string( $get['pg'] ) && ctype_digit( $get['pg'] ) ? (int) $get['pg'] : 1;
 	if ( $p < 1 ) {
 		$p = 1;
 	}
@@ -150,6 +151,27 @@ function bstv_schedule_is_stale( $generated_at, $now, $max = BSTV_SCHEDULE_STALE
 		return true;
 	}
 	return ( $now - $t ) > $max;
+}
+
+/**
+ * 한국 날짜 기준 「오늘」. 서버 시간대 설정과 무관하게 계산한다(한국은 서머타임이 없다).
+ */
+function bstv_schedule_kst_today( $now ) {
+	return gmdate( 'Y-m-d', $now + 9 * 3600 );
+}
+
+/**
+ * 날짜 칩 — 지난 날짜는 뺀다. 데이터가 늦어 전부 지났으면 그대로 둔다
+ * (빈 화면보다 오래됨 안내와 함께 마지막 데이터를 보여 주는 편이 낫다).
+ */
+function bstv_schedule_visible_days( array $days, $today ) {
+	$ahead = array();
+	foreach ( $days as $d ) {
+		if ( strcmp( $d, $today ) >= 0 ) {
+			$ahead[] = $d;
+		}
+	}
+	return $ahead ? $ahead : array_values( $days );
 }
 
 /**

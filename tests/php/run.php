@@ -60,11 +60,15 @@ $days    = array( '2026-10-21', '2026-10-22', '2026-10-23' );
 $leagues = array_keys( BSTV_SCHEDULE_LEAGUES );
 check(
 	'sanitize_request: 이상한 값은 기본값',
-	array( 'd' => '2026-10-21', 'l' => 'top', 'p' => 1 ) === bstv_schedule_sanitize_request( array( 'd' => '1999-01-01', 'l' => '<script>', 'p' => '-3' ), $days, $leagues, '2026-10-21' )
+	array( 'd' => '2026-10-21', 'l' => 'top', 'p' => 1 ) === bstv_schedule_sanitize_request( array( 'd' => '1999-01-01', 'l' => '<script>', 'pg' => '-3' ), $days, $leagues, '2026-10-21' )
 );
 check(
-	'sanitize_request: 정상 값은 그대로',
-	array( 'd' => '2026-10-22', 'l' => 'nba', 'p' => 2 ) === bstv_schedule_sanitize_request( array( 'd' => '2026-10-22', 'l' => 'nba', 'p' => '2' ), $days, $leagues, '2026-10-21' )
+	'sanitize_request: 정상 값은 그대로 (쪽은 ?pg= — ?p= 는 WordPress 의 글 ID 다)',
+	array( 'd' => '2026-10-22', 'l' => 'nba', 'p' => 2 ) === bstv_schedule_sanitize_request( array( 'd' => '2026-10-22', 'l' => 'nba', 'pg' => '2' ), $days, $leagues, '2026-10-21' )
+);
+check(
+	'sanitize_request: ?p= 는 쪽 번호로 읽지 않는다',
+	1 === bstv_schedule_sanitize_request( array( 'p' => '2' ), $days, $leagues, '2026-10-21' )['p']
 );
 check(
 	'sanitize_request: 오늘이 목록에 없으면 첫 날',
@@ -72,7 +76,7 @@ check(
 );
 check(
 	'sanitize_request: 배열로 온 값도 기본값',
-	array( 'd' => '2026-10-21', 'l' => 'top', 'p' => 1 ) === bstv_schedule_sanitize_request( array( 'd' => array( 'x' ), 'l' => array( 'y' ), 'p' => array( 1 ) ), $days, $leagues, '2026-10-21' )
+	array( 'd' => '2026-10-21', 'l' => 'top', 'p' => 1 ) === bstv_schedule_sanitize_request( array( 'd' => array( 'x' ), 'l' => array( 'y' ), 'pg' => array( 1 ) ), $days, $leagues, '2026-10-21' )
 );
 
 /* ── page ──────────────────────────────────────────── */
@@ -94,6 +98,12 @@ check( 'is_stale: 해석 불가', bstv_schedule_is_stale( 'garbage', $now ) );
 check( 'day_label: 오늘', '오늘' === bstv_schedule_day_label( '2026-10-21', '2026-10-21' ) );
 check( 'day_label: 내일', '내일' === bstv_schedule_day_label( '2026-10-22', '2026-10-21' ) );
 check( 'day_label: 요일', '토' === bstv_schedule_day_label( '2026-10-24', '2026-10-21' ) );
+
+/* ── kst_today · visible_days ──────────────────────── */
+check( 'kst_today: UTC 15:30 은 한국 다음 날', '2026-10-22' === bstv_schedule_kst_today( strtotime( '2026-10-21T15:30:00Z' ) ) );
+check( 'kst_today: UTC 14:59 는 같은 날', '2026-10-21' === bstv_schedule_kst_today( strtotime( '2026-10-21T14:59:00Z' ) ) );
+check( 'visible_days: 지난 날짜는 뺀다', array( '2026-10-21', '2026-10-22' ) === bstv_schedule_visible_days( array( '2026-10-20', '2026-10-21', '2026-10-22' ), '2026-10-21' ) );
+check( 'visible_days: 전부 지났으면 그대로 둔다(오래됨 안내와 함께 보여 준다)', array( '2026-10-18', '2026-10-19' ) === bstv_schedule_visible_days( array( '2026-10-18', '2026-10-19' ), '2026-10-21' ) );
 
 /* ── jsonld ────────────────────────────────────────── */
 $list = array();
