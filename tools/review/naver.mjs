@@ -51,16 +51,25 @@ export function parseNaverSchedule(html) {
   return out;
 }
 
-const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+const realSleep = (ms) => new Promise(r => setTimeout(r, ms));
 
-/** 리그의 질의어마다 네이버 검색 결과를 받아 합친다(검색어 중복 제거). HTTP 오류는 던진다. */
-export async function fetchNaverEntries(league, fetchImpl = fetch) {
+/* 네이버로 나가는 모든 요청 사이 GAP_MS 를 지킨다. 호출(리그) 사이에도 이어지도록 모듈 전역으로 마지막 요청 시각을 둔다. */
+let lastRequestAt = -Infinity;
+
+/** 테스트용: 전역 간격 기록을 지운다. */
+export function resetNaverThrottle() { lastRequestAt = -Infinity; }
+
+/** 리그의 질의어마다 네이버 검색 결과를 받아 합친다(검색어 중복 제거). HTTP 오류는 던진다.
+    opts.sleep·opts.now 는 테스트에서 시계를 바꿔 끼우는 용도. */
+export async function fetchNaverEntries(league, fetchImpl = fetch, { sleep = realSleep, now = Date.now } = {}) {
   const cfg = LEAGUES[league];
   if (!cfg) throw new Error(`알 수 없는 리그: ${league}`);
   const merged = [];
   const seen = new Set();
   for (let i = 0; i < cfg.naverQueries.length; i++) {
-    if (i > 0) await sleep(GAP_MS);
+    const wait = GAP_MS - (now() - lastRequestAt);
+    if (wait > 0) await sleep(wait);
+    lastRequestAt = now();
     const url = `https://search.naver.com/search.naver?query=${encodeURIComponent(cfg.naverQueries[i])}`;
     const res = await fetchImpl(url, { headers: { 'User-Agent': UA, 'Accept-Language': 'ko-KR,ko;q=0.9' } });
     if (!res.ok) throw new Error(`네이버 ${res.status}: ${cfg.naverQueries[i]}`);

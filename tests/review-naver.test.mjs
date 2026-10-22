@@ -4,7 +4,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
-import { parseNaverSchedule, fetchNaverEntries, pairQuery, splitFullNames } from '../tools/review/naver.mjs';
+import { parseNaverSchedule, fetchNaverEntries, resetNaverThrottle, pairQuery, splitFullNames } from '../tools/review/naver.mjs';
 import { ALIASES } from '../tools/review/aliases.mjs';
 import { LEAGUES } from '../tools/review/config.mjs';
 
@@ -121,7 +121,15 @@ test('aliases_cover_every_team_seen_in_fixtures', () => {
   assert.deepEqual(Object.keys(ALIASES).sort(), Object.keys(LEAGUES).sort());
 });
 
+/* 가짜 시계: sleep 은 시계만 앞으로 돌린다 (실제로 기다리지 않는다). */
+function fakeClock() {
+  const c = { t: 1_000_000, now: () => c.t, sleep: async (ms) => { c.t += ms; } };
+  return c;
+}
+
 test('fetch_merges_queries_and_dedupes', async () => {
+  resetNaverThrottle();
+  const clock = fakeClock();
   const calls = [];
   const pages = {
     '프로야구 일정': fixture('naver-kbo.html'),
@@ -132,16 +140,27 @@ test('fetch_merges_queries_and_dedupes', async () => {
   };
   const fake = async (url, init) => {
     const q = decodeURIComponent(new URL(url).searchParams.get('query'));
-    calls.push({ q, t: Date.now(), ua: init?.headers?.['User-Agent'] });
+    calls.push({ q, t: clock.now(), ua: init?.headers?.['User-Agent'] });
     return { ok: true, status: 200, text: async () => pages[q] };
   };
-  const e = await fetchNaverEntries('kbo', fake);
+  const e = await fetchNaverEntries('kbo', fake, clock);
   assert.deepEqual(calls.map(c => c.q), LEAGUES.kbo.naverQueries);
   assert.ok(calls.every(c => /Chrome/.test(c.ua)));
-  for (let i = 1; i < calls.length; i++) assert.ok(calls[i].t - calls[i - 1].t >= 650, '요청 간격 700ms');
+  for (let i = 1; i < calls.length; i++) assert.ok(calls[i].t - calls[i - 1].t >= 700, '요청 간격 700ms');
   assert.equal(e.length, 5 + 1 + 3);
   assert.equal(new Set(e.map(x => x.query)).size, e.length);
 });
+test('fetch_gap_holds_across_consecutive_calls', async () => {
+  resetNaverThrottle();
+  const clock = fakeClock();
+  const times = [];
+  const fake = async () => { times.push(clock.now()); return { ok: true, status: 200, text: async () => fixture('naver-kl1.html') }; };
+  await fetchNaverEntries('kl1', fake, clock);     // 질의어 1개짜리 리그를 연달아
+  await fetchNaverEntries('kbl', fake, clock);
+  assert.equal(times.length, 2);
+  assert.ok(times[1] - times[0] >= 700, '호출 사이에도 700ms');
+});
 test('fetch_http_error_throws', async () => {
-  await assert.rejects(() => fetchNaverEntries('kl1', async () => ({ ok: false, status: 503, text: async () => '' })), /503/);
+  resetNaverThrottle();
+  await assert.rejects(() => fetchNaverEntries('kl1', async () => ({ ok: false, status: 503, text: async () => '' }), fakeClock()), /503/);
 });
