@@ -126,3 +126,66 @@ test('timeout_aborts', async () => {
     fetchImpl: (url, o) => new Promise((_, rej) => o.signal.addEventListener('abort', () => rej(new Error('aborted')))) });
   await assert.rejects(() => wp.findBySlug('x'), /GET \/wp-json\/wp\/v2\/posts.*(timeout|aborted)/);
 });
+
+const mk = (fetchImpl, extra = {}) => createWp({ url: 'https://example.test', user: 'u', appPassword: PASS, fetchImpl, ...extra });
+
+test('timeout_covers_body_read', async () => {
+  const wp = mk(async () => ({ ok: true, status: 200, json: () => new Promise(() => {}) }), { timeoutMs: 30 });
+  await assert.rejects(() => wp.findBySlug('x'), (e) => {
+    assert.match(e.message, /^WP GET \/wp-json\/wp\/v2\/posts 실패: timeout/);
+    assert.ok(!e.message.includes(PASS));
+    return true;
+  });
+});
+
+test('malformed_json_gives_clean_message', async () => {
+  const wp = mk(async () => ({ ok: true, status: 200, json: async () => JSON.parse(`{"secret":${PASS}`) }));
+  await assert.rejects(() => wp.findBySlug('x'), (e) => {
+    assert.equal(e.message, 'WP GET /wp-json/wp/v2/posts 실패: invalid JSON (HTTP 200)');
+    return true;
+  });
+});
+
+test('network_error_message_has_no_password', async () => {
+  const wp = mk(async () => { throw Object.assign(new Error(`connect failed for bot:${PASS}`), { code: 'ECONNRESET' }); });
+  await assert.rejects(() => wp.findBySlug('x'), (e) => {
+    assert.equal(e.message, 'WP GET /wp-json/wp/v2/posts 실패: ECONNRESET');
+    assert.ok(!e.message.includes(PASS));
+    return true;
+  });
+});
+
+test('related_reviews_empty_tags_no_request', async () => {
+  const { calls, wp } = fake([() => res(200, [])]);
+  assert.deepEqual(await wp.relatedReviews([], 1), []);
+  assert.equal(calls.length, 0);
+});
+
+test('related_reviews_exclude_param_and_no_category', async () => {
+  const { calls, wp } = fake([
+    (c) => c.url.includes('/categories?') && res(200, []),
+    (c) => c.url.includes('/posts?') && res(200, [{ id: 1, status: 'publish', link: 'https://example.test/a/', title: { rendered: 'A' } }]),
+  ]);
+  assert.equal((await wp.relatedReviews([5], 9, 2)).length, 1);
+  const q = calls.find((c) => c.url.includes('/posts?')).url;
+  assert.match(q, /exclude=9/);
+  assert.doesNotMatch(q, /categories=/);
+});
+
+test('upload_image_rejects_bad_filename', async () => {
+  const { calls, wp } = fake([() => res(201, { id: 1 })]);
+  for (const bad of ['a"b.jpg', 'a b.jpg', '../x.jpg', '경기.jpg', 'a\r\nX: y.jpg', '']) {
+    await assert.rejects(() => wp.uploadImage(Buffer.from([1]), bad, 'alt'), /filename/);
+  }
+  assert.equal(calls.length, 0);
+});
+
+test('ensure_tags_case_insensitive_match', async () => {
+  const { calls, wp } = fake([(c) => c.url.includes('/tags?') && c.method === 'GET' && res(200, [{ id: 3, name: 'Lg' }])]);
+  assert.deepEqual(await wp.ensureTags(['LG']), [3]);
+  assert.equal(calls.filter((c) => c.method === 'POST').length, 0);
+});
+
+test('rejects_non_https_base_url', () => {
+  assert.throws(() => createWp({ url: 'http://example.test', user: 'u', appPassword: 'p' }), /https/);
+});
