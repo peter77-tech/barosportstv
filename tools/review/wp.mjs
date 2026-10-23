@@ -1,5 +1,6 @@
 // 워드프레스 REST 클라이언트. 자격증명은 헤더에만 쓰고 오류·로그에 넣지 않는다.
 const API = '/wp-json/wp/v2';
+const ALL_STATUSES = 'publish,future,draft,pending,private,trash';
 const ENTITIES = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ', hellip: '…', ndash: '–', mdash: '—', lsquo: '‘', rsquo: '’', ldquo: '“', rdquo: '”' };
 
 export function decodeEntities(s) {
@@ -67,8 +68,9 @@ export function createWp({ url, user, appPassword, fetchImpl = fetch, timeoutMs 
     return ids;
   }
 
+  /* status=any 는 휴지통(trash)을 빼므로 상태를 모두 적는다 — 휴지통으로 내린 리뷰도 「있음」이라 다시 만들지 않는다. */
   async function findBySlug(slug) {
-    const list = await call('GET', `${API}/posts`, { query: { slug, status: 'any', context: 'edit' } });
+    const list = await call('GET', `${API}/posts`, { query: { slug, status: ALL_STATUSES, context: 'edit' } });
     return list.length ? { id: list[0].id, status: list[0].status } : null;
   }
 
@@ -100,5 +102,12 @@ export function createWp({ url, user, appPassword, fetchImpl = fetch, timeoutMs 
     return { id: p.id, link: p.link };
   }
 
-  return { ensureCategory, ensureTags, findBySlug, relatedReviews, uploadImage, createPost };
+  /** 있는 글의 필드만 바꾼다 (POST /posts/{id}). */
+  async function updatePost(id, fields) {
+    if (!Number.isInteger(id) || id <= 0) throw new Error(`WP updatePost: id 는 양의 정수여야 한다: ${id}`);
+    const p = await call('POST', `${API}/posts/${id}`, { json: fields });
+    return { id: p.id, link: p.link };
+  }
+
+  return { ensureCategory, ensureTags, findBySlug, relatedReviews, uploadImage, createPost, updatePost };
 }

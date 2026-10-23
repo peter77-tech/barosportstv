@@ -12,6 +12,11 @@ import { cardText } from './image.mjs';
 
 const NAVER_TIMEOUT_MS = 30000;
 const WP_BROKEN = 'WP 쓰기 실패로 중단';
+const DUPLICATE_QUERY = '같은 검색어 중복';
+/* 원고보다 먼저 만드는 임시글(draft) 본문. 실패하면 「자동 작성 실패: …」 로 바꾼다 — 어느 쪽이든 slug 를 잡고 있어
+   다음 회차가 「있음」으로 보고 같은 경기를 다시 쓰지(AI 비용) 않는다. */
+const PLACEHOLDER_HTML = '<p>자동 작성 중 — 실패하면 이 임시글이 남는다.</p>';
+const failedHtml = (why) => `<p>자동 작성 실패: ${esc(why.length > 300 ? `${why.slice(0, 299)}…` : why)}</p>`;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 const prevDay = (key) => new Date(Date.parse(`${key}T00:00:00Z`) - DAY_MS).toISOString().slice(0, 10);
@@ -82,11 +87,23 @@ export async function runReview({
   let composed = 0;
   let categoryId = null;
   let wpBroken = false;   // 워드프레스 쓰기가 한 번 실패하면 이번 회차는 더 쓰지 않는다(같은 실패에 AI 비용·고아 미디어를 쌓지 않게)
+  const usedTitles = new Set();   // 이번 회차에 짝지은 제목(리그 + 네이버 검색어). 같은 경기가 원본에 두 번 오면 둘째는 건너뛴다
 
   const record = (o) => {
     outcomes.push(o);
     log(`${LEAGUES[o.league].titleName} ${o.gameKey} → ${o.status}${o.reason ? ` (${o.reason})` : ''}`);
   };
+
+  /* 임시글을 「자동 작성 실패」로 바꾼다(draft 그대로). 그 쓰기마저 실패하면 워드프레스가 아픈 것이므로 회차를 멈춘다. */
+  async function markFailed(postId, why) {
+    try {
+      await wp.updatePost(postId, { content: failedHtml(why) });
+      return why;
+    } catch (e) {
+      wpBroken = true;
+      return `${why} — 임시글 #${postId} 에 실패 표시도 못 했다: ${message(e)}`;
+    }
+  }
 
   async function reviewGame(league, game, entries, src) {
     const titleName = LEAGUES[league].titleName;
@@ -95,32 +112,37 @@ export async function runReview({
     if (wpBroken) return { ...out, status: 'skip', reason: WP_BROKEN };
     if (composed >= MAX_POSTS_PER_RUN) return { ...out, status: 'skip', reason: `회차 상한 ${MAX_POSTS_PER_RUN}편 — 다음 회차에` };
     try {
+      const entry = pairQuery(game, entries);
+      const title = entry ? titleFor(league, entry.query) : null;
       if (!dry) {
         const found = await wp.findBySlug(slug);
-        if (found) return { ...out, status: 'exists', reason: `이미 있음 (${found.status})`, postId: found.id };
+        if (found) {
+          if (title) usedTitles.add(title);   // 이미 있는 글의 제목도 이번 회차에서 다시 쓰지 않는다
+          return { ...out, status: 'exists', reason: `이미 있음 (${found.status})`, postId: found.id };
+        }
       }
-      const entry = pairQuery(game, entries);
       if (!entry) {
         return game.date < yesterday
           ? { ...out, status: 'giveup', reason: '네이버 검색어 짝 없음 — 포기' }
           : { ...out, status: 'skip', reason: '네이버 검색어 짝 없음 — 다음 회차에 다시' };
       }
-      out.title = titleFor(league, entry.query);
+      if (usedTitles.has(title)) return { ...out, status: 'skip', reason: DUPLICATE_QUERY };
+      usedTitles.add(title);
+      out.title = title;
       const raw = await src.fetchFacts(game);
       const full = splitFullNames(entry, game);
       const facts = { ...raw, home: { ...raw.home, full: full.home }, away: { ...raw.away, full: full.away } };
       /* 대표 이미지를 원고보다 먼저 만든다 — 글꼴에 없는 글자 같은 실패로 AI 비용을 버리지 않도록. */
       const card = await image(facts);
-
-      composed += 1;
-      const r = await compose(facts, out.title, out.title);
-      out.tokens = tokensOf(r.attempts);
-      if (!r.doc) throw new Error('AI 원고를 JSON 으로 한 번도 받지 못했다 — 글을 만들지 않는다');
-      const status = r.status === 'publish' ? 'publish' : 'draft';
-      if (status === 'draft') out.reason = draftReason(r.attempts);
       const alt = cardText(facts).alt;
 
       if (dry) {
+        composed += 1;
+        const r = await compose(facts, out.title, out.title);
+        out.tokens = tokensOf(r.attempts);
+        if (!r.doc) throw new Error('AI 원고를 JSON 으로 한 번도 받지 못했다 — 글을 만들지 않는다');
+        const status = r.status === 'publish' ? 'publish' : 'draft';
+        if (status === 'draft') out.reason = draftReason(r.attempts);
         const content = renderPost(facts, r.doc, internalLinks(facts, []));
         await mkdir(previewDir, { recursive: true });
         await writeFile(join(previewDir, `${game.gameKey}.jpg`), card);
@@ -129,17 +151,52 @@ export async function runReview({
         return { ...out, status };
       }
 
-      /* 준비(카테고리·태그·관련 리뷰)를 다 마친 뒤 이미지를 올린다 — 업로드 뒤에는 createPost 하나뿐이라 고아 미디어가 생길 틈이 좁다. */
-      let post;
+      /* 원고(AI 비용)보다 먼저 slug 를 임시글로 잡는다. 여기서 워드프레스 쓰기가 실패하면 AI 를 부르기 전에 회차를 멈춘다. */
+      let tags;
       try {
         if (categoryId == null) categoryId = await wp.ensureCategory();
-        const tags = await wp.ensureTags([titleName, facts.home.name, facts.away.name]);
-        const related = await wp.relatedReviews(tags, null);
-        const content = renderPost(facts, r.doc, internalLinks(facts, related));
+        tags = await wp.ensureTags([titleName, facts.home.name, facts.away.name]);
+        const placeholder = await wp.createPost({
+          title: out.title, slug, status: 'draft', content: PLACEHOLDER_HTML, categories: [categoryId], tags,
+        });
+        out.postId = placeholder.id;
+      } catch (e) {
+        wpBroken = true;
+        throw e;
+      }
+
+      composed += 1;
+      let r;
+      try {
+        r = await compose(facts, out.title, out.title);
+      } catch (e) {
+        throw new Error(await markFailed(out.postId, `AI 원고 호출 실패: ${message(e)}`));
+      }
+      out.tokens = tokensOf(r.attempts);
+      if (!r.doc) throw new Error(await markFailed(out.postId, 'AI 원고를 JSON 으로 한 번도 받지 못했다 — 글을 만들지 않는다'));
+      const status = r.status === 'publish' ? 'publish' : 'draft';
+      if (status === 'draft') out.reason = draftReason(r.attempts);
+
+      let related;
+      try {
+        related = await wp.relatedReviews(tags, out.postId);
+      } catch (e) {
+        wpBroken = true;
+        throw new Error(await markFailed(out.postId, `관련 리뷰 읽기 실패: ${message(e)}`));
+      }
+      /* 그리기 실패는 이 경기만의 오류다(워드프레스 탓이 아니므로 회차를 멈추지 않는다). */
+      let content;
+      try {
+        content = renderPost(facts, r.doc, internalLinks(facts, related));
+      } catch (e) {
+        throw new Error(await markFailed(out.postId, `본문 그리기 실패: ${message(e)}`));
+      }
+
+      /* 이미지를 올린 뒤에는 updatePost 하나뿐이라 고아 미디어가 생길 틈이 좁다. */
+      try {
         const mediaId = await wp.uploadImage(card, `${slug}.jpg`, alt);
-        post = await wp.createPost({
-          title: out.title, slug, status, content,
-          categories: [categoryId], tags, featured_media: mediaId,
+        await wp.updatePost(out.postId, {
+          content, status, featured_media: mediaId, title: out.title,
           meta: {
             rank_math_description: r.doc.meta_description,
             rank_math_focus_keyword: entry.query,
@@ -148,9 +205,9 @@ export async function runReview({
         });
       } catch (e) {
         wpBroken = true;
-        throw e;
+        throw new Error(await markFailed(out.postId, message(e)));
       }
-      return { ...out, status, postId: post.id };
+      return { ...out, status };
     } catch (e) {
       errors.push(`${titleName} ${game.gameKey}: ${message(e)}`);
       return { ...out, status: 'error', reason: message(e) };
@@ -230,7 +287,7 @@ export function parseArgs(argv) {
     else if (a === '--since') opts.since = value(++i, '--since');
     else throw new Error(`알 수 없는 인자: ${a}`);
   }
-  if (opts.only != null && !LEAGUES[opts.only]) throw new Error(`--league 는 ${Object.keys(LEAGUES).join('|')} 중 하나: ${opts.only}`);
+  if (opts.only != null && !Object.hasOwn(LEAGUES, opts.only)) throw new Error(`--league 는 ${Object.keys(LEAGUES).join('|')} 중 하나: ${opts.only}`);
   if (opts.since !== undefined && !/^\d{4}-\d{2}-\d{2}$/.test(String(opts.since))) throw new Error(`--since 는 YYYY-MM-DD: ${opts.since}`);
   return opts;
 }

@@ -3,6 +3,7 @@
 
    재시도: 네트워크 오류(fetch 실패·스트림 도중 끊김)와 서버 쪽 일시 오류(429·5xx·스트림 error 이벤트)만
    2회까지 다시 부른다. 400·401 처럼 다시 불러도 같은 오류는 바로 던진다.
+   호출 하나(응답 머리글 + 스트림 끝까지)에 전체 시간 제한을 둔다. 넘기면 요청을 끊고 네트워크 오류로 다룬다(재시도 대상).
    `fetchImpl`·`sleep` 은 테스트에서 가짜를 넣기 위해 주입받는다. */
 
 import { MODEL } from './config.mjs';
@@ -11,6 +12,7 @@ const URL_MESSAGES = 'https://api.anthropic.com/v1/messages';
 const API_VERSION = '2023-06-01';
 const RETRIES = 2;
 const BASE_WAIT_MS = 5000;
+const TIMEOUT_MS = 5 * 60 * 1000;
 
 class HttpError extends Error {
   constructor(status, message) { super(message); this.status = status; }
@@ -60,9 +62,10 @@ async function readStream(body) {
   return out;
 }
 
-async function once({ system, user, maxTokens, apiKey, fetchImpl }) {
+async function request({ system, user, maxTokens, apiKey, fetchImpl, signal }) {
   const res = await fetchImpl(URL_MESSAGES, {
     method: 'POST',
+    signal,
     headers: {
       'content-type': 'application/json',
       'x-api-key': apiKey,
@@ -83,6 +86,20 @@ async function once({ system, user, maxTokens, apiKey, fetchImpl }) {
   return readStream(res.body);
 }
 
+/* status 없는 Error 로 거절 = 재시도하는 네트워크 오류. 진 쪽(끊긴 요청)의 늦은 거절은 삼킨다. */
+async function once({ timeoutMs, ...req }) {
+  const ac = new AbortController();
+  let timer;
+  const timedOut = new Promise((_, rej) => {
+    timer = setTimeout(() => { ac.abort(); rej(new Error(`Anthropic 호출 시간 초과 ${timeoutMs}ms`)); }, timeoutMs);
+  });
+  const work = request({ ...req, signal: ac.signal });
+  work.catch(() => {});
+  try {
+    return await Promise.race([work, timedOut]);
+  } finally { clearTimeout(timer); }
+}
+
 /**
  * @returns {Promise<{ text: string, usage: object, stopReason: string|null }>}
  *   stopReason 이 'end_turn' 이 아니면(예 'max_tokens'·'refusal') 부르는 쪽이 실패로 다룬다.
@@ -92,12 +109,13 @@ export async function callClaude({
   apiKey = process.env.ANTHROPIC_API_KEY,
   fetchImpl = globalThis.fetch,
   sleep = (ms) => new Promise((r) => setTimeout(r, ms)),
+  timeoutMs = TIMEOUT_MS,
 }) {
   if (!apiKey) throw new Error('ANTHROPIC_API_KEY 가 없다');
   let wait = BASE_WAIT_MS;
   for (let attempt = 0; ; attempt += 1) {
     try {
-      return await once({ system, user, maxTokens, apiKey, fetchImpl });
+      return await once({ system, user, maxTokens, apiKey, fetchImpl, timeoutMs });
     } catch (err) {
       if (attempt >= RETRIES || !retryable(err)) throw err;
       await sleep(wait);

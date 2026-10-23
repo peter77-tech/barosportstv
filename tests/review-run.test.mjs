@@ -60,11 +60,14 @@ function deps({ games = {}, entries, listThrows = {}, composeResult, wpFound = (
     relatedReviews: wpCall('relatedReviews', () => [{ url: 'https://barosportstv.com/r1/', title: '관련 & 리뷰' }]),
     uploadImage: wpCall('uploadImage', () => 55),
     createPost: wpCall('createPost', () => ({ id: 900, link: 'https://barosportstv.com/x/' })),
+    updatePost: wpCall('updatePost', (id) => ({ id, link: 'https://barosportstv.com/x/' })),
   };
   const image = async (facts) => { calls.push(['image', facts.gameKey]); return Buffer.from('JPEG'); };
   return { calls, now, sources, naver, compose, wp, image, log: () => {} };
 }
 const named = (calls, n) => calls.filter((c) => c[0] === n);
+const at = (calls, n, pred = () => true) => calls.findIndex((c) => c[0] === n && pred(c));
+const PLACEHOLDER = '<p>자동 작성 중 — 실패하면 이 임시글이 남는다.</p>';
 const wpCalls = (calls) => calls.filter((c) => c[0].startsWith('wp.'));
 
 test('skips_before_start_date', async () => {
@@ -150,16 +153,21 @@ test('publish_order', async () => {
   const r = await runReview({ ...d, only: 'kbl' });
   for (const [g, status] of [[g1, 'publish'], [g2, 'draft']]) {
     const slug = `match-review-${g.gameKey.toLowerCase()}`;
-    const up = d.calls.findIndex((c) => c[0] === 'wp.uploadImage' && c[2] === `${slug}.jpg`);
-    const cp = d.calls.findIndex((c) => c[0] === 'wp.createPost' && c[1].slug === slug);
-    assert.ok(up >= 0 && cp > up, `${status}: 이미지 → 글 순서`);
-    const post = d.calls[cp][1];
+    const query = entryFor(g).query;
+    /* 원고보다 먼저 slug 를 임시글로 잡는다: 실패해도 다음 회차가 「있음」으로 보고 다시 쓰지 않는다 */
+    const cp = at(d.calls, 'wp.createPost', (c) => c[1].slug === slug);
+    const co = at(d.calls, 'compose', (c) => c[1] === g.gameKey);
+    const up = at(d.calls, 'wp.uploadImage', (c) => c[2] === `${slug}.jpg`);
+    const ud = d.calls.findIndex((c, i) => i > up && c[0] === 'wp.updatePost');
+    assert.ok(cp >= 0 && co > cp && up > co && ud === up + 1, `${status}: 임시글 → 원고 → 이미지 → 글 채우기 순서`);
+    const ph = d.calls[cp][1];
+    assert.deepEqual(ph, { title: titleFor('kbl', query), slug, status: 'draft', content: PLACEHOLDER, categories: [7], tags: [100, 101, 102] });
+    assert.equal(d.calls[ud][1], 900);
+    const post = d.calls[ud][2];
+    assert.deepEqual(Object.keys(post).sort(), ['content', 'featured_media', 'meta', 'status', 'title']);
     assert.equal(post.status, status);
     assert.equal(post.featured_media, 55);
-    const query = entryFor(g).query;
     assert.equal(post.title, titleFor('kbl', query));
-    assert.deepEqual(post.categories, [7]);
-    assert.deepEqual(post.tags, [100, 101, 102]);
     assert.equal(post.meta.rank_math_description, DOC.meta_description);
     assert.equal(post.meta.rank_math_focus_keyword, query);
     const ld = JSON.parse(post.meta.bstv_review_jsonld);
@@ -170,13 +178,14 @@ test('publish_order', async () => {
   }
   assert.deepEqual(named(d.calls, 'wp.ensureTags')[0][1], ['KBL', BASE.home.name, BASE.away.name]);
   assert.equal(named(d.calls, 'wp.ensureCategory').length, 1);
-  /* 글 하나에 필요한 준비(카테고리·태그·관련 리뷰)를 마친 뒤에만 이미지를 올린다 — 업로드 뒤에는 createPost 뿐 */
+  /* 글 하나에 필요한 준비(카테고리·태그·관련 리뷰)를 마친 뒤에만 이미지를 올린다 — 업로드 뒤에는 updatePost 뿐 */
   const firstUp = d.calls.findIndex((c) => c[0] === 'wp.uploadImage');
   for (const n of ['wp.ensureCategory', 'wp.ensureTags', 'wp.relatedReviews']) {
     assert.ok(d.calls.findIndex((c) => c[0] === n) < firstUp, n);
   }
   const ups = d.calls.map((c, i) => [c[0], i]).filter(([n]) => n === 'wp.uploadImage').map(([, i]) => i);
-  for (const i of ups) assert.equal(d.calls[i + 1][0], 'wp.createPost');
+  for (const i of ups) assert.equal(d.calls[i + 1][0], 'wp.updatePost');
+  assert.deepEqual(named(d.calls, 'wp.relatedReviews')[0].slice(1), [[100, 101, 102], 900]);   // 임시글 자신은 뺀다
   /* 네이버 정식명이 facts 에 채워져 compose 로 넘어간다 */
   const f = named(d.calls, 'compose')[0][4];
   assert.equal(f.home.full, '서울 삼성 삼성 썬더스');
@@ -188,14 +197,91 @@ test('publish_order', async () => {
   assert.deepEqual(r.errors, []);
 });
 
-test('doc_null_is_error_no_post_no_image', async () => {
+test('doc_null_is_error_placeholder_marked_failed_no_image', async () => {
   const g = game('kbl', '2026-10-22', '서울 삼성', '부산 KCC');
   const d = deps({ games: { kbl: [g] }, composeResult: () => ({ status: 'draft', doc: null, attempts: [{ pass: false, issues: [], usage: {} }] }) });
   const r = await runReview({ ...d, only: 'kbl' });
   assert.equal(r.outcomes[0].status, 'error');
+  assert.equal(r.outcomes[0].postId, 900);
   assert.equal(r.errors.length, 1);
   assert.equal(named(d.calls, 'wp.uploadImage').length, 0);
-  assert.equal(named(d.calls, 'wp.createPost').length, 0);
+  assert.equal(named(d.calls, 'wp.createPost').length, 1);            // 임시글만
+  const ups = named(d.calls, 'wp.updatePost');
+  assert.equal(ups.length, 1);
+  assert.equal(ups[0][1], 900);
+  assert.deepEqual(Object.keys(ups[0][2]), ['content']);              // 상태는 draft 그대로
+  assert.match(ups[0][2].content, /^<p>자동 작성 실패: .*JSON/);
+});
+
+/* 다음 회차: 임시글이 slug 를 잡고 있으므로 같은 경기를 다시 쓰지 않는다(원고 비용 0). */
+test('failed_placeholder_blocks_recompose_next_run', async () => {
+  const g = game('kbl', '2026-10-22', '서울 삼성', '부산 KCC');
+  const d = deps({ games: { kbl: [g] }, wpFound: () => ({ id: 900, status: 'draft' }) });
+  const r = await runReview({ ...d, only: 'kbl' });
+  assert.equal(r.outcomes[0].status, 'exists');
+  assert.equal(named(d.calls, 'compose').length, 0);
+});
+
+test('render_failure_is_game_error_not_wp_breaker', async () => {
+  const g1 = game('kbl', '2026-10-22', '서울 삼성', '부산 KCC');
+  const g2 = game('kbl', '2026-10-22', '서울 SK', '창원 LG');
+  const bad = { ...DOC };
+  Object.defineProperty(bad, 'verdict_html', { enumerable: true, get() { throw new Error('렌더 폭발'); } });
+  const d = deps({
+    games: { kbl: [g1, g2] },
+    composeResult: (f) => ({ status: 'publish', doc: f.gameKey === g1.gameKey ? bad : DOC, attempts: [{ pass: true, issues: [], usage: {} }] }),
+  });
+  const r = await runReview({ ...d, only: 'kbl' });
+  assert.deepEqual(r.outcomes.map((o) => o.status), ['error', 'publish']);
+  assert.match(r.outcomes[0].reason, /렌더 폭발/);
+  assert.equal(r.errors.length, 1);
+  const marked = named(d.calls, 'wp.updatePost')[0];
+  assert.match(marked[2].content, /^<p>자동 작성 실패: .*렌더 폭발/);
+  assert.equal(named(d.calls, 'wp.uploadImage').length, 1);          // 실패한 경기는 이미지를 올리지 않는다
+});
+
+test('draft_with_non_array_key_points_still_saved', async () => {
+  const g = game('kbl', '2026-10-22', '서울 삼성', '부산 KCC');
+  const d = deps({ games: { kbl: [g] }, composeResult: () => ({ status: 'draft', doc: { ...DOC, key_points: 'x' }, attempts: [{ pass: false, issues: [], usage: {} }] }) });
+  const r = await runReview({ ...d, only: 'kbl' });
+  assert.equal(r.outcomes[0].status, 'draft');
+  assert.deepEqual(r.errors, []);
+});
+
+/* TheSportsDB 에 같은 경기가 두 번 올라오면 둘 다 같은 네이버 검색어와 짝지어진다 — 같은 제목 글 두 개를 막는다. */
+test('same_query_twice_in_run_is_skip', async () => {
+  const g1 = game('kbl', '2026-10-22', '서울 삼성', '부산 KCC');
+  const g2 = game('kbl', '2026-10-22', '서울 삼성', '부산 KCC');
+  const d = deps({ games: { kbl: [g1, g2] }, entries: { kbl: [entryFor(g1), OTHER_ENTRY] } });
+  const r = await runReview({ ...d, only: 'kbl' });
+  assert.deepEqual(r.outcomes.map((o) => [o.status, o.reason ?? null]), [['publish', null], ['skip', '같은 검색어 중복']]);
+  assert.equal(named(d.calls, 'compose').length, 1);
+  assert.equal(named(d.calls, 'wp.createPost').length, 1);
+  assert.deepEqual(r.errors, []);
+});
+
+test('same_query_as_existing_post_is_skip', async () => {
+  const g1 = game('kbl', '2026-10-22', '서울 삼성', '부산 KCC');
+  const g2 = game('kbl', '2026-10-22', '서울 삼성', '부산 KCC');
+  const d = deps({ games: { kbl: [g1, g2] }, entries: { kbl: [entryFor(g1)] },
+    wpFound: (slug) => (slug === `match-review-${g1.gameKey.toLowerCase()}` ? { id: 5, status: 'publish' } : null) });
+  const r = await runReview({ ...d, only: 'kbl' });
+  assert.deepEqual(r.outcomes.map((o) => o.status), ['exists', 'skip']);
+  assert.equal(r.outcomes[1].reason, '같은 검색어 중복');
+  assert.equal(named(d.calls, 'compose').length, 0);
+});
+
+test('dry_same_query_twice_is_skip', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'review-run-'));
+  try {
+    const g1 = game('kbl', '2026-10-22', '서울 삼성', '부산 KCC');
+    const g2 = game('kbl', '2026-10-22', '서울 삼성', '부산 KCC');
+    const d = deps({ games: { kbl: [g1, g2] }, entries: { kbl: [entryFor(g1)] } });
+    const r = await runReview({ ...d, wp: null, only: 'kbl', dry: true, previewDir: dir });
+    assert.deepEqual(r.outcomes.map((o) => o.status), ['publish', 'skip']);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
 });
 
 test('dry_writes_preview_no_wp', async () => {
@@ -248,6 +334,7 @@ test('one_game_failure_isolated', async () => {
   assert.deepEqual(r.outcomes.map((o) => o.status), ['error', 'publish']);
   assert.equal(r.errors.length, 1);
   assert.match(r.errors[0], /카드 글꼴/);
+  assert.equal(named(d.calls, 'wp.createPost').length, 1);           // 카드 실패 경기는 임시글도 만들지 않는다
 });
 
 test('exit_code_only_on_errors', async () => {
@@ -280,14 +367,14 @@ test('summary_table_and_league_counts', () => {
   assert.match(md, /KBL: 무엇/);
 });
 
-test('wp_write_failure_stops_run', async () => {
+test('wp_placeholder_failure_stops_run_before_any_compose', async () => {
   const g1 = game('kbl', '2026-10-22', '서울 삼성', '부산 KCC');
   const g2 = game('kbl', '2026-10-22', '서울 SK', '창원 LG');
   const w = game('wkbl', '2026-10-22', '청주 KB스타즈', '용인 삼성생명');
   const d = deps({ games: { kbl: [g1, g2], wkbl: [w] } });
   d.wp.createPost = async (...a) => { d.calls.push(['wp.createPost', ...a]); throw new Error('WP POST /wp-json/wp/v2/posts 실패: HTTP 500'); };
   const r = await runReview({ ...d });
-  assert.equal(named(d.calls, 'compose').length, 1);
+  assert.equal(named(d.calls, 'compose').length, 0);                 // AI 비용 전에 멈춘다
   assert.deepEqual(r.outcomes.map((o) => o.status), ['error', 'skip', 'skip']);
   assert.ok(r.outcomes.slice(1).every((o) => o.reason === 'WP 쓰기 실패로 중단'));
   assert.equal(r.errors.length, 1);
@@ -296,11 +383,27 @@ test('wp_write_failure_stops_run', async () => {
 
 test('wp_prepare_failure_uploads_no_image', async () => {
   const g1 = game('kbl', '2026-10-22', '서울 삼성', '부산 KCC');
-  const d = deps({ games: { kbl: [g1] } });
+  const g2 = game('kbl', '2026-10-22', '서울 SK', '창원 LG');
+  const d = deps({ games: { kbl: [g1, g2] } });
   d.wp.ensureTags = async () => { throw new Error('WP GET /tags 실패: HTTP 503'); };
   const r = await runReview({ ...d, only: 'kbl' });
-  assert.equal(r.outcomes[0].status, 'error');
+  assert.deepEqual(r.outcomes.map((o) => o.status), ['error', 'skip']);
   assert.equal(named(d.calls, 'wp.uploadImage').length, 0);
+  assert.equal(named(d.calls, 'compose').length, 0);
+});
+
+test('wp_final_update_failure_stops_run', async () => {
+  const g1 = game('kbl', '2026-10-22', '서울 삼성', '부산 KCC');
+  const g2 = game('kbl', '2026-10-22', '서울 SK', '창원 LG');
+  const d = deps({ games: { kbl: [g1, g2] } });
+  d.wp.updatePost = async (...a) => { d.calls.push(['wp.updatePost', ...a]); throw new Error('WP POST /wp-json/wp/v2/posts/900 실패: HTTP 400'); };
+  const r = await runReview({ ...d, only: 'kbl' });
+  assert.deepEqual(r.outcomes.map((o) => o.status), ['error', 'skip']);
+  assert.equal(r.outcomes[1].reason, 'WP 쓰기 실패로 중단');
+  assert.equal(named(d.calls, 'compose').length, 1);
+  assert.equal(r.outcomes[0].postId, 900);
+  assert.equal(r.errors.length, 1);
+  assert.match(r.errors[0], /HTTP 400/);
 });
 
 test('max_posts_counts_across_leagues', async () => {
@@ -338,5 +441,22 @@ test('cli_args_missing_value_throws', () => {
   assert.throws(() => parseArgs(['--league', '--dry']), /--league/);
   assert.throws(() => parseArgs(['--since']), /--since/);
   assert.throws(() => parseArgs(['--league', 'xx']), /--league/);
+  for (const proto of ['toString', 'constructor', '__proto__', 'hasOwnProperty']) assert.throws(() => parseArgs(['--league', proto]), /--league/);
   assert.throws(() => parseArgs(['--since', '10-22']), /--since/);
+});
+
+/* AI 호출이 재시도 끝에 던져도 임시글에 실패를 적는다(워드프레스 탓이 아니므로 회차는 계속). */
+test('compose_throw_marks_placeholder_failed_not_breaker', async () => {
+  const g1 = game('kbl', '2026-10-22', '서울 삼성', '부산 KCC');
+  const g2 = game('kbl', '2026-10-22', '서울 SK', '창원 LG');
+  const d = deps({ games: { kbl: [g1, g2] } });
+  const base = d.compose;
+  d.compose = async (f, ...a) => { if (f.gameKey === g1.gameKey) throw new Error('Anthropic 호출 시간 초과 300000ms'); return base(f, ...a); };
+  const r = await runReview({ ...d, only: 'kbl' });
+  assert.deepEqual(r.outcomes.map((o) => o.status), ['error', 'publish']);
+  assert.equal(r.outcomes[0].postId, 900);
+  const marked = named(d.calls, 'wp.updatePost')[0];
+  assert.deepEqual(Object.keys(marked[2]), ['content']);
+  assert.match(marked[2].content, /^<p>자동 작성 실패: .*시간 초과/);
+  assert.match(r.errors[0], /시간 초과/);
 });

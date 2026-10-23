@@ -230,3 +230,27 @@ test('http_400_not_retried_and_stream_error_throws', async () => {
 test('missing_api_key_throws', async () => {
   await assert.rejects(callClaude({ system: 'S', user: 'U', apiKey: '', fetchImpl: async () => sseResponse(SSE_OK) }), /ANTHROPIC_API_KEY/);
 });
+
+/* 응답 머리글이 안 오거나 스트림이 도중에 멈춰도 호출 하나가 프로세스를 붙잡지 않는다 — 시간 초과는 재시도하는 네트워크 오류다. */
+test('overall_timeout_covers_fetch_and_stream_and_is_retried', async () => {
+  let n = 0;
+  const signals = [];
+  const hangFetch = async (url, init) => { n++; signals.push(init.signal); return new Promise(() => {}); };
+  await assert.rejects(callClaude({ system: 'S', user: 'U', apiKey: 'k', fetchImpl: hangFetch, sleep: async () => {}, timeoutMs: 20 }), /시간 초과/);
+  assert.equal(n, 3);
+  assert.ok(signals.every((s) => s && s.aborted), '시간 초과 때 요청을 끊는다');
+
+  n = 0;
+  const hangStream = async () => {
+    n++;
+    const body = new ReadableStream({ start(c) { c.enqueue(new TextEncoder().encode(SSE_OK[0])); } });   // 닫지 않는다
+    return new Response(body);
+  };
+  await assert.rejects(callClaude({ system: 'S', user: 'U', apiKey: 'k', fetchImpl: hangStream, sleep: async () => {}, timeoutMs: 20 }), /시간 초과/);
+  assert.equal(n, 3);
+
+  n = 0;
+  const slowThenOk = async () => { n++; return n < 2 ? new Promise(() => {}) : sseResponse(SSE_OK); };
+  const r = await callClaude({ system: 'S', user: 'U', apiKey: 'k', fetchImpl: slowThenOk, sleep: async () => {}, timeoutMs: 20 });
+  assert.equal(r.text, '{"a":"한글"}');
+});

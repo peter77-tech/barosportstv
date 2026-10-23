@@ -29,7 +29,9 @@ test('existing_draft_slug_blocks_duplicate', async () => {
   const { calls, wp } = fake([(c) => c.url.includes('/posts?') && res(200, [{ id: 7, status: 'draft' }])]);
   assert.deepEqual(await wp.findBySlug('kbo-a'), { id: 7, status: 'draft' });
   assert.match(calls[0].url, /^https:\/\/example\.test\/wp-json\/wp\/v2\/posts\?/);
-  assert.match(calls[0].url, /status=any/);
+  /* status=any 는 휴지통을 빼므로 상태를 모두 적는다 — 휴지통으로 내린 리뷰가 다음 회차에 다시 발행되지 않게 */
+  assert.deepEqual(new URL(calls[0].url).searchParams.get('status').split(',').sort(),
+    ['draft', 'future', 'pending', 'private', 'publish', 'trash']);
   assert.match(calls[0].url, /context=edit/);
   assert.match(calls[0].url, /slug=kbo-a/);
 });
@@ -188,4 +190,26 @@ test('ensure_tags_case_insensitive_match', async () => {
 
 test('rejects_non_https_base_url', () => {
   assert.throws(() => createWp({ url: 'http://example.test', user: 'u', appPassword: 'p' }), /https/);
+});
+
+test('trashed_slug_blocks_duplicate', async () => {
+  const { wp } = fake([(c) => c.url.includes('/posts?') && new URL(c.url).searchParams.get('status').split(',').includes('trash') && res(200, [{ id: 8, status: 'trash' }])]);
+  assert.deepEqual(await wp.findBySlug('kbo-b'), { id: 8, status: 'trash' });
+});
+
+test('update_post_posts_fields_to_id', async () => {
+  const { calls, wp } = fake([(c) => c.method === 'POST' && /\/posts\/77$/.test(c.url) && res(200, { id: 77, link: 'https://example.test/p77/' })]);
+  const fields = { content: '<p>y</p>', status: 'publish', featured_media: 9, meta: { rank_math_description: 'd' }, title: 't' };
+  assert.deepEqual(await wp.updatePost(77, fields), { id: 77, link: 'https://example.test/p77/' });
+  assert.equal(calls.length, 1);
+  assert.match(calls[0].url, /^https:\/\/example\.test\/wp-json\/wp\/v2\/posts\/77$/);
+  assert.deepEqual(JSON.parse(calls[0].body), fields);
+  assert.equal(calls[0].headers['Content-Type'], 'application/json');
+});
+
+test('update_post_rejects_bad_id_and_http_error', async () => {
+  const { calls, wp } = fake([(c) => c.method === 'POST' && res(400, { code: 'rest_invalid_param' })]);
+  for (const id of [0, -1, 1.5, '7', null, undefined]) await assert.rejects(() => wp.updatePost(id, { content: 'x' }), /id/);
+  assert.equal(calls.length, 0);
+  await assert.rejects(() => wp.updatePost(7, { content: 'x' }), /POST \/wp-json\/wp\/v2\/posts\/7 실패: HTTP 400/);
 });
