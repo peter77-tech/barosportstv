@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFile, mkdtemp, rm, stat } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { runReview, summaryMarkdown } from '../tools/review/run.mjs';
+import { runReview, summaryMarkdown, parseArgs } from '../tools/review/run.mjs';
 import { toFacts as kblFacts } from '../tools/review/sources/kbl.mjs';
 import { ALIASES } from '../tools/review/aliases.mjs';
 import { titleFor, LEAGUES } from '../tools/review/config.mjs';
@@ -169,7 +169,14 @@ test('publish_order', async () => {
     assert.equal(d.calls[up][3], `${BASE.home.short} 97 : 86 ${BASE.away.short} · 2026.10.22 · KBL`);
   }
   assert.deepEqual(named(d.calls, 'wp.ensureTags')[0][1], ['KBL', BASE.home.name, BASE.away.name]);
-  assert.ok(named(d.calls, 'wp.ensureCategory').length <= 1);
+  assert.equal(named(d.calls, 'wp.ensureCategory').length, 1);
+  /* 글 하나에 필요한 준비(카테고리·태그·관련 리뷰)를 마친 뒤에만 이미지를 올린다 — 업로드 뒤에는 createPost 뿐 */
+  const firstUp = d.calls.findIndex((c) => c[0] === 'wp.uploadImage');
+  for (const n of ['wp.ensureCategory', 'wp.ensureTags', 'wp.relatedReviews']) {
+    assert.ok(d.calls.findIndex((c) => c[0] === n) < firstUp, n);
+  }
+  const ups = d.calls.map((c, i) => [c[0], i]).filter(([n]) => n === 'wp.uploadImage').map(([, i]) => i);
+  for (const i of ups) assert.equal(d.calls[i + 1][0], 'wp.createPost');
   /* 네이버 정식명이 facts 에 채워져 compose 로 넘어간다 */
   const f = named(d.calls, 'compose')[0][4];
   assert.equal(f.home.full, '서울 삼성 삼성 썬더스');
@@ -271,4 +278,65 @@ test('summary_table_and_league_counts', () => {
   assert.match(md, /V리그 여자부: .*skip 1/);
   assert.match(md, /KBL: .*publish 1/);
   assert.match(md, /KBL: 무엇/);
+});
+
+test('wp_write_failure_stops_run', async () => {
+  const g1 = game('kbl', '2026-10-22', '서울 삼성', '부산 KCC');
+  const g2 = game('kbl', '2026-10-22', '서울 SK', '창원 LG');
+  const w = game('wkbl', '2026-10-22', '청주 KB스타즈', '용인 삼성생명');
+  const d = deps({ games: { kbl: [g1, g2], wkbl: [w] } });
+  d.wp.createPost = async (...a) => { d.calls.push(['wp.createPost', ...a]); throw new Error('WP POST /wp-json/wp/v2/posts 실패: HTTP 500'); };
+  const r = await runReview({ ...d });
+  assert.equal(named(d.calls, 'compose').length, 1);
+  assert.deepEqual(r.outcomes.map((o) => o.status), ['error', 'skip', 'skip']);
+  assert.ok(r.outcomes.slice(1).every((o) => o.reason === 'WP 쓰기 실패로 중단'));
+  assert.equal(r.errors.length, 1);
+  assert.match(r.errors[0], /HTTP 500/);
+});
+
+test('wp_prepare_failure_uploads_no_image', async () => {
+  const g1 = game('kbl', '2026-10-22', '서울 삼성', '부산 KCC');
+  const d = deps({ games: { kbl: [g1] } });
+  d.wp.ensureTags = async () => { throw new Error('WP GET /tags 실패: HTTP 503'); };
+  const r = await runReview({ ...d, only: 'kbl' });
+  assert.equal(r.outcomes[0].status, 'error');
+  assert.equal(named(d.calls, 'wp.uploadImage').length, 0);
+});
+
+test('max_posts_counts_across_leagues', async () => {
+  const kblTeams = TEAMS;
+  const kblGames = [];
+  for (let i = 0; i < kblTeams.length && kblGames.length < 8; i++) {
+    for (let j = i + 1; j < kblTeams.length && kblGames.length < 8; j++) kblGames.push(game('kbl', '2026-10-22', kblTeams[i], kblTeams[j]));
+  }
+  const W = ['청주 KB스타즈', 'BNK 썸', '용인 삼성생명', '부천 하나은행', '인천 신한은행', '우리은행'];
+  const wkblGames = [];
+  for (let i = 0; i < W.length && wkblGames.length < 6; i++) {
+    for (let j = i + 1; j < W.length && wkblGames.length < 6; j++) wkblGames.push(game('wkbl', '2026-10-22', W[i], W[j]));
+  }
+  const d = deps({ games: { kbl: kblGames, wkbl: wkblGames } });
+  const r = await runReview({ ...d });
+  assert.equal(named(d.calls, 'compose').length, 12);
+  const wk = r.outcomes.filter((o) => o.league === 'wkbl');
+  assert.deepEqual(wk.map((o) => o.status), ['publish', 'publish', 'publish', 'publish', 'skip', 'skip']);
+  assert.deepEqual(r.errors, []);
+});
+
+test('naver_non_array_is_league_error', async () => {
+  const k = game('kbl', '2026-10-22', '서울 삼성', '부산 KCC');
+  const d = deps({ games: { kbl: [k] } });
+  d.naver = async () => null;
+  const r = await runReview({ ...d, only: 'kbl' });
+  assert.equal(r.errors.length, 1);
+  assert.match(r.errors[0], /KBL/);
+  assert.equal(named(d.calls, 'compose').length, 0);
+});
+
+test('cli_args_missing_value_throws', () => {
+  assert.deepEqual(parseArgs(['--dry', '--league', 'kbl', '--since', '2026-10-22']), { dry: true, only: 'kbl', since: '2026-10-22' });
+  assert.throws(() => parseArgs(['--league']), /--league/);
+  assert.throws(() => parseArgs(['--league', '--dry']), /--league/);
+  assert.throws(() => parseArgs(['--since']), /--since/);
+  assert.throws(() => parseArgs(['--league', 'xx']), /--league/);
+  assert.throws(() => parseArgs(['--since', '10-22']), /--since/);
 });

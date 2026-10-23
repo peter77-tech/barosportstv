@@ -11,6 +11,7 @@ import { internalLinks, sportsEventJsonLd } from './links.mjs';
 import { cardText } from './image.mjs';
 
 const NAVER_TIMEOUT_MS = 30000;
+const WP_BROKEN = 'WP 쓰기 실패로 중단';
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 const prevDay = (key) => new Date(Date.parse(`${key}T00:00:00Z`) - DAY_MS).toISOString().slice(0, 10);
@@ -80,6 +81,7 @@ export async function runReview({
   const leagues = only ? [only] : Object.keys(LEAGUES);
   let composed = 0;
   let categoryId = null;
+  let wpBroken = false;   // 워드프레스 쓰기가 한 번 실패하면 이번 회차는 더 쓰지 않는다(같은 실패에 AI 비용·고아 미디어를 쌓지 않게)
 
   const record = (o) => {
     outcomes.push(o);
@@ -90,6 +92,7 @@ export async function runReview({
     const titleName = LEAGUES[league].titleName;
     const slug = reviewSlug(game.gameKey);
     const out = { league, gameKey: game.gameKey, title: null };
+    if (wpBroken) return { ...out, status: 'skip', reason: WP_BROKEN };
     if (composed >= MAX_POSTS_PER_RUN) return { ...out, status: 'skip', reason: `회차 상한 ${MAX_POSTS_PER_RUN}편 — 다음 회차에` };
     try {
       if (!dry) {
@@ -126,20 +129,27 @@ export async function runReview({
         return { ...out, status };
       }
 
-      const mediaId = await wp.uploadImage(card, `${slug}.jpg`, alt);
-      if (categoryId == null) categoryId = await wp.ensureCategory();
-      const tags = await wp.ensureTags([titleName, facts.home.name, facts.away.name]);
-      const related = await wp.relatedReviews(tags, null);
-      const post = await wp.createPost({
-        title: out.title, slug, status,
-        content: renderPost(facts, r.doc, internalLinks(facts, related)),
-        categories: [categoryId], tags, featured_media: mediaId,
-        meta: {
-          rank_math_description: r.doc.meta_description,
-          rank_math_focus_keyword: entry.query,
-          bstv_review_jsonld: JSON.stringify(sportsEventJsonLd(facts)),
-        },
-      });
+      /* 준비(카테고리·태그·관련 리뷰)를 다 마친 뒤 이미지를 올린다 — 업로드 뒤에는 createPost 하나뿐이라 고아 미디어가 생길 틈이 좁다. */
+      let post;
+      try {
+        if (categoryId == null) categoryId = await wp.ensureCategory();
+        const tags = await wp.ensureTags([titleName, facts.home.name, facts.away.name]);
+        const related = await wp.relatedReviews(tags, null);
+        const content = renderPost(facts, r.doc, internalLinks(facts, related));
+        const mediaId = await wp.uploadImage(card, `${slug}.jpg`, alt);
+        post = await wp.createPost({
+          title: out.title, slug, status, content,
+          categories: [categoryId], tags, featured_media: mediaId,
+          meta: {
+            rank_math_description: r.doc.meta_description,
+            rank_math_focus_keyword: entry.query,
+            bstv_review_jsonld: JSON.stringify(sportsEventJsonLd(facts)),
+          },
+        });
+      } catch (e) {
+        wpBroken = true;
+        throw e;
+      }
       return { ...out, status, postId: post.id };
     } catch (e) {
       errors.push(`${titleName} ${game.gameKey}: ${message(e)}`);
@@ -166,13 +176,13 @@ export async function runReview({
     let entries;
     try {
       entries = await withTimeout(Promise.resolve().then(() => naver(league)), naverTimeoutMs, '네이버');
+      if (!Array.isArray(entries) || !entries.length) {
+        errors.push(`${cfg.titleName}: 네이버 일정 카드에서 검색어를 0개 뽑았다 — 페이지 구조가 바뀌었는지 확인`);
+        for (const g of games) record({ league, gameKey: g.gameKey, title: null, status: 'error', reason: '네이버 검색어 0개' });
+        continue;
+      }
     } catch (e) {
       errors.push(`${cfg.titleName}: 네이버 검색어 가져오기 실패 — ${message(e)}`);
-      continue;
-    }
-    if (!entries.length) {
-      errors.push(`${cfg.titleName}: 네이버 일정 카드에서 검색어를 0개 뽑았다 — 페이지 구조가 바뀌었는지 확인`);
-      for (const g of games) record({ league, gameKey: g.gameKey, title: null, status: 'error', reason: '네이버 검색어 0개' });
       continue;
     }
 
@@ -206,13 +216,18 @@ export function summaryMarkdown({ outcomes, errors, dry = false }) {
 
 /* ───── CLI ───── */
 
-function parseArgs(argv) {
+export function parseArgs(argv) {
   const opts = { dry: false, only: null, since: undefined };
+  const value = (i, flag) => {
+    const v = argv[i];
+    if (v === undefined || v.startsWith('--')) throw new Error(`${flag} 에 값이 없다`);
+    return v;
+  };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === '--dry') opts.dry = true;
-    else if (a === '--league') opts.only = argv[++i];
-    else if (a === '--since') opts.since = argv[++i];
+    else if (a === '--league') opts.only = value(++i, '--league');
+    else if (a === '--since') opts.since = value(++i, '--since');
     else throw new Error(`알 수 없는 인자: ${a}`);
   }
   if (opts.only != null && !LEAGUES[opts.only]) throw new Error(`--league 는 ${Object.keys(LEAGUES).join('|')} 중 하나: ${opts.only}`);
@@ -269,5 +284,11 @@ async function main() {
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  main().then((code) => { process.exitCode = code; }, (e) => { console.error(message(e)); process.exitCode = 1; });
+  main().then((code) => { process.exitCode = code; }, async (e) => {
+    console.error(message(e));
+    process.exitCode = 1;
+    if (process.env.GITHUB_STEP_SUMMARY) {
+      await appendFile(process.env.GITHUB_STEP_SUMMARY, `## 경기 리뷰 실행\n\n실행 실패: ${message(e)}\n`).catch(() => {});
+    }
+  });
 }

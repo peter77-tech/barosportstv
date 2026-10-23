@@ -62,11 +62,19 @@ function compare(f) {
   return `<table class="bstv-cmp"><caption>팀 기록 비교</caption><thead><tr><th scope="col">${esc(f.away.name)}</th><th scope="col"></th><th scope="col">${esc(f.home.name)}</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
 
+/* 선수 표 계약: playerColumns·cells 가 표 전체다. 첫 열은 선수 이름(행 머리로 그린다).
+   '팀' 열이 없는 리그(KBL·WKBL)만 이름 다음에 팀 열을 끼운다 — 어느 리그든 「선수 · 팀 · …」 한 벌. */
 function playerTable(f) {
   if (!f.players.length) return '';
-  const head = `<tr><th scope="col">팀</th><th scope="col">선수</th>${f.playerColumns.map((c) => `<th scope="col">${esc(c)}</th>`).join('')}</tr>`;
-  const rows = f.players.map((p) =>
-    `<tr><td>${esc(p.side === 'home' ? f.home.name : f.away.name)}</td><th scope="row">${esc(p.name)}</th>${p.cells.map((c) => `<td>${esc(c)}</td>`).join('')}</tr>`).join('');
+  const [nameCol, ...restCols] = f.playerColumns;
+  const addTeam = !f.playerColumns.includes('팀');
+  const th = (c) => `<th scope="col">${esc(c)}</th>`;
+  const head = `<tr>${th(nameCol)}${addTeam ? th('팀') : ''}${restCols.map(th).join('')}</tr>`;
+  const rows = f.players.map((p) => {
+    const [name, ...rest] = p.cells;
+    const team = addTeam ? `<td>${esc(p.side === 'home' ? f.home.name : f.away.name)}</td>` : '';
+    return `<tr><th scope="row">${esc(name)}</th>${team}${rest.map((c) => `<td>${esc(c)}</td>`).join('')}</tr>`;
+  }).join('');
   return `<table class="bstv-pt"><caption>주요 선수 기록</caption><thead>${head}</thead><tbody>${rows}</tbody></table>`;
 }
 

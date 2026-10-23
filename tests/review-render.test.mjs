@@ -122,3 +122,26 @@ test('crowd_only_when_positive', () => {
   assert.ok(!/관중/.test(renderPost({ ...F, crowd: 0 }, DOC, [])));
   assert.match(renderPost({ ...F, crowd: 1234 }, DOC, []), /관중 1,234명/);
 });
+const ptHead = (h) => {
+  const t = h.slice(h.indexOf('bstv-pt'), h.indexOf('</table>', h.indexOf('bstv-pt')));
+  const head = t.slice(t.indexOf('<thead>'), t.indexOf('</thead>'));
+  return [...head.matchAll(/<th scope="col">(.*?)<\/th>/g)].map((m) => m[1]);
+};
+test('player_table_one_name_and_team_column_kbl', () => {
+  const h = renderPost(F, DOC, []);
+  const cols = ptHead(h);
+  assert.equal(cols.filter((c) => c === '선수').length, 1);
+  assert.equal(cols.filter((c) => c === '팀').length, 1);
+  assert.deepEqual(cols, ['선수', '팀', '시간', '득점', '리바', '어시', '스틸', '3점', '+/-']);
+  const t = h.slice(h.indexOf('bstv-pt'), h.indexOf('</table>', h.indexOf('bstv-pt')));
+  const row = t.slice(t.indexOf('<tbody>')).split('</tr>')[0];
+  const cells = [...row.matchAll(/<t[hd][^>]*>(.*?)<\/t[hd]>/g)].map((m) => m[1]);
+  assert.equal(cells.length, cols.length);
+  assert.equal(cells.filter((c) => c === F.players[0].name).length, 1);
+});
+test('player_table_no_duplicate_team_column_kl1', () => {
+  const cols = ptHead(renderPost(FD, DOC, []));
+  assert.equal(cols.filter((c) => c === '선수').length, 1);
+  assert.equal(cols.filter((c) => c === '팀').length, 1);
+  assert.deepEqual(cols, FD.playerColumns);
+});

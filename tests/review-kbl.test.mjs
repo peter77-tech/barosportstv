@@ -132,3 +132,14 @@ test('kbl_fetch_facts_three_calls_headers_throttled_across_calls', async () => {
   for (let i = 1; i < seen.length; i++) assert.ok(seen[i].t - seen[i - 1].t >= 700, `gap ${i}`);
   assert.equal(f.score.home, 97);
 });
+test('kbl_margin_sentinel_999_is_dash', () => {
+  const ps = structuredClone(playerStat);
+  const kanter = ps.find((p) => p.player.pname === '케렘 칸터');
+  kanter.records.marginCn = 999;
+  const f = toFacts({ ...fx, playerStat: ps });
+  assert.equal(f.players.find((p) => p.name === '케렘 칸터').cells[7], '-');
+  assert.equal(f.ai.players.find((p) => p.name === '케렘 칸터').plusMinus, null);
+  assert.ok(!toFacts(fx).players.some((p) => p.cells.includes(999)));
+  assert.ok(!toFacts(fx).ai.players.some((p) => p.plusMinus === 999));
+  assert.ok(f.players.filter((p) => p.name !== '케렘 칸터').every((p) => typeof p.cells[7] === 'number'));
+});

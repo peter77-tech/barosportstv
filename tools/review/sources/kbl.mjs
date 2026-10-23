@@ -79,13 +79,17 @@ const teamRow = (name, r) => ({
   maxLead: r.maxLeadScoreCn, maxRun: r.maxContiScoreCn,
 });
 
+/* KBL 은 +/- 를 모를 때 999 를 넣는다(실측: 뛴 선수에게도 나온다). 표에는 '-', AI 에는 null. */
+const NO_MARGIN = 999;
+const margin = (v) => (v === NO_MARGIN || v === null || v === undefined ? null : v);
+
 const aiPlayer = (p) => {
   const r = p.records;
   return {
     name: p.player.pname, team: p.player.tname, pos: p.player.pos, starter: p.startFlag === 1, minutes: clock(r),
     points: r.score, rebounds: r.rb, assists: r.ast, steals: r.stl, blocks: r.bs, turnovers: r.to, fouls: r.foul,
     twoPoint: ratio(r.fg, r.fgA), threePoint: ratio(r.threep, r.threepA), freeThrows: ratio(r.ft, r.ftA),
-    plusMinus: r.marginCn,
+    plusMinus: margin(r.marginCn),
   };
 };
 
@@ -93,7 +97,7 @@ const playerRow = (p) => {
   const r = p.records;
   return {
     side: p.homeAway === '1' ? 'home' : 'away', name: p.player.pname,
-    cells: [p.player.pname, clock(r), r.score, r.rb, r.ast, r.stl, `${r.threep}/${r.threepA}`, r.marginCn],
+    cells: [p.player.pname, clock(r), r.score, r.rb, r.ast, r.stl, `${r.threep}/${r.threepA}`, margin(r.marginCn) ?? '-'],
   };
 };
 
