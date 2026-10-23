@@ -145,7 +145,8 @@ test('fetch_merges_queries_and_dedupes', async () => {
   };
   const e = await fetchNaverEntries('kbo', fake, clock);
   assert.deepEqual(calls.map(c => c.q), LEAGUES.kbo.naverQueries);
-  assert.ok(calls.every(c => /Chrome/.test(c.ua)));
+  // 브라우저·curl 인 척하는 UA 를 붙이면 GitHub 서버(미국 IP)에서 403 이다(2026-10-23 실측) → 붙이지 않는다
+  assert.ok(calls.every(c => c.ua === undefined));
   for (let i = 1; i < calls.length; i++) assert.ok(calls[i].t - calls[i - 1].t >= 700, '요청 간격 700ms');
   assert.equal(e.length, 5 + 1 + 3);
   assert.equal(new Set(e.map(x => x.query)).size, e.length);

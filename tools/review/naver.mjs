@@ -3,7 +3,6 @@
 import { LEAGUES } from './config.mjs';
 import { ALIASES } from './aliases.mjs';
 
-const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36';
 const GAP_MS = 700;   // 사이트 요청 사이 최소 간격 (공통 제약)
 
 /* 일정 카드 컨테이너 판별 — 2026-10-22 에 받은 실제 마크업 기준 (tests/fixtures/review/naver-*.html).
@@ -71,7 +70,9 @@ export async function fetchNaverEntries(league, fetchImpl = fetch, { sleep = rea
     if (wait > 0) await sleep(wait);
     lastRequestAt = now();
     const url = `https://search.naver.com/search.naver?query=${encodeURIComponent(cfg.naverQueries[i])}`;
-    const res = await fetchImpl(url, { headers: { 'User-Agent': UA, 'Accept-Language': 'ko-KR,ko;q=0.9' } });
+    // 헤더를 붙이지 않는다. 브라우저·curl 인 척하는 User-Agent 를 붙이면 GitHub 서버(미국 IP)에서
+    // 403 이 난다(2026-10-23 실측: 크롬 UA·curl UA·전체 헤더 모두 403, 헤더 없음만 200). 국내 IP 도 헤더 없이 된다.
+    const res = await fetchImpl(url);
     if (!res.ok) throw new Error(`네이버 ${res.status}: ${cfg.naverQueries[i]}`);
     for (const e of parseNaverSchedule(await res.text())) {
       if (seen.has(e.query)) continue;
