@@ -14,5 +14,8 @@
     "test:php": "php tests/php/run.php",
     "prebake": "node --env-file-if-exists=.env tools/prebake.mjs",
     "prebake:quick": "node --env-file-if-exists=.env tools/prebake.mjs --quick"
+  },
+  "dependencies": {
+    "sharp": "^0.35.5"
   }
 }
