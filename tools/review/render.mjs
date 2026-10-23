@@ -19,8 +19,10 @@ function meta(f) {
 }
 
 function answer(doc) {
-  const pts = doc.key_points.map((p) => `<li>${esc(p)}</li>`).join('');
-  return `<div class="bstv-answer"><p><strong>한눈에 보기</strong></p><p>${esc(doc.answer)}</p><ul>${pts}</ul></div>`;
+  /* 검토 미통과(draft) 원고도 그리므로 key_points 가 배열이 아니면 빈 목록으로 다룬다. */
+  const kp = Array.isArray(doc.key_points) ? doc.key_points : [];
+  const pts = kp.map((p) => `<li>${esc(p)}</li>`).join('');
+  return `<div class="bstv-answer"><p><strong>한눈에 보기</strong></p><p>${esc(doc.answer)}</p>${pts ? `<ul>${pts}</ul>` : ''}</div>`;
 }
 
 /* 원정 → 홈 순서 (「{원정} vs {홈}」 표기와 같다). 무승부면 승 배지를 달지 않는다. */

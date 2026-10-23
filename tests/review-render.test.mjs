@@ -145,3 +145,12 @@ test('player_table_no_duplicate_team_column_kl1', () => {
   assert.equal(cols.filter((c) => c === '팀').length, 1);
   assert.deepEqual(cols, FD.playerColumns);
 });
+
+/* 검토를 못 통과한 원고(draft)도 그린다 — key_points 가 배열이 아니어도 던지지 않고 빈 목록으로 다룬다. */
+test('non_array_key_points_render_as_empty', () => {
+  for (const kp of [undefined, null, 'x', {}, 5]) {
+    const h = renderPost(F, { ...DOC, key_points: kp }, internalLinks(F, []));
+    assert.match(h, /bstv-answer/);
+    assert.doesNotMatch(h, /<ul><\/ul>/);
+  }
+});

@@ -22,7 +22,7 @@ function flatten(v, out = []) {
 
 const plainNums = (strs) => strs.flatMap(numbersIn).filter((t) => !t.includes('+')).map(Number);
 
-function allowedNumbers(facts) {
+function allowedNumbers(facts, title) {
   const nums = new Set();
   const minutes = new Set();                // '45+9' 같은 토큰
   const add = (n) => { if (Number.isFinite(n)) nums.add(Math.round(n * 1000) / 1000); };
@@ -47,6 +47,9 @@ function allowedNumbers(facts) {
 
   for (let i = 0; i <= SMALL_MAX; i += 1) add(i);
   for (const t of numbersIn(facts.date)) add(Number(t));   // 연·월·일
+  /* 팀 이름 속 숫자(부천FC1995)와 제목(네이버 검색어) 속 숫자 — 프롬프트가 첫 문장에 정식 이름을 쓰게 한다. */
+  const names = [facts.home, facts.away].flatMap((s) => [s?.name, s?.short, s?.full]).filter((v) => typeof v === 'string');
+  for (const s of [...names, ...(typeof title === 'string' ? [title] : [])]) for (const t of plainNums([s])) add(t);
   return { nums, minutes };
 }
 
@@ -89,7 +92,7 @@ export function checkDoc(doc, facts, title, expectedTitle) {
   }
   const plain = [...plainFields, ...HTML_FIELDS.map((f) => [f, stripTags(doc[f] ?? '')])];
 
-  const { nums, minutes } = allowedNumbers(facts);
+  const { nums, minutes } = allowedNumbers(facts, expectedTitle);
   const draw = facts.score.home === facts.score.away;
   for (const [f, v] of plain) {
     const text = String(v ?? '');

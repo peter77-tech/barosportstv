@@ -90,3 +90,20 @@ test('negative_cases_in_other_fields', () => {
   const ok = { ...good, meta_description: '2-2 무승부.', key_points: ['2-2'], answer: '2-2로 비겼다.', verdict_html: '<p>무승부.</p>' };
   assert.equal(checkDoc({ ...ok, body_html: '<p>서울이 이겼다.</p>' }, FD, EXP, EXP).ok, false);
 });
+/* 프롬프트가 첫 문장에 정식 팀 이름을 쓰게 하므로 이름 속 숫자(부천FC1995)는 근거 있는 숫자다. */
+test('digits_inside_team_names_allowed', () => {
+  const T = titleFor('kl1', '2026년 10월18일 부천FC1995 vs 전북');
+  const fx = { ...FD, home: { ...FD.home, name: '부천', short: '부천', full: '부천 부천FC1995' }, away: { ...FD.away, full: '전북 전북 현대 모터스' } };
+  const ok = { ...good, meta_description: '부천FC1995와 전북 현대 모터스가 2-2로 비겼다.', key_points: ['2-2'], answer: '2-2로 비겼다.', body_html: '<p>부천FC1995는 2-2로 맞섰다.</p>', verdict_html: '<p>무승부.</p>' };
+  assert.deepEqual(checkDoc(ok, fx, T, T).issues, []);
+  /* 이름에도 제목에도 없는 숫자는 여전히 막는다 */
+  assert.ok(checkDoc({ ...ok, answer: '1996년 이후 처음 비겼다.' }, fx, T, T).issues.some(i => /1996/.test(i.problem)));
+});
+test('digits_in_name_or_short_or_title_allowed', () => {
+  const ok = { ...good, meta_description: '2-2 무승부.', key_points: ['2-2'], answer: '2-2로 비겼다.', verdict_html: '<p>무승부.</p>' };
+  const byName = { ...FD, home: { ...FD.home, name: '팀2077', short: '팀2088' } };
+  assert.equal(checkDoc({ ...ok, body_html: '<p>팀2077과 팀2088.</p>' }, byName, EXP, EXP).ok, true);
+  const T = titleFor('kl1', '2026년 10월18일 서울 3033 vs 김천');
+  assert.equal(checkDoc({ ...ok, body_html: '<p>3033 경기.</p>' }, FD, T, T).ok, true);
+  assert.equal(checkDoc({ ...ok, body_html: '<p>3033 경기.</p>' }, FD, EXP, EXP).ok, false);
+});
