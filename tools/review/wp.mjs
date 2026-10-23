@@ -68,9 +68,10 @@ export function createWp({ url, user, appPassword, fetchImpl = fetch, timeoutMs 
     return ids;
   }
 
-  /* status=any 는 휴지통(trash)을 빼므로 상태를 모두 적는다 — 휴지통으로 내린 리뷰도 「있음」이라 다시 만들지 않는다. */
+  /* status=any 는 휴지통(trash)을 빼므로 상태를 모두 적는다. 워드프레스는 휴지통에 넣은 글의 slug 를 <slug>__trashed 로
+     바꾸므로 두 slug 를 함께 묻는다 — 어느 쪽이 맞든 「있음」이라 휴지통으로 내린 리뷰를 다시 만들지 않는다. */
   async function findBySlug(slug) {
-    const list = await call('GET', `${API}/posts`, { query: { slug, status: ALL_STATUSES, context: 'edit' } });
+    const list = await call('GET', `${API}/posts`, { query: { slug: `${slug},${slug}__trashed`, status: ALL_STATUSES, context: 'edit' } });
     return list.length ? { id: list[0].id, status: list[0].status } : null;
   }
 
@@ -109,5 +110,11 @@ export function createWp({ url, user, appPassword, fetchImpl = fetch, timeoutMs 
     return { id: p.id, link: p.link };
   }
 
-  return { ensureCategory, ensureTags, findBySlug, relatedReviews, uploadImage, createPost, updatePost };
+  /** 글을 휴지통을 거치지 않고 영구 삭제한다 (DELETE /posts/{id}?force=true) — slug 가 풀려 다음 회차가 다시 쓸 수 있다. */
+  async function deletePost(id) {
+    if (!Number.isInteger(id) || id <= 0) throw new Error(`WP deletePost: id 는 양의 정수여야 한다: ${id}`);
+    await call('DELETE', `${API}/posts/${id}`, { query: { force: 'true' } });
+  }
+
+  return { ensureCategory, ensureTags, findBySlug, relatedReviews, uploadImage, createPost, updatePost, deletePost };
 }

@@ -61,6 +61,7 @@ function deps({ games = {}, entries, listThrows = {}, composeResult, wpFound = (
     uploadImage: wpCall('uploadImage', () => 55),
     createPost: wpCall('createPost', () => ({ id: 900, link: 'https://barosportstv.com/x/' })),
     updatePost: wpCall('updatePost', (id) => ({ id, link: 'https://barosportstv.com/x/' })),
+    deletePost: wpCall('deletePost', () => ({ deleted: true })),
   };
   const image = async (facts) => { calls.push(['image', facts.gameKey]); return Buffer.from('JPEG'); };
   return { calls, now, sources, naver, compose, wp, image, log: () => {} };
@@ -209,8 +210,10 @@ test('doc_null_is_error_placeholder_marked_failed_no_image', async () => {
   const ups = named(d.calls, 'wp.updatePost');
   assert.equal(ups.length, 1);
   assert.equal(ups[0][1], 900);
-  assert.deepEqual(Object.keys(ups[0][2]), ['content']);              // 상태는 draft 그대로
+  assert.deepEqual(Object.keys(ups[0][2]).sort(), ['content', 'status']);
+  assert.equal(ups[0][2].status, 'draft');                          // 실패 표시는 언제나 임시글로
   assert.match(ups[0][2].content, /^<p>자동 작성 실패: .*JSON/);
+  assert.equal(named(d.calls, 'wp.deletePost').length, 0);          // 모델이 답은 했다 — 실패 임시글로 남긴다
 });
 
 /* 다음 회차: 임시글이 slug 를 잡고 있으므로 같은 경기를 다시 쓰지 않는다(원고 비용 0). */
@@ -445,18 +448,83 @@ test('cli_args_missing_value_throws', () => {
   assert.throws(() => parseArgs(['--since', '10-22']), /--since/);
 });
 
-/* AI 호출이 재시도 끝에 던져도 임시글에 실패를 적는다(워드프레스 탓이 아니므로 회차는 계속). */
-test('compose_throw_marks_placeholder_failed_not_breaker', async () => {
+/* 원고 호출 자체가 던지면(네트워크·5xx·401·크레딧) AI 장애다: 임시글을 영구 삭제하고 회차를 멈춘다 —
+   실패 임시글을 남기면 장애가 풀린 뒤에도 그 경기를 다시 쓰지 못한다. */
+test('compose_throw_deletes_placeholder_and_stops_ai', async () => {
   const g1 = game('kbl', '2026-10-22', '서울 삼성', '부산 KCC');
   const g2 = game('kbl', '2026-10-22', '서울 SK', '창원 LG');
   const d = deps({ games: { kbl: [g1, g2] } });
-  const base = d.compose;
-  d.compose = async (f, ...a) => { if (f.gameKey === g1.gameKey) throw new Error('Anthropic 호출 시간 초과 300000ms'); return base(f, ...a); };
+  let composeCalls = 0;
+  d.compose = async () => { composeCalls += 1; throw new Error('Anthropic HTTP 529'); };
   const r = await runReview({ ...d, only: 'kbl' });
-  assert.deepEqual(r.outcomes.map((o) => o.status), ['error', 'publish']);
-  assert.equal(r.outcomes[0].postId, 900);
-  const marked = named(d.calls, 'wp.updatePost')[0];
-  assert.deepEqual(Object.keys(marked[2]), ['content']);
-  assert.match(marked[2].content, /^<p>자동 작성 실패: .*시간 초과/);
-  assert.match(r.errors[0], /시간 초과/);
+  assert.equal(composeCalls, 1);
+  const dels = named(d.calls, 'wp.deletePost');
+  assert.equal(dels.length, 1);
+  assert.equal(dels[0][1], 900);
+  assert.equal(named(d.calls, 'wp.updatePost').length, 0);          // 실패 표시 대신 삭제
+  assert.equal(named(d.calls, 'wp.createPost').length, 1);          // 둘째 경기는 임시글도 만들지 않는다
+  assert.deepEqual(r.outcomes.map((o) => o.status), ['error', 'skip']);
+  assert.equal(r.outcomes[1].reason, 'AI 호출 실패로 중단');
+  assert.equal(r.errors.length, 1);
+  assert.match(r.errors[0], /AI 원고 호출 실패: Anthropic HTTP 529/);
+});
+
+test('compose_throw_delete_failure_falls_back_to_mark_failed', async () => {
+  const g1 = game('kbl', '2026-10-22', '서울 삼성', '부산 KCC');
+  const g2 = game('kbl', '2026-10-22', '서울 SK', '창원 LG');
+  const d = deps({ games: { kbl: [g1, g2] } });
+  d.compose = async () => { throw new Error('Anthropic 호출 시간 초과 300000ms'); };
+  d.wp.deletePost = async (...a) => { d.calls.push(['wp.deletePost', ...a]); throw new Error('WP DELETE /wp-json/wp/v2/posts/900 실패: HTTP 500'); };
+  const r = await runReview({ ...d, only: 'kbl' });
+  assert.equal(named(d.calls, 'wp.deletePost').length, 1);
+  const ups = named(d.calls, 'wp.updatePost');
+  assert.equal(ups.length, 1);
+  assert.equal(ups[0][1], 900);
+  assert.equal(ups[0][2].status, 'draft');
+  assert.match(ups[0][2].content, /^<p>자동 작성 실패: .*시간 초과/);
+  assert.equal(r.outcomes[0].postId, 900);                          // 남은 임시글 번호를 요약에 남긴다
+  assert.deepEqual(r.outcomes.map((o) => o.status), ['error', 'skip']);
+  assert.equal(r.outcomes[1].reason, 'AI 호출 실패로 중단');
+  assert.equal(r.errors.length, 1);
+});
+
+/* 마지막 updatePost 가 서버에서 일부만 반영될 수 있다(상태는 publish, 메타에서 오류) — 실패 표시는 status:draft 와 함께 보낸다. */
+test('final_update_failure_mark_failed_forces_draft', async () => {
+  const g = game('kbl', '2026-10-22', '서울 삼성', '부산 KCC');
+  const d = deps({ games: { kbl: [g] } });
+  let n = 0;
+  d.wp.updatePost = async (...a) => {
+    d.calls.push(['wp.updatePost', ...a]);
+    n += 1;
+    if (n === 1) throw new Error('WP POST /wp-json/wp/v2/posts/900 실패: HTTP 500');
+    return { id: a[0], link: 'x' };
+  };
+  const r = await runReview({ ...d, only: 'kbl' });
+  const ups = named(d.calls, 'wp.updatePost');
+  assert.equal(ups.length, 2);
+  assert.equal(ups[0][2].status, 'publish');
+  assert.deepEqual(Object.keys(ups[1][2]).sort(), ['content', 'status']);
+  assert.equal(ups[1][2].status, 'draft');
+  assert.match(ups[1][2].content, /^<p>자동 작성 실패: .*HTTP 500/);
+  assert.equal(r.outcomes[0].status, 'error');
+});
+
+/* 워드프레스가 휴지통 글의 slug 를 <slug>__trashed 로 바꿔도 「있음」이다 — 내린 리뷰를 다시 올리지 않는다. */
+test('trashed_review_is_exists_not_republished', async () => {
+  const g = game('kbl', '2026-10-22', '서울 삼성', '부산 KCC');
+  const slug = `match-review-${g.gameKey.toLowerCase()}`;
+  const d = deps({ games: { kbl: [g] } });
+  const { createWp } = await import('../tools/review/wp.mjs');
+  const real = createWp({ url: 'https://example.test', user: 'u', appPassword: 'p', fetchImpl: async (url) => {
+    const want = new URL(url).searchParams.get('slug')?.split(',') ?? [];
+    const body = want.includes(`${slug}__trashed`) ? [{ id: 31, slug: `${slug}__trashed`, status: 'trash' }] : [];
+    return { ok: true, status: 200, json: async () => body };
+  } });
+  d.wp.findBySlug = async (s) => { d.calls.push(['wp.findBySlug', s]); return real.findBySlug(s); };
+  const r = await runReview({ ...d, only: 'kbl' });
+  assert.equal(r.outcomes[0].status, 'exists');
+  assert.equal(r.outcomes[0].postId, 31);
+  assert.match(r.outcomes[0].reason, /trash/);
+  assert.equal(named(d.calls, 'compose').length, 0);
+  assert.equal(named(d.calls, 'wp.createPost').length, 0);
 });

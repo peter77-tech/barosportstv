@@ -12,9 +12,11 @@ import { cardText } from './image.mjs';
 
 const NAVER_TIMEOUT_MS = 30000;
 const WP_BROKEN = 'WP 쓰기 실패로 중단';
+const AI_BROKEN = 'AI 호출 실패로 중단';
 const DUPLICATE_QUERY = '같은 검색어 중복';
 /* 원고보다 먼저 만드는 임시글(draft) 본문. 실패하면 「자동 작성 실패: …」 로 바꾼다 — 어느 쪽이든 slug 를 잡고 있어
-   다음 회차가 「있음」으로 보고 같은 경기를 다시 쓰지(AI 비용) 않는다. */
+   다음 회차가 「있음」으로 보고 같은 경기를 다시 쓰지(AI 비용) 않는다. 단, 원고 호출 자체가 던지면(AI 장애) 임시글을
+   영구 삭제해 다음 회차가 다시 쓰게 한다. */
 const PLACEHOLDER_HTML = '<p>자동 작성 중 — 실패하면 이 임시글이 남는다.</p>';
 const failedHtml = (why) => `<p>자동 작성 실패: ${esc(why.length > 300 ? `${why.slice(0, 299)}…` : why)}</p>`;
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -87,6 +89,7 @@ export async function runReview({
   let composed = 0;
   let categoryId = null;
   let wpBroken = false;   // 워드프레스 쓰기가 한 번 실패하면 이번 회차는 더 쓰지 않는다(같은 실패에 AI 비용·고아 미디어를 쌓지 않게)
+  let aiBroken = false;   // 원고 호출이 한 번 던지면(네트워크·5xx·401·크레딧) 이번 회차는 임시글도 원고도 더 만들지 않는다
   const usedTitles = new Set();   // 이번 회차에 짝지은 제목(리그 + 네이버 검색어). 같은 경기가 원본에 두 번 오면 둘째는 건너뛴다
 
   const record = (o) => {
@@ -94,10 +97,12 @@ export async function runReview({
     log(`${LEAGUES[o.league].titleName} ${o.gameKey} → ${o.status}${o.reason ? ` (${o.reason})` : ''}`);
   };
 
-  /* 임시글을 「자동 작성 실패」로 바꾼다(draft 그대로). 그 쓰기마저 실패하면 워드프레스가 아픈 것이므로 회차를 멈춘다. */
+  /* 임시글을 「자동 작성 실패」로 바꾸고 draft 로 되돌린다 — 마지막 updatePost 가 서버에서 상태만 publish 로 바꾸고
+     메타·대표 이미지에서 실패했을 수 있으므로, 공개된 글에 실패 문구가 남지 않게 status 를 함께 보낸다.
+     그 쓰기마저 실패하면 워드프레스가 아픈 것이므로 회차를 멈춘다. */
   async function markFailed(postId, why) {
     try {
-      await wp.updatePost(postId, { content: failedHtml(why) });
+      await wp.updatePost(postId, { content: failedHtml(why), status: 'draft' });
       return why;
     } catch (e) {
       wpBroken = true;
@@ -110,6 +115,7 @@ export async function runReview({
     const slug = reviewSlug(game.gameKey);
     const out = { league, gameKey: game.gameKey, title: null };
     if (wpBroken) return { ...out, status: 'skip', reason: WP_BROKEN };
+    if (aiBroken) return { ...out, status: 'skip', reason: AI_BROKEN };
     if (composed >= MAX_POSTS_PER_RUN) return { ...out, status: 'skip', reason: `회차 상한 ${MAX_POSTS_PER_RUN}편 — 다음 회차에` };
     try {
       const entry = pairQuery(game, entries);
@@ -170,7 +176,17 @@ export async function runReview({
       try {
         r = await compose(facts, out.title, out.title);
       } catch (e) {
-        throw new Error(await markFailed(out.postId, `AI 원고 호출 실패: ${message(e)}`));
+        /* AI 장애: 실패 임시글로 남기면 장애가 풀린 뒤에도 그 경기를 다시 못 쓴다. 임시글을 영구 삭제하고 회차를 멈춘다.
+           삭제마저 실패하면 실패 표시로 남긴다(사람이 영구 삭제하면 다시 쓴다). */
+        aiBroken = true;
+        const why = `AI 원고 호출 실패: ${message(e)}`;
+        try {
+          await wp.deletePost(out.postId);
+        } catch (de) {
+          throw new Error(await markFailed(out.postId, `${why} — 임시글 삭제도 실패: ${message(de)}`));
+        }
+        delete out.postId;
+        throw new Error(why);
       }
       out.tokens = tokensOf(r.attempts);
       if (!r.doc) throw new Error(await markFailed(out.postId, 'AI 원고를 JSON 으로 한 번도 받지 못했다 — 글을 만들지 않는다'));

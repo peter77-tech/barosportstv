@@ -213,3 +213,47 @@ test('update_post_rejects_bad_id_and_http_error', async () => {
   assert.equal(calls.length, 0);
   await assert.rejects(() => wp.updatePost(7, { content: 'x' }), /POST \/wp-json\/wp\/v2\/posts\/7 실패: HTTP 400/);
 });
+
+/* 워드프레스는 휴지통에 넣은 글의 slug 를 <slug>__trashed 로 바꾼다 — 두 slug 를 함께 물어야 휴지통 글도 「있음」이다. */
+test('find_by_slug_asks_both_slug_and_trashed_slug', async () => {
+  const { calls, wp } = fake([() => res(200, [])]);
+  await wp.findBySlug('kbo-a');
+  const q = new URL(calls[0].url).searchParams;
+  assert.deepEqual(q.get('slug').split(','), ['kbo-a', 'kbo-a__trashed']);
+  assert.ok(q.get('status').split(',').includes('trash'));
+  assert.equal(q.get('context'), 'edit');
+});
+
+test('find_by_slug_trashed_renamed_slug_counts', async () => {
+  const { wp } = fake([(c) => c.url.includes('/posts?') && res(200, [{ id: 12, slug: 'kbo-a__trashed', status: 'trash' }])]);
+  assert.deepEqual(await wp.findBySlug('kbo-a'), { id: 12, status: 'trash' });
+});
+
+test('delete_post_forces_permanent_delete', async () => {
+  const { calls, wp } = fake([(c) => c.method === 'DELETE' && res(200, { deleted: true, previous: { id: 77 } })]);
+  await wp.deletePost(77);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].method, 'DELETE');
+  const u = new URL(calls[0].url);
+  assert.equal(u.origin + u.pathname, 'https://example.test/wp-json/wp/v2/posts/77');
+  assert.equal(u.searchParams.get('force'), 'true');
+  const want = 'Basic ' + Buffer.from(`bot:${PASS}`).toString('base64');
+  assert.equal(calls[0].headers.Authorization, want);
+  assert.ok(calls[0].signal, 'timeout signal attached');
+});
+
+test('delete_post_rejects_bad_id_and_hides_credentials', async () => {
+  const { calls, wp } = fake([() => res(500, { message: `bad ${PASS}` })]);
+  for (const id of [0, -1, 1.5, '7', null, undefined]) await assert.rejects(() => wp.deletePost(id), /id/);
+  assert.equal(calls.length, 0);
+  await assert.rejects(() => wp.deletePost(7), (e) => {
+    assert.equal(e.message, 'WP DELETE /wp-json/wp/v2/posts/7 실패: HTTP 500');
+    assert.ok(!e.message.includes(PASS));
+    return true;
+  });
+  const net = mk(async () => { throw Object.assign(new Error(`reset bot:${PASS}`), { code: 'ECONNRESET' }); });
+  await assert.rejects(() => net.deletePost(7), (e) => {
+    assert.equal(e.message, 'WP DELETE /wp-json/wp/v2/posts/7 실패: ECONNRESET');
+    return true;
+  });
+});
