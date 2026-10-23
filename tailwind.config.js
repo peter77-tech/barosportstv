@@ -19,10 +19,12 @@ const themeSrc = fs.readFileSync(path.join(__dirname, 'assets', 'theme.js'), 'ut
 new Function('tailwind', themeSrc)(tailwind);
 
 module.exports = {
-  /* 클래스를 찾을 곳. assets/*.js 를 넣는 이유:
-   * app.js 가 bg-hermes-orange / translate-x-1 / translate-x-6 등을
-   * JS 에서 토글하므로, HTML 만 훑으면 그 클래스가 빠진다. */
-  content: ['./*.html', './assets/*.js'],
+  // 클래스를 찾을 곳. 한 줄 주석을 쓴다 - 블록 주석 안에 glob 패턴을 넣으면
+  // 패턴 안의 별표+슬래시가 주석을 조기 종료시킨다 (2026-09-01 실제로 깨졌다).
+  //   ./*.html         : 기존 정적 사이트
+  //   ./assets/*.js    : app.js 가 JS 에서 토글하는 클래스 (bg-hermes-orange 등)
+  //   ./wp-theme/      : 워드프레스 테마 PHP. 빼면 PHP 안의 클래스가 통째로 사라진다.
+  content: ['./*.html', './assets/*.js', './wp-theme/**/*.php'],
 
   ...tailwind.config,
 
