@@ -1,4 +1,4 @@
-/* 대표 이미지 (§11). 리그별 배경 사진 → 흐리게·어둡게 → 점수 글자를 코드가 그린다.
+/* 대표 이미지 (§11). 종목별 배경 사진 → 흐리게·어둡게 → 점수 글자를 코드가 그린다.
    한글 글꼴은 저장소에 함께 둔다 — 실행기(ubuntu)에 한글 글꼴이 없다. */
 import sharp from 'sharp';
 import { readFileSync } from 'node:fs';
@@ -11,9 +11,14 @@ const FONT_FAMILY = 'Noto Sans KR';   // 글꼴 이름표(family)와 같아야 �
 const W = 1200, H = 630;
 const TEXT_MAX_WIDTH = 1080;   // 좌우 여백 60px
 
+/* 배경은 종목별 4장. 남·여 리그는 같은 종목 사진을 쓴다. */
+const BG_SPORT = {
+  kbo: 'baseball', kl1: 'soccer', kbl: 'basketball', wkbl: 'basketball', vm: 'volleyball', vw: 'volleyball',
+};
+
 export function bgPath(league) {
-  if (!LEAGUES[league]) throw new Error(`알 수 없는 리그: ${league}`);
-  return `${ROOT}bg/${league}.jpg`;
+  if (!LEAGUES[league] || !BG_SPORT[league]) throw new Error(`알 수 없는 리그: ${league}`);
+  return `${ROOT}bg/${BG_SPORT[league]}.jpg`;
 }
 
 /* 이긴 팀 먼저, 무승부는 홈 먼저. 점수는 이긴 쪽이 앞에 온다. */

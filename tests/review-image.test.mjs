@@ -58,10 +58,13 @@ test('card_text_kl1_winner_first', () => {
 });
 
 test('card_uses_league_bg', () => {
-  for (const lg of ['kbo', 'kl1', 'kbl', 'wkbl', 'vm', 'vw']) {
-    assert.ok(bgPath(lg).split(/[\\/]/).slice(-4).join('/') === `assets/review/bg/${lg}.jpg`, bgPath(lg));
+  const sportOf = { kbo: 'baseball', kl1: 'soccer', kbl: 'basketball', wkbl: 'basketball', vm: 'volleyball', vw: 'volleyball' };
+  for (const [lg, sport] of Object.entries(sportOf)) {
+    assert.ok(bgPath(lg).split(/[\\/]/).slice(-4).join('/') === `assets/review/bg/${sport}.jpg`, bgPath(lg));
     assert.ok(existsSync(bgPath(lg)), `${lg} 배경 파일이 있어야 한다`);
   }
+  assert.equal(bgPath('kbl'), bgPath('wkbl'));
+  assert.equal(bgPath('vm'), bgPath('vw'));
   assert.ok(existsSync(FONT_PATH));
   assert.throws(() => bgPath('xx'));
 });
