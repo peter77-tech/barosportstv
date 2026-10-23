@@ -127,6 +127,20 @@ foreach ( array( 'page-templates/schedule.php', 'template-parts/schedule-row.php
 	check( "template_globals: {$tpl} 가 WordPress 전역 이름에 쓰지 않는다" . ( $hit ? ' (' . implode( ',', $hit ) . ')' : '' ), ! $hit );
 }
 
+/* ── 경기 리뷰 JSON-LD 태그 ─────────────────────────── */
+require __DIR__ . '/../../wp-theme/barosportstv/inc/review.php';
+$ld  = '{"@type":"SportsEvent","name":"A vs B","description":"</script><!--<script>x & 한글 a/b"}';
+$tag = bstv_review_jsonld_tag( $ld );
+check( 'jsonld_tag: 올바른 JSON 은 script 로 감싼다', 0 === strpos( $tag, '<script type="application/ld+json">' ) && '</script>' === substr( $tag, -9 ) );
+$body = substr( $tag, strlen( '<script type="application/ld+json">' ), -strlen( '</script>' ) );
+check( 'jsonld_tag: 값 안의 </script>·<!--<script 는 < > 가 한 글자도 남지 않는다', false === strpos( $body, '<' ) && false === strpos( $body, '>' ) && 1 === substr_count( $tag, '</script>' ) && false === strpos( $tag, '<!--' ) );
+$inner = substr( $tag, strlen( '<script type="application/ld+json">' ), -strlen( '</script>' ) );
+check( 'jsonld_tag: 바꾼 뒤에도 JSON 내용이 같다', json_decode( $inner, true ) === json_decode( $ld, true ) );
+check( 'jsonld_tag: 깨진 JSON 은 빈 문자열', '' === bstv_review_jsonld_tag( '{"a":' ) );
+check( 'jsonld_tag: 빈 값은 빈 문자열', '' === bstv_review_jsonld_tag( '' ) && '' === bstv_review_jsonld_tag( '   ' ) );
+check( 'jsonld_tag: 목록·@type 없는 객체는 빈 문자열', '' === bstv_review_jsonld_tag( '[1]' ) && '' === bstv_review_jsonld_tag( '[{"@type":"X"}]' ) && '' === bstv_review_jsonld_tag( '{"name":"x"}' ) && '' === bstv_review_jsonld_tag( '{}' ) );
+check( 'jsonld_tag: 객체가 아닌 JSON 은 빈 문자열', '' === bstv_review_jsonld_tag( '"x"' ) && '' === bstv_review_jsonld_tag( '12' ) && '' === bstv_review_jsonld_tag( 'null' ) );
+
 /* ── 데이터 받기·저장 (WordPress 스텁) ─────────────── */
 require __DIR__ . '/data.php';
 
