@@ -12,7 +12,7 @@ on:
   workflow_dispatch:
     inputs:
       dry:
-        description: '글을 올리지 않고 요약만 본다 (워드프레스·Anthropic 호출 없음)'
+        description: '워드프레스에는 쓰지 않고 미리보기만 만든다 — 단 Anthropic 은 호출한다(토큰 소모)'
         type: boolean
         default: false
       league:
@@ -27,13 +27,6 @@ on:
 permissions:
   contents: read
 
-# 겹쳐 돌면 같은 경기를 두 실행이 동시에 보고 글을 두 번 올린다.
-# 중복 확인(slug 조회)과 글쓰기 사이에 틈이 있으므로 실행을 줄 세운다.
-# 진행 중인 것은 끝까지 두고, 기다리는 것만 최신 하나로 남는다.
-concurrency:
-  group: review
-  cancel-in-progress: false
-
 jobs:
   review:
     # 예약 실행은 저장소 변수 REVIEW_SCHEDULE 이 'on' 일 때만 일한다.
@@ -43,6 +36,13 @@ jobs:
     #   gh variable set REVIEW_SCHEDULE --body on
     # 으로 켠다. 손으로 실행(workflow_dispatch)은 변수와 상관없이 언제나 된다.
     if: github.event_name == 'workflow_dispatch' || vars.REVIEW_SCHEDULE == 'on'
+    # concurrency 는 워크플로가 아니라 여기(if 아래)에 둔다. 워크플로 수준에 두면
+    # REVIEW_SCHEDULE 이 꺼진 동안 건너뛰는 예약 실행도 그룹에 들어가 대기 중인
+    # 손 실행을 밀어낸다. 겹쳐 돌면 같은 경기를 두 실행이 동시에 보고 글을 두 번
+    # 올린다(slug 중복 확인과 글쓰기 사이에 틈). 그래서 줄 세우고 진행 중인 것은 끝까지 둔다.
+    concurrency:
+      group: review
+      cancel-in-progress: false
     runs-on: ubuntu-latest
     # 한 회차 새 글 12편 상한 + 네이버·공식 사이트 요청 간격을 감안한 여유.
     timeout-minutes: 40
@@ -78,3 +78,14 @@ jobs:
           if [ -n "$IN_LEAGUE" ]; then args+=(--league "$IN_LEAGUE"); fi
           if [ -n "$IN_SINCE" ]; then args+=(--since "$IN_SINCE"); fi
           node tools/review/run.mjs "${args[@]}"
+
+      # dry 는 글을 올리지 않으므로 미리보기 파일(out/review-preview/)이 결과의 전부다.
+      # 실행기가 실패해도(always) 남은 파일은 올린다.
+      - name: 미리보기 업로드
+        if: always() && inputs.dry == true
+        uses: actions/upload-artifact@v4
+        with:
+          name: review-preview
+          path: out/review-preview/
+          retention-days: 7
+          if-no-files-found: warn
