@@ -33,6 +33,9 @@ async function post(path, body, { fetchImpl, sleep, now }) {
   return out.data;
 }
 
+/* null·''·undefined 는 Number() 로 0 이 되므로 따로 막는다(골 칸이 빈 「종료」 경기 = 가짜 0:0). */
+const isGoal = (v) => v !== null && v !== undefined && v !== '' && Number.isFinite(Number(v));
+
 const isoDate = (d) => String(d).replace(/\./g, '-');   // 'YYYY.MM.DD' → 'YYYY-MM-DD'
 
 /** days(한국 날짜들)의 끝난 K리그1 경기. 달마다 한 번 요청한다. */
@@ -45,7 +48,7 @@ export async function listFinished(days, { fetchImpl = fetch, sleep = realSleep,
     const data = await post('/getScheduleList.do', { json: { year, month, leagueId: '1' } }, { fetchImpl, sleep, now });
     for (const it of data.scheduleList || []) {
       const date = isoDate(it.gameDate);
-      if (!want.has(date) || it.endYn !== 'Y') continue;
+      if (!want.has(date) || it.endYn !== 'Y' || !isGoal(it.homeGoal) || !isGoal(it.awayGoal)) continue;
       games.push({
         league: 'kl1', gameKey: `kl1-${String(it.gameId).replace(/[^0-9A-Za-z-]/g, '')}`, date,
         home: it.homeTeamName, away: it.awayTeamName,

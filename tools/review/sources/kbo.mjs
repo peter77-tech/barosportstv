@@ -18,6 +18,10 @@ const ArenaTeams = (() => {
   return win.ArenaTeams;
 })();
 
+/* TheSportsDB 는 누구나 고치는 자료라 최종 점수를 믿기 전에 이닝 점수 합과 맞춰 본다(다른 수집기도 모두 교차 확인한다).
+   이닝 점수를 못 읽거나 합이 다르면 경기를 거절한다 — 틀린 점수로 글을 내는 것보다 안 쓰는 편이 낫다. */
+const refuse = (e, why) => new Error(`KBO ${e.idEvent}: ${why} — 경기를 쓰지 않는다`);
+
 /* TheSportsDB 구장 영문 → 한글. 표에 없으면 원문을 쓴다. */
 const VENUES = {
   'Jamsil Baseball Stadium': '잠실야구장',
@@ -86,24 +90,27 @@ function sideOf(english) {
   return { name, short: firstWord(name), full: null };
 }
 
-/** TheSportsDB 이벤트 하나 → MatchFacts. 순수 함수. */
+/** TheSportsDB 이벤트 하나 → MatchFacts. 순수 함수. 이닝 점수가 없거나 최종 점수와 어긋나면 던진다. */
 export function toFacts(e) {
   const home = sideOf(e.strHomeTeam);
   const away = sideOf(e.strAwayTeam);
   const score = { home: Number(e.intHomeScore), away: Number(e.intAwayScore) };
   const ls = parseLineScore(e.strResult);
-  const n = ls ? Math.max(ls.home.runs.length, ls.away.runs.length) : 0;
-  const pad = (runs) => Array.from({ length: n }, (_, i) => (i < runs.length ? runs[i] : null));
-  const periods = ls
-    ? { labels: Array.from({ length: n }, (_, i) => String(i + 1)), home: pad(ls.home.runs), away: pad(ls.away.runs) }
-    : { labels: [], home: [], away: [] };
-  const scoring = (runs) => runs.filter((r) => r > 0).length;
-  const teamStats = [{ label: '득점', home: score.home, away: score.away }];
-  if (ls) {
-    teamStats.push({ label: '안타', home: ls.home.hits, away: ls.away.hits });
-    teamStats.push({ label: '실책', home: ls.home.errors, away: ls.away.errors, lowerBetter: true });
-    teamStats.push({ label: '득점 이닝', home: scoring(ls.home.runs), away: scoring(ls.away.runs) });
+  if (!ls || !ls.home.runs.length || !ls.away.runs.length) throw refuse(e, '이닝 점수를 읽지 못했다');
+  const sum = (runs) => runs.reduce((t, r) => t + (r ?? 0), 0);   // 'x'(말 공격 없음) = null = 0점
+  if (sum(ls.home.runs) !== score.home || sum(ls.away.runs) !== score.away) {
+    throw refuse(e, `이닝 점수 합(${sum(ls.home.runs)}:${sum(ls.away.runs)})이 최종 점수(${score.home}:${score.away})와 다르다`);
   }
+  const n = Math.max(ls.home.runs.length, ls.away.runs.length);
+  const pad = (runs) => Array.from({ length: n }, (_, i) => (i < runs.length ? runs[i] : null));
+  const periods = { labels: Array.from({ length: n }, (_, i) => String(i + 1)), home: pad(ls.home.runs), away: pad(ls.away.runs) };
+  const scoring = (runs) => runs.filter((r) => r > 0).length;
+  const teamStats = [
+    { label: '득점', home: score.home, away: score.away },
+    { label: '안타', home: ls.home.hits, away: ls.away.hits },
+    { label: '실책', home: ls.home.errors, away: ls.away.errors, lowerBetter: true },
+    { label: '득점 이닝', home: scoring(ls.home.runs), away: scoring(ls.away.runs) },
+  ];
   const date = dateOf(e);
   const venue = VENUES[e.strVenue] || e.strVenue || '';
   return {
@@ -114,8 +121,8 @@ export function toFacts(e) {
     ai: {
       date, venue, home: home.name, away: away.name, score,
       innings: { labels: periods.labels, home: periods.home, away: periods.away },
-      hits: ls ? { home: ls.home.hits, away: ls.away.hits } : null,
-      errors: ls ? { home: ls.home.errors, away: ls.away.errors } : null,
+      hits: { home: ls.home.hits, away: ls.away.hits },
+      errors: { home: ls.home.errors, away: ls.away.errors },
     },
     source: { name: SOURCE_NAME, url: `https://www.koreabaseball.com/Schedule/GameCenter/Main.aspx?gameDate=${date.replace(/-/g, '')}` },
   };

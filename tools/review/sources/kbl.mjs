@@ -36,6 +36,7 @@ const isoDate = (d) => `${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6, 8)}`;
 /** days(한국 날짜들)의 끝난 KBL 경기(정규시즌·플레이오프·챔피언결정전). 가장 이른 날~늦은 날을 한 번에 요청한다. */
 export async function listFinished(days, { fetchImpl = fetch, sleep = realSleep, now = Date.now } = {}) {
   const want = new Set(days);
+  if (!want.size) return [];                 // 앞날 --since 처럼 날짜가 하나도 없으면 요청하지 않는다
   const sorted = [...want].sort();
   const rows = await get(`/match/list?fromDate=${compact(sorted[0])}&toDate=${compact(sorted[sorted.length - 1])}`, { fetchImpl, sleep, now });
   const games = [];

@@ -111,6 +111,12 @@ test('kbl_unfinished_and_other_categories_excluded', async () => {
   assert.deepEqual(games.map(g => g.gameKey), ['kbl-A1', 'kbl-A4', 'kbl-A5']);
   assert.equal(games[1].stage, '플레이오프');
 });
+test('kbl_list_no_days_is_empty_without_request', async () => {
+  const calls = [];
+  const fetchImpl = async (u) => { calls.push(u); return { ok: true, json: async () => list }; };
+  assert.deepEqual(await listFinished([], { fetchImpl, ...fakeClock() }), []);
+  assert.equal(calls.length, 0);
+});
 test('kbl_http_error_throws', async () => {
   const bad = async () => ({ ok: false, status: 400, json: async () => null });
   await assert.rejects(listFinished(['2026-10-21'], { fetchImpl: bad, ...fakeClock() }), /400/);

@@ -101,6 +101,20 @@ test('kl1_unfinished_excluded', async () => {
   assert.deepEqual(games.map(g => g.gameKey), ['kl1-1']);
 });
 
+/* endYn 'Y' 인데 골 칸이 비어 있으면 Number(null)=0 이 가짜 0:0 무승부를 만든다 — 두 골 칸이 모두 숫자일 때만 쓴다. */
+test('kl1_ended_without_goals_skipped', async () => {
+  const base = item(190);
+  const mk = (id, over) => ({ ...base, gameId: id, ...over });
+  const data = { scheduleList: [
+    mk(1, {}), mk(2, { homeGoal: null, awayGoal: null }), mk(3, { homeGoal: '', awayGoal: 1 }),
+    mk(4, { homeGoal: 2, awayGoal: undefined }), mk(5, { homeGoal: '0', awayGoal: '0' }),
+  ] };
+  const fetchImpl = async () => ({ ok: true, json: async () => ({ resultCode: '200', data }) });
+  const games = await listFinished(['2026-10-18'], { fetchImpl, ...fakeClock() });
+  assert.deepEqual(games.map(g => g.gameKey), ['kl1-1', 'kl1-5']);
+  assert.deepEqual([games[1].homeScore, games[1].awayScore], [0, 0]);
+});
+
 test('kl1_http_error_throws', async () => {
   const bad = async () => ({ ok: false, status: 503, json: async () => null });
   await assert.rejects(listFinished(['2026-10-18'], { fetchImpl: bad, ...fakeClock() }), /503/);

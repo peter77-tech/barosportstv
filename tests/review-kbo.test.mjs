@@ -80,21 +80,40 @@ test('kbo_requests_spaced_700ms', async () => {
 });
 
 test('kbo_extra_innings', () => {
-  const e = { ...fx.events[0], strResult: ' LG Twins Innings:<br>0 0 0 0 0 1 0 0 0 0 0 1 <br>Hits: 8 - Errors: 1<br><br>Kia Tigers Innings:<br>0 7 0 0 1 1 1 0 0 0 0 0 <br>Hits: 16 - Errors: 0' };
+  const e = { ...fx.events[0], intHomeScore: '2', intAwayScore: '10', strResult: ' LG Twins Innings:<br>0 0 0 0 0 1 0 0 0 0 0 1 <br>Hits: 8 - Errors: 1<br><br>Kia Tigers Innings:<br>0 7 0 0 1 1 1 0 0 0 0 0 <br>Hits: 16 - Errors: 0' };
   const f = toFacts(e);
   assert.deepEqual(f.periods.labels, ['1','2','3','4','5','6','7','8','9','10','11','12']);
   assert.equal(f.periods.home.length, 12);
   assert.equal(f.periods.home[11], 1);
 });
 
-test('kbo_missing_line_score_degrades', () => {
-  const f = toFacts({ ...fx.events[0], strResult: '' });
-  assert.deepEqual(f.periods, { labels: [], home: [], away: [] });
-  assert.equal(f.teamStats.find(s => s.label === '안타'), undefined);
-  assert.deepEqual(f.score, { home: 1, away: 13 });
+/* TheSportsDB 는 누구나 고치는 자료라 최종 점수를 이닝 점수 합과 맞춰 본다. 못 맞추면 경기를 거절한다. */
+test('kbo_missing_line_score_refused', () => {
+  assert.throws(() => toFacts({ ...fx.events[0], strResult: '' }), /이닝/);
+});
+
+test('kbo_malformed_line_score_refused', () => {
+  const one = ' LG Twins Innings:<br>0 0 0 0 0 1 0 0 0 <br>Hits: 8 - Errors: 1';
+  assert.throws(() => toFacts({ ...fx.events[0], strResult: one }), /이닝/);
+});
+
+test('kbo_score_disagrees_with_innings_refused', () => {
+  assert.throws(() => toFacts({ ...fx.events[0], intHomeScore: '2' }), /이닝/);
+  assert.throws(() => toFacts({ ...fx.events[0], intAwayScore: '12' }), /이닝/);
+});
+
+test('kbo_real_fixture_innings_agree_with_score', () => {
+  assert.doesNotThrow(() => toFacts(fx.events[0]));
+});
+
+test('kbo_unplayed_bottom_ninth_x_counts_as_zero', () => {
+  const r = ' LG Twins Innings:<br>0 0 0 0 0 1 0 0 x <br>Hits: 8 - Errors: 1<br><br>Kia Tigers Innings:<br>0 0 0 0 0 0 0 0 0 <br>Hits: 3 - Errors: 0';
+  const f = toFacts({ ...fx.events[0], intHomeScore: '1', intAwayScore: '0', strResult: r });
+  assert.deepEqual(f.periods.home, [0, 0, 0, 0, 0, 1, 0, 0, null]);
 });
 
 test('kbo_draw_keeps_equal_score', () => {
-  const f = toFacts({ ...fx.events[0], intHomeScore: '4', intAwayScore: '4' });
+  const r = ' LG Twins Innings:<br>0 0 0 0 0 4 0 0 0 0 0 0 <br>Hits: 8 - Errors: 1<br><br>Kia Tigers Innings:<br>0 4 0 0 0 0 0 0 0 0 0 0 <br>Hits: 9 - Errors: 0';
+  const f = toFacts({ ...fx.events[0], intHomeScore: '4', intAwayScore: '4', strResult: r });
   assert.deepEqual(f.score, { home: 4, away: 4 });
 });
