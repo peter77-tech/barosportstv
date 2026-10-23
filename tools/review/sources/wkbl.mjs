@@ -77,13 +77,23 @@ function parseList(html, seasonGu) {
     const stage = STAGES[gameType];
     if (!stage) continue;                                   // 컵대회(09)·정체불명 종류는 쓰지 않는다 (§3)
     const [home, away] = teams;                             // 먼저 적힌 팀 = 홈 (파일 머리 주석)
-    games.push({
+    const time = cellsOf(body).find((c) => /^\d{1,2}:\d{2}$/.test(c)) ?? null;   // 경기 시작 시각(KST)
+    games.push({ time, game: {
       league: 'wkbl', gameKey: `wkbl-${seasonGu}-${gameType}-${gameNo}`, date: isoOf(compact),
       home: home.name, away: away.name, homeScore: Number(home.score), awayScore: Number(away.score),
       stage, ref: { seasonGu, gameType, gameNo, ym },
-    });
+    } });
   }
   return games;
+}
+
+const GAME_LENGTH_MS = 2.5 * 3600e3;
+/* 목록 행에는 진행 상태 칸이 없어 경기 중에도 부분 점수 + 기록 링크가 보일 수 있다. 오늘 경기는 시작 + 2시간 30분이 지나야
+   끝난 것으로 본다. 시작 시각을 못 읽으면 건너뛴다(다음 회차 windowDays 안에서 다시 잡힌다). */
+function startedLongAgo(date, time, nowMs) {
+  if (!time) return false;
+  const start = Date.parse(`${date}T${time.padStart(5, '0')}:00+09:00`);
+  return Number.isFinite(start) && nowMs >= start + GAME_LENGTH_MS;
 }
 
 /** days(한국 날짜들)의 끝난 WKBL 경기(정규시즌·플레이오프·챔피언결정전). 달마다 1번 + 플레이오프 목록 1번. */
@@ -91,6 +101,8 @@ export async function listFinished(days, { fetchImpl = fetch, sleep = realSleep,
   const io = { fetchImpl, sleep, now };
   const season = seasonGu ?? await findSeasonGu(io);
   const want = new Set(days);
+  const nowMs = now();
+  const today = new Date(nowMs + 9 * 3600e3).toISOString().slice(0, 10);   // 오늘(KST)
   const months = [...new Set(days.map((d) => d.slice(0, 7).replace('-', '')))].sort();
   const pages = [];
   for (const ym of months) pages.push(await request(`/game/sch/inc_list_1_new.asp?season_gu=${season}&ym=${ym}&viewType=1&gun=1`, undefined, io));
@@ -98,7 +110,8 @@ export async function listFinished(days, { fetchImpl = fetch, sleep = realSleep,
   const seen = new Set();                                   // 같은 경기가 여러 목록에 반복된다 → (game_type, game_no) 로 한 번만
   const games = [];
   for (const html of pages) {
-    for (const g of parseList(html, season)) {
+    for (const { game: g, time } of parseList(html, season)) {
+      if (g.date === today && !startedLongAgo(g.date, time, nowMs)) continue;
       const id = `${g.ref.gameType}-${g.ref.gameNo}`;
       if (!want.has(g.date) || seen.has(id)) continue;
       seen.add(id);

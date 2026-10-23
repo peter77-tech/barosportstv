@@ -202,3 +202,27 @@ test('wkbl_fetch_facts_two_calls_post_form_throttled_across_calls', async () => 
   for (let i = 1; i < seen.length; i++) assert.ok(seen[i].t - seen[i - 1].t >= 700, `gap ${i}`);
   assert.equal(f.score.home, 77); assert.equal(f.gameKey, 'wkbl-046-01-89');
 });
+
+/* 진행 중 경기 방어: 목록 행에는 상태 칸이 없다. 오늘(KST) 경기는 시작 시각 + 2시간 30분이 지나야 끝난 경기로 본다. */
+const kst = (iso) => Date.parse(`${iso}+09:00`);
+const clockAt = (iso) => { const c = fakeClock(); return { sleep: c.sleep, now: () => kst(iso) }; };
+const todayList = (date, time) => listMonth.replace(/id="20260401"/, `id="${date}"`).replace(/<td>19:00<\/td>/, `<td>${time}</td>`);
+const gamesAt = (list, nowIso) => listFinished(['2026-04-01'], { fetchImpl: route(listRoutes(list, emptyList)), seasonGu: '046', ...clockAt(nowIso) });
+
+test('wkbl_today_before_start_plus_2h30_excluded', async () => {
+  const g = await gamesAt(listMonth, '2026-04-01T21:29:00');
+  assert.deepEqual(g.filter((x) => x.ref.gameNo === '89'), []);
+});
+test('wkbl_today_after_start_plus_2h30_included', async () => {
+  const g = await gamesAt(listMonth, '2026-04-01T21:30:00');
+  assert.deepEqual(g.map((x) => x.ref.gameNo), ['89']);
+});
+test('wkbl_yesterday_included_regardless_of_clock', async () => {
+  const g = await gamesAt(listMonth, '2026-04-02T00:05:00');
+  assert.deepEqual(g.map((x) => x.ref.gameNo), ['89']);
+});
+test('wkbl_today_without_parseable_time_excluded', async () => {
+  const noTime = listMonth.replace(/<td>19:00<\/td>/, '<td>미정</td>');
+  assert.deepEqual(await gamesAt(noTime, '2026-04-01T23:59:00'), []);
+  assert.deepEqual((await gamesAt(noTime, '2026-04-02T00:05:00')).map((x) => x.ref.gameNo), ['89']);   // 다음 날엔 풀린다
+});
