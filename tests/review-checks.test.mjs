@@ -55,15 +55,38 @@ test('banned_phrases', () => {
 });
 test('draw_no_winner_words', () => {
   assert.equal(FD.score.home, FD.score.away);
-  const ok = { ...good, meta_description: '2-2 무승부.', key_points: [], answer: '2-2로 비겼다.', body_html: '<p>양 팀이 2-2로 맞섰다.</p>', verdict_html: '<p>승부는 갈리지 않았다.</p>' };
+  const ok = { ...good, meta_description: '2-2 무승부.', key_points: ['2-2'], answer: '2-2로 비겼다.', body_html: '<p>양 팀이 2-2로 맞섰다.</p>', verdict_html: '<p>승부는 갈리지 않았다.</p>' };
   assert.equal(checkDoc(ok, FD, EXP, EXP).ok, true);
   for (const w of ['서울이 이겼다', '서울의 승리였다', '서울이 김천을 꺾었다'])
     assert.equal(checkDoc({ ...ok, answer: w }, FD, EXP, EXP).ok, false);
 });
 test('stoppage_minute_is_one_token', () => {
   const fx = { ...FD, ai: { ...FD.ai, timeline: ['전반 45+9분 득점 제주 네게바'] } };
-  const ok = { ...good, meta_description: '2-2 무승부.', key_points: [], answer: '2-2로 비겼다.', body_html: '<p>전반 45+9분에 골이 나왔다.</p>', verdict_html: '<p>무승부.</p>' };
+  const ok = { ...good, meta_description: '2-2 무승부.', key_points: ['2-2'], answer: '2-2로 비겼다.', body_html: '<p>전반 45+9분에 골이 나왔다.</p>', verdict_html: '<p>무승부.</p>' };
   assert.equal(checkDoc(ok, fx, EXP, EXP).ok, true);
   const bad = { ...ok, body_html: '<p>전반 45+7분에 골이 나왔다.</p>' };
   assert.ok(checkDoc(bad, fx, EXP, EXP).issues.some(i => /45\+7/.test(i.problem)));
+});
+test('missing_or_malformed_fields_fail_not_throw', () => {
+  assert.equal(checkDoc({}, F, EXP, EXP).ok, false);
+  assert.equal(checkDoc(null, F, EXP, EXP).ok, false);
+  for (const f of ['meta_description', 'answer', 'body_html', 'verdict_html'])
+    for (const v of ['', '  ', undefined, 5])
+      assert.equal(checkDoc({ ...good, [f]: v }, F, EXP, EXP).ok, false, `${f}=${v}`);
+  for (const v of [undefined, 'x', [], [''], [1], {}])
+    assert.equal(checkDoc({ ...good, key_points: v }, F, EXP, EXP).ok, false);
+  assert.equal(checkDoc(good, F, undefined, undefined).ok, false);
+  assert.equal(checkDoc(good, F, '', '').ok, false);
+});
+test('hidden_markup_rejected', () => {
+  for (const bad of ['<p>a</p><!-- 99점 -->', '<![CDATA[x]]>', '<?php echo 1 ?>', '<p>x</p><img src=x onerror=alert(1)', '<p>1 < 2</p>'])
+    assert.equal(checkDoc({ ...good, body_html: bad }, F, EXP, EXP).ok, false, bad);
+});
+test('negative_cases_in_other_fields', () => {
+  assert.ok(checkDoc({ ...good, body_html: '<p>99점을 넣었다.</p>' }, F, EXP, EXP).issues.some(i => /99/.test(i.problem)));
+  assert.ok(checkDoc({ ...good, key_points: ['99점'] }, F, EXP, EXP).issues.some(i => /99/.test(i.problem)));
+  assert.equal(checkDoc({ ...good, verdict_html: '<p class="a">x</p>' }, F, EXP, EXP).ok, false);
+  assert.equal(checkDoc({ ...good, verdict_html: '<a href="x">x</a>' }, F, EXP, EXP).ok, false);
+  const ok = { ...good, meta_description: '2-2 무승부.', key_points: ['2-2'], answer: '2-2로 비겼다.', verdict_html: '<p>무승부.</p>' };
+  assert.equal(checkDoc({ ...ok, body_html: '<p>서울이 이겼다.</p>' }, FD, EXP, EXP).ok, false);
 });

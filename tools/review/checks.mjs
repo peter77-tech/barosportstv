@@ -52,23 +52,37 @@ function allowedNumbers(facts) {
 
 function stripTags(html) { return String(html).replace(/<[^>]*>/g, ' '); }
 
+const isText = (v) => typeof v === 'string' && v.trim() !== '';
+
 export function checkDoc(doc, facts, title, expectedTitle) {
   const issues = [];
   const issue = (field, problem) => issues.push({ field, problem });
 
-  if (title !== expectedTitle) issue('title', `제목이 기대값과 다르다: ${title}`);
+  if (!isText(title) || !isText(expectedTitle)) issue('title', '제목이 비어 있다');
+  else if (title !== expectedTitle) issue('title', `제목이 기대값과 다르다: ${title}`);
+
+  if (doc == null || typeof doc !== 'object') {
+    issue('doc', '문서가 객체가 아니다');
+    return { ok: false, issues };
+  }
+  for (const f of [...TEXT_FIELDS, ...HTML_FIELDS]) if (!isText(doc[f])) issue(f, '비어 있거나 문자열이 아니다');
+  const kp = doc.key_points;
+  const kpOk = Array.isArray(kp) && kp.length > 0 && kp.every(isText);
+  if (!kpOk) issue('key_points', '비어 있지 않은 문자열 배열이어야 한다');
 
   for (const f of HTML_FIELDS) {
-    const html = String(doc[f] ?? '');
-    for (const m of html.matchAll(/<\/?\s*([a-zA-Z][a-zA-Z0-9]*)([^>]*)>/g)) {
-      const tag = m[1].toLowerCase();
+    if (typeof doc[f] !== 'string') continue;
+    const rest = doc[f].replace(/<\/?\s*([a-zA-Z][a-zA-Z0-9]*)([^<>]*)>/g, (all, name, attrs) => {
+      const tag = name.toLowerCase();
       if (!ALLOWED_TAGS.has(tag)) issue(f, `허용되지 않는 태그: <${tag}>`);
-      else if (m[2].replace(/\/$/, '').trim() !== '') issue(f, `태그에 속성이 있다: <${tag}>`);
-    }
+      else if (attrs.trim() !== '') issue(f, `태그에 속성이 있다: <${tag}>`);
+      return ' ';
+    });
+    if (/[<>]/.test(rest)) issue(f, '허용되지 않는 마크업(주석·CDATA·미완성 태그 등)이 있다');
   }
   const plainFields = [
     ...TEXT_FIELDS.map((f) => [f, doc[f]]),
-    ...(doc.key_points ?? []).map((k, i) => [`key_points[${i}]`, k]),
+    ...(kpOk ? kp : []).map((k, i) => [`key_points[${i}]`, k]),
   ];
   for (const [f, v] of plainFields) {
     if (/[<>]/.test(String(v ?? ''))) issue(f, '일반 문장 필드에 태그 문자가 있다');
