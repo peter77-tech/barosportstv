@@ -78,7 +78,8 @@ test('kovo_ai_and_source', () => {
   assert.equal(f.ai.sets.length, 5); assert.deepEqual(f.ai.sets[2], { set: 3, home: 23, away: 25, minutes: 30 });
   assert.ok(f.ai.players.some((p) => p.name === '임동혁' && p.team === '대한항공' && p.points === 22));
   assert.ok(f.ai.players.every((p) => p.name));
-  assert.equal(f.source.name, 'KOVO 공식 기록'); assert.match(f.source.url, /^https:\/\/kovo\.co\.kr\//);
+  assert.equal(f.source.name, 'KOVO 공식 기록'); 
+  assert.equal(f.source.url, 'https://kovo.co.kr/games/v-leagues/schedules/262?gcode=001&seasonCode=022&leagueCode=203&round=1');   // 사이트 일정 화면의 「상세 결과」 버튼이 여는 주소
   assert.deepEqual(f.timeline, []);
 });
 test('kovo_mismatch_throws_instead_of_guessing', () => {
@@ -118,6 +119,15 @@ test('kovo_list_game_fields_and_filters_days', async () => {
     league: 'vm', gameKey: 'vm-022-262', date: '2026-04-02', home: '대한항공', away: '현대캐피탈',
     homeScore: 3, awayScore: 2, stage: '챔피언결정전', ref: { gnum: 262, gcode: '001', seasonCode: '022' },
   });
+});
+test('kovo_next_season_failure_keeps_current_season_games', async () => {
+  for (const next of [{ ok: false, status: 404 }, { ok: false, status: 500 }, { ok: true, json: async () => ({ result: { status: 404 } }) }, { ok: true, json: async () => { throw new Error('bad json'); } }]) {
+    const fetchImpl = async (u) => (/seasonCode=024/.test(u) ? next : { ok: true, json: async () => list });
+    const g = await listFinished(['2026-04-02'], { gender: '1', fetchImpl, ...fakeClock() });
+    assert.deepEqual(g.map((x) => x.gameKey), ['vm-022-262']);
+  }
+  const bad = async (u) => (/seasonCode=023/.test(u) ? { ok: false, status: 404 } : { ok: true, json: async () => list });
+  await assert.rejects(listFinished(['2026-04-02'], { gender: '1', fetchImpl: bad, ...fakeClock() }), /404/);   // 현재 시즌 실패는 그대로 던진다
 });
 test('kovo_http_error_throws', async () => {
   const bad = async () => ({ ok: false, status: 404 });

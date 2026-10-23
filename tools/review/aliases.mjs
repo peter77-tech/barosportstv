@@ -3,7 +3,7 @@
    토큰은 같은 리그의 다른 팀 이름 안에 들어가지 않을 만큼 길게, 네이버가 줄여 쓰는 말(예: 고양 소노는
    「스카이거너스」 한 단어)에도 걸리도록 짧게 잡는다.
    키 출처: kbo = TheSportsDB 영문(assets/teams.js), kbl = api.kbl.or.kr tname, kl1 = kleague.com 짧은 이름,
-   vm·vw = KOVO user-api 의 hsname/asname, wkbl = 공식 사이트 표기(아래 주의).
+   vm·vw = KOVO user-api 의 hsname/asname(요청에 `Accept-Language: ko-KR` 를 보낼 때만 한글 짧은 이름 — 안 보내면 영문), wkbl = 공식 사이트 표기(아래 주의).
    2026-10-22 에 KBL·KOVO·K리그 목록 API 와 네이버 일정 카드에서 대조했다. */
 
 export const ALIASES = {

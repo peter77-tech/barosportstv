@@ -23,7 +23,9 @@ const GAP_MS = 700;                      // 사이트 요청 사이 최소 간�
 const GCODE = '001';                     // V-리그. 컵대회 gcode 는 쓰지 않는다
 const SEASON_CODE = '023';               // 2026-27
 const SOURCE_NAME = 'KOVO 공식 기록';
-const SOURCE_URL = 'https://kovo.co.kr/';   // 상세 화면 주소는 SPA 라 확인할 수 없어 대표 주소만 쓴다
+/* 경기별 기록 페이지: 사이트 일정 화면의 「상세 결과」 버튼이 여는 주소를 사이트 번들(index-*.js)에서 읽어 그대로 만든다
+   (끝난 경기 → `/games/v-leagues/schedules/{gnum}?gcode&seasonCode&leagueCode&round`). */
+const recordUrl = (g) => `https://kovo.co.kr/games/v-leagues/schedules/${g.gnum}?gcode=${GCODE}&seasonCode=${g.seasonCode}&leagueCode=${g.leagueCode}&round=${g.round}`;
 const HEADERS = {
   Origin: 'https://kovo.co.kr',
   'Accept-Language': 'ko-KR,ko;q=0.9',
@@ -75,10 +77,18 @@ export async function listFinished(days, { gender, fetchImpl = fetch, sleep = re
   const want = new Set(days);
   const games = [];
   const seen = new Set();
-  for (const code of [seasonCode, nextSeason(seasonCode)]) {
+  const pull = async (code) => {
     const payload = await request(`/stat/game-schedule?gcode=${GCODE}&seasonCode=${code}&size=500`, io);
     if (!Array.isArray(payload?.content)) throw fail('경기 목록');
-    for (const r of payload.content) {
+    return payload.content;
+  };
+  for (const code of [seasonCode, nextSeason(seasonCode)]) {
+    let content;
+    if (code === seasonCode) content = await pull(code);       // 현재 시즌 실패는 그대로 던진다
+    else {
+      try { content = await pull(code); } catch { continue; }  // 아직 열리지 않은 다음 시즌은 404·빈 응답일 수 있다 → 건너뛴다
+    }
+    for (const r of content) {
       if (String(r.gender) !== gender || !STAGES[r.leagueCode] || !want.has(r.gdate) || !isFinished(r)) continue;
       const gameKey = gameKeyOf(league, r.seasonCode, r.gnum);
       if (seen.has(gameKey)) continue;                        // 같은 경기가 두 시즌 요청에 다시 나와도 한 번만
@@ -168,6 +178,6 @@ export function toFacts({ schedule: s, detail }) {
       teamStats: { [home.name]: aiTeam(ht, at, home.name), [away.name]: aiTeam(at, ht, away.name) },
       players: roster.filter(active).map(aiPlayer),
     },
-    source: { name: SOURCE_NAME, url: SOURCE_URL },
+    source: { name: SOURCE_NAME, url: recordUrl(s) },
   };
 }
