@@ -20,3 +20,5 @@
 `../fonts/NotoSansKR-Bold.ttf` — Noto Sans KR (Google), SIL Open Font License 1.1 (`../fonts/OFL.txt`).
 Google Fonts 저장소의 가변 글꼴(`ofl/notosanskr`)에서 굵기 700 한 벌을 뽑고, 한글 KS X 1001 완성형 2,350자와 ASCII·`· × : – — ‘ ’ “ ”`
 만 남겨 줄인 것입니다(fonttools). 글리프를 줄인 파생본도 OFL 에 따라 같은 라이선스로 둡니다. 팀 이름에 이 범위 밖 글자가 있으면 카드에 빈칸이 생기므로, 새 팀·글자가 생기면 다시 뽑아야 합니다.
+
+글리프 범위: `../fonts/charset.txt` 는 글꼴 cmap 에서 `python tools/review/font-charset.py` 로 뽑은 목록이며, `makeCard` 가 이 밖의 글자를 만나면 오류를 던진다. 글꼴 이름표(family `Noto Sans KR`, style `Bold`)도 같은 스크립트(`--rename`)로 맞췄다. 글꼴을 다시 만들면 스크립트를 다시 돌려 함께 커밋한다.

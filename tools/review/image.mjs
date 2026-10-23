@@ -1,12 +1,13 @@
 /* 대표 이미지 (§11). 리그별 배경 사진 → 흐리게·어둡게 → 점수 글자를 코드가 그린다.
    한글 글꼴은 저장소에 함께 둔다 — 실행기(ubuntu)에 한글 글꼴이 없다. */
 import sharp from 'sharp';
+import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { LEAGUES } from './config.mjs';
 
 const ROOT = fileURLToPath(new URL('../../assets/review/', import.meta.url));
 export const FONT_PATH = `${ROOT}fonts/NotoSansKR-Bold.ttf`;
-const FONT_FAMILY = 'Noto Sans KR';
+const FONT_FAMILY = 'Noto Sans KR';   // 글꼴 이름표(family)와 같아야 한다 — font-charset.py --rename
 const W = 1200, H = 630;
 const TEXT_MAX_WIDTH = 1080;   // 좌우 여백 60px
 
@@ -24,6 +25,14 @@ export function cardText(facts) {
   const big = `${a.short} ${sa} : ${sb} ${b.short}`;
   const small = `${facts.date.replaceAll('-', '.')} · ${LEAGUES[facts.league].titleName}`;
   return { big, small, alt: `${big} · ${small}` };
+}
+
+/* 글꼴이 그릴 수 있는 글자(font-charset.py 가 글꼴의 cmap 에서 뽑아 둔다). */
+const COVERED = new Set(readFileSync(`${ROOT}fonts/charset.txt`, 'utf8'));
+
+/* 글꼴에 없는 글자(공백 제외). 글자가 빠지면 카드에 빈칸이 생기므로 그리기 전에 막는다. */
+export function missingGlyphs(text) {
+  return [...new Set([...text].filter((ch) => !/\s/.test(ch) && !COVERED.has(ch)))];
 }
 
 const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -46,6 +55,8 @@ async function textLayer(text, size, color) {
 /* bg 는 후보 견본을 만들 때만 바꿔 쓴다. */
 export async function makeCard(facts, { bg: bgFile = bgPath(facts.league) } = {}) {
   const { big, small } = cardText(facts);
+  const missing = missingGlyphs(big + small);
+  if (missing.length) throw new Error(`카드 글꼴에 없는 글자: ${missing.join('')}`);
   const bg = await sharp(bgFile)
     .resize(W, H, { fit: 'cover' })
     .blur(12)
