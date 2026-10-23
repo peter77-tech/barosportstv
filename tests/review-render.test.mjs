@@ -99,9 +99,9 @@ test('jsonld_sportsevent_only', () => {
   assert.equal(withFull.homeTeam.name, 'LG 트윈스 정식');
   const s = JSON.stringify(j);
   assert.ok(!s.includes('NewsArticle') && !s.includes('FAQPage'));
+  assert.ok(!('eventStatus' in j));
   const h = renderPost(KBO_FACTS, DOC, []);
-  assert.equal((h.match(/application\/ld\+json/g) || []).length, 1);
-  assert.ok(!h.includes('FAQPage'));
+  assert.ok(!h.includes('application/ld+json') && !h.includes('<script'));
 });
 test('escapes_html_in_names', () => {
   const h = renderPost(named(F, '<b>', 'A&B'), DOC, []);
@@ -112,7 +112,13 @@ test('escapes_html_in_names', () => {
 test('bars_follow_lower_better', () => {
   const f = { ...F, teamStats: [{ label: '실책', home: 1, away: 3, lowerBetter: true }, { label: '3점슛', home: '8/20 (40.0%)', away: '5/10 (50.0%)' }] };
   const h = renderPost(f, DOC, []);
-  assert.match(h, /<strong>1<\/strong>/);       // 실책은 적은 쪽이 강조
-  assert.match(h, /<strong>5\/10 \(50\.0%\)<\/strong>/);   // 비율은 괄호 안 값으로 비교
-  assert.match(h, /width:25(\.0)?%/);            // 실책 1 vs 3 → 홈 25%
+  const cmp = h.slice(h.indexOf('bstv-cmp'), h.indexOf('</table>', h.indexOf('bstv-cmp')));
+  assert.match(cmp, /<strong>1<\/strong>/);
+  assert.match(cmp, /<strong>5\/10 \(50\.0%\)<\/strong>/);
+  assert.match(cmp, /width:25%/);
+  assert.match(cmp, /<span class="bstv-bar" aria-hidden="true">/);
+});
+test('crowd_only_when_positive', () => {
+  assert.ok(!/관중/.test(renderPost({ ...F, crowd: 0 }, DOC, [])));
+  assert.match(renderPost({ ...F, crowd: 1234 }, DOC, []), /관중 1,234명/);
 });

@@ -1,7 +1,6 @@
 /* 글 본문 조립. 점수판·비교 막대·선수 표·타임라인·JSON-LD 는 코드가 facts 로 그린다 — AI 는 문장 필드만 쓴다 (§7.1).
    doc 의 HTML 은 checkDoc 이 허용 태그만 남겼으므로 그대로 넣고, facts 에서 온 값은 모두 이스케이프한다. */
 import { LEAGUES } from './config.mjs';
-import { sportsEventJsonLd } from './links.mjs';
 
 const esc = (v) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
@@ -14,7 +13,7 @@ function meta(f) {
   const lg = LEAGUES[f.league];
   const parts = [lg.titleName, dateKo(f.date)];
   if (f.venue) parts.push(f.venue);
-  if (f.crowd != null) parts.push(`관중 ${f.crowd.toLocaleString('en-US')}명`);
+  if (f.crowd > 0) parts.push(`관중 ${f.crowd.toLocaleString('en-US')}명`);
   parts.push(`기록 출처 ${f.source.name}`);
   return `<p class="bstv-meta">${parts.map(esc).join(' · ')}</p>`;
 }
@@ -58,7 +57,7 @@ function compare(f) {
     const aw = sum > 0 ? (a / sum) * 100 : 50;
     const better = a === h ? null : (s.lowerBetter ? a < h : a > h) ? 'away' : 'home';
     const cell = (side, val) => (better === side ? `<td><strong>${esc(val)}</strong></td>` : `<td>${esc(val)}</td>`);
-    return `<tr>${cell('away', s.away)}<th scope="row">${esc(s.label)}<span class="bstv-bar"><i style="width:${pctStr(aw)}"></i><i style="width:${pctStr(100 - aw)}"></i></span></th>${cell('home', s.home)}</tr>`;
+    return `<tr>${cell('away', s.away)}<th scope="row">${esc(s.label)}<span class="bstv-bar" aria-hidden="true"><i style="width:${pctStr(aw)}"></i><i style="width:${pctStr(100 - aw)}"></i></span></th>${cell('home', s.home)}</tr>`;
   }).join('');
   return `<table class="bstv-cmp"><caption>팀 기록 비교</caption><thead><tr><th scope="col">${esc(f.away.name)}</th><th scope="col"></th><th scope="col">${esc(f.home.name)}</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
@@ -86,17 +85,13 @@ function source(f) {
   return `<p class="bstv-src">${esc(name)}을 바탕으로 자동 작성·사실 검수 · <a href="${esc(f.source.url)}" rel="noopener" target="_blank">공식 기록 보기</a></p>`;
 }
 
-function jsonLd(f) {
-  const json = JSON.stringify(sportsEventJsonLd(f)).replace(/</g, '\\u003c');
-  return `<script type="application/ld+json">${json}</script>`;
-}
-
-/** 글 본문 HTML. 총평·절 소제목은 doc 안에 이미 있으므로 덧붙이지 않는다. */
+/* 글 본문 HTML. 총평·절 소제목은 doc 안에 이미 있으므로 덧붙이지 않는다.
+    SportsEvent JSON-LD 는 본문에 넣지 않는다 — Task 13 이 메타로 저장하고 테마가 wp_head 에 찍는다. */
 export function renderPost(facts, doc, links = []) {
   const inner = [
     meta(facts), answer(doc), scoreboard(facts), doc.body_html,
     compare(facts), playerTable(facts), timeline(facts), doc.verdict_html,
-    linkList(links), source(facts), jsonLd(facts),
+    linkList(links), source(facts),
   ].filter(Boolean).join('\n');
   return `<div class="bstv-review">\n${inner}\n</div>`;
 }

@@ -40,7 +40,6 @@ export function sportsEventJsonLd(facts) {
     '@type': 'SportsEvent',
     name: `${away.name} vs ${home.name}`,
     startDate: facts.date,
-    eventStatus: 'https://schema.org/EventCompleted',
     sport: LEAGUES[facts.league].sport,
     homeTeam: home,
     awayTeam: away,
