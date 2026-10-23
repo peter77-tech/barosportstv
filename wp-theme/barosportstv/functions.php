@@ -189,8 +189,8 @@ function bstv_expose_review_meta() {
 			'type'          => 'string',
 			'single'        => true,
 			'show_in_rest'  => true,
-			'auth_callback' => function () {
-				return current_user_can( 'edit_posts' );
+			'auth_callback' => function ( $a, $b, $post_id ) {
+				return current_user_can( 'edit_post', $post_id );
 			},
 		)
 	);

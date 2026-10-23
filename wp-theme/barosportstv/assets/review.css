@@ -1,10 +1,12 @@
 /* 경기 리뷰 글 (카테고리 match-review) 전용 스타일 — Tailwind 가 아닌 일반 CSS.
    마크업은 tools/review/render.mjs 가 만든다. 클래스 이름을 바꾸면 그쪽과 같이 바꾼다.
-   사이트 배경이 어두워도 읽히도록, 표·막대·카드는 고정된 밝은 바탕과 어두운 글자색을 쓴다. */
+   글은 singular.php 의 .bstv-prose 안에 들어가고 wp.css 가 먼저 로드된다(th/td 테두리·여백, a 색, h2/h3 크기).
+   그 규칙을 이긴다: 같은 특이도면 뒤에 오는 이 파일이, wp.css 가 더 센 곳은 선택자를 한 단계 더 붙였다.
+   사이트 배경이 어두우므로 표·카드는 고정된 밝은 바탕과 어두운 글자색을 쓴다. */
 
 .bstv-review{line-height:1.8;font-size:15.5px;overflow-wrap:anywhere}
 .bstv-review h2{font-size:19px;line-height:1.5;margin:30px 0 10px;padding-left:10px;border-left:4px solid #10b981}
-.bstv-review h3{font-size:16px;margin:18px 0 4px;color:#10b981}
+.bstv-review h3{font-size:16px;margin:18px 0 4px}
 .bstv-review p{margin:0 0 .9em}
 
 /* 머리 줄 */
@@ -16,24 +18,28 @@
 .bstv-review .bstv-answer p:first-child{font-size:12px;letter-spacing:.04em;color:#047857}
 .bstv-review .bstv-answer ul{margin:10px 0 0;padding-left:18px}
 
-/* 표 공통 — 고정 밝은 바탕. 좁은 화면에서는 표 자체가 가로로 밀린다. */
+/* 표 공통 — wp.css 의 th/td 격자(border·padding)를 먼저 지우고, 아래 각 표가 필요한 선만 다시 긋는다. */
 .bstv-review table{background:#fff;color:#1d1d1f;border-collapse:separate;border-spacing:0;border:1px solid #e5e7eb;border-top:0;border-radius:0 0 10px 10px;font-size:14px;margin:0 0 14px;max-width:100%}
+.bstv-review table th,
+.bstv-review table td{border:0;padding:0}
+.bstv-review caption{caption-side:top;text-align:left;font-size:12.5px;font-weight:700;padding:8px 12px;background:#f3f4f6;color:#111827;border:1px solid #e5e7eb;border-bottom:0;border-radius:10px 10px 0 0;margin-top:8px}
+
+/* 좁은 화면에서 점수판·선수 표는 block 으로 두고 표 안에서 가로 스크롤한다. 표 배경은 칸이 갖는다(캡션 옆으로 번지지 않게). */
 .bstv-review table.bstv-sb,
-.bstv-review table.bstv-pt{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.bstv-review table.bstv-pt{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch;background:transparent;border:0}
 @media (min-width:640px){
   .bstv-review table.bstv-sb,
-  .bstv-review table.bstv-pt{display:table;width:100%;overflow:visible}
+  .bstv-review table.bstv-pt{display:table;width:100%;overflow:visible;border:1px solid #e5e7eb;border-top:0}
 }
-.bstv-review caption{caption-side:top;text-align:left;font-size:12.5px;font-weight:700;padding:8px 12px;background:#f3f4f6;color:#111827;border:1px solid #e5e7eb;border-bottom:0;border-radius:10px 10px 0 0;margin-top:8px}
 
 /* 점수판 */
 .bstv-review .bstv-sb th,
 .bstv-review .bstv-sb td{padding:9px 8px;text-align:center;white-space:nowrap}
 .bstv-review .bstv-sb thead th{background:#111827;color:#fff;font-weight:600;font-size:12.5px}
 .bstv-review .bstv-sb thead th:last-child{background:#047857}
-.bstv-review .bstv-sb tbody th{text-align:left;padding-left:12px;font-weight:600;background:#fff}
-.bstv-review .bstv-sb tbody td{border-top:1px solid #e5e7eb}
-.bstv-review .bstv-sb tbody th{border-top:1px solid #e5e7eb}
+.bstv-review .bstv-sb tbody th,
+.bstv-review .bstv-sb tbody td{background:#fff;border-top:1px solid #e5e7eb}
+.bstv-review .bstv-sb tbody th{text-align:left;padding-left:12px;font-weight:600}
 .bstv-review .bstv-sb tbody td:last-child{background:#f3f4f6}
 .bstv-review .bstv-sb b{display:inline-block;font-size:11px;line-height:1.5;background:#10b981;color:#fff;border-radius:4px;padding:0 5px;margin-left:4px;vertical-align:1px}
 
@@ -42,13 +48,12 @@
 .bstv-review .bstv-cmp th,
 .bstv-review .bstv-cmp td{padding:7px 6px;text-align:center;border-top:1px dashed #eceff3}
 .bstv-review .bstv-cmp thead th{background:#111827;color:#fff;font-size:13px;border-top:0;overflow-wrap:anywhere}
-.bstv-review .bstv-cmp thead th:last-child{border-top-right-radius:9px}
 .bstv-review .bstv-cmp th:nth-child(2){width:40%}
 .bstv-review .bstv-cmp tbody th{font-size:12.5px;font-weight:400;color:#374151}
 .bstv-review .bstv-cmp td{color:#6b7280;font-size:13.5px;overflow-wrap:anywhere}
 .bstv-review .bstv-cmp td strong{color:#111827;font-weight:700}
-.bstv-review .bstv-bar{display:flex;height:7px;border-radius:4px;overflow:hidden;background:#eee;margin:4px 6px 0}
-.bstv-review .bstv-bar i{display:block;height:100%;background:#d1d5db}
+.bstv-review .bstv-bar{display:flex;box-sizing:border-box;height:7px;border-radius:4px;overflow:hidden;background:#eee;margin:4px 6px 0}
+.bstv-review .bstv-bar i{display:block;box-sizing:border-box;height:100%;background:#d1d5db}
 .bstv-review .bstv-bar i:first-child{border-right:2px solid #fff}
 /* 나은 쪽 값이 굵게(<strong>) 찍힌 행은 그쪽 막대를 초록으로 */
 .bstv-review .bstv-cmp tr:has(> td:first-child strong) .bstv-bar i:first-child,
@@ -59,10 +64,11 @@
 .bstv-review .bstv-pt th,
 .bstv-review .bstv-pt td{padding:7px 8px;text-align:center;white-space:nowrap;border-bottom:1px solid #f0f0f0}
 .bstv-review .bstv-pt thead th{background:#f9fafb;color:#374151;font-size:12.5px;font-weight:600;border-bottom:2px solid #e5e7eb}
-.bstv-review .bstv-pt tbody th{text-align:left;font-weight:600;background:inherit}
-.bstv-review .bstv-pt tbody tr:nth-child(odd){background:#fcfcfd}
-.bstv-review .bstv-pt tbody tr:last-child th,
-.bstv-review .bstv-pt tbody tr:last-child td{border-bottom:0}
+.bstv-review .bstv-pt tbody th,
+.bstv-review .bstv-pt tbody td{background:#fff}
+.bstv-review .bstv-pt tbody th{text-align:left;font-weight:600}
+.bstv-review .bstv-pt tbody tr:nth-child(odd) > *{background:#fcfcfd}
+.bstv-review .bstv-pt tbody tr:last-child > *{border-bottom:0}
 
 /* 득점·경고 기록 */
 .bstv-review .bstv-tl{background:#fff;color:#1d1d1f;border:1px solid #e5e7eb;border-radius:10px;padding:10px 14px;margin:8px 0 14px}
@@ -70,23 +76,12 @@
 .bstv-review .bstv-tl ul{list-style:none;margin:0;padding:0}
 .bstv-review .bstv-tl li{padding:5px 10px;border-left:3px solid #d1d5db;margin:4px 0;font-size:14px;line-height:1.6}
 
-/* 함께 보기 */
+/* 함께 보기 — 밝은 카드 위 링크 */
 .bstv-review .bstv-links{background:#fff;color:#1d1d1f;border:1px solid #e5e7eb;border-radius:10px;padding:12px 16px;margin:22px 0 8px}
 .bstv-review .bstv-links p{margin:0 0 4px;font-size:13px}
 .bstv-review .bstv-links ul{margin:0;padding-left:18px}
 .bstv-review .bstv-links li{margin:2px 0}
 .bstv-review .bstv-links a{color:#047857;text-decoration:underline;text-underline-offset:2px}
 
-/* 출처 */
+/* 출처 — 어두운 페이지 바탕 위라 링크 색은 테마(.bstv-prose a)를 따른다 */
 .bstv-review .bstv-src{font-size:12.5px;line-height:1.6;opacity:.75;border-top:1px solid rgba(128,128,128,.35);margin:26px 0 0;padding-top:12px}
-.bstv-review .bstv-src a{text-decoration:underline}
-
-/* 좁은 화면에서 sb·pt 는 block 이라 표 배경이 캡션 옆까지 번진다 — 배경은 칸이 갖는다 */
-.bstv-review table.bstv-sb,
-.bstv-review table.bstv-pt{background:transparent}
-.bstv-review .bstv-sb tbody td,
-.bstv-review .bstv-pt tbody th,
-.bstv-review .bstv-pt tbody td{background:#fff}
-.bstv-review .bstv-sb tbody td:last-child{background:#f3f4f6}
-.bstv-review .bstv-pt tbody tr:nth-child(odd) > *{background:#fcfcfd}
-.bstv-review .bstv-src a{color:#34d399}

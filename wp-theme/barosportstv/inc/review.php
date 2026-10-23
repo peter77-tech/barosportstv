@@ -22,10 +22,16 @@ function bstv_review_jsonld_tag( $json ) {
 		return '';
 	}
 	$data = json_decode( $json, true );
-	if ( ! is_array( $data ) ) {
+	// 객체(키가 있는 배열)이고 @type 이 있어야 한다. 목록·숫자·문자열은 거부.
+	if ( ! is_array( $data ) || array() === $data || array_keys( $data ) === range( 0, count( $data ) - 1 ) || empty( $data['@type'] ) ) {
 		return '';
 	}
-	return '<script type="application/ld+json">' . str_replace( '</', '<\/', trim( $json ) ) . '</script>';
+	// 다시 인코딩한다: JSON_HEX_TAG 가 < > 를 < > 로 바꿔 </script>·<!--<script 로 파서 상태가 바뀌는 일이 없다.
+	$safe = json_encode( $data, JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES );
+	if ( false === $safe ) {
+		return '';
+	}
+	return '<script type="application/ld+json">' . $safe . '</script>';
 }
 
 /**
@@ -53,6 +59,6 @@ function bstv_review_head() {
  */
 function bstv_review_assets() {
 	if ( bstv_is_review_post() ) {
-		wp_enqueue_style( 'bstv-review', get_theme_file_uri( 'assets/review.css' ), array( 'bstv-wp' ), BSTV_VERSION );
+		wp_enqueue_style( 'bstv-review', get_theme_file_uri( 'assets/review.css' ), array( 'bstv-wp' ), bstv_asset_version( 'assets/review.css' ) );
 	}
 }
