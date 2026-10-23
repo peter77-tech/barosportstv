@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'BSTV_VERSION', '0.2.0' );
+define( 'BSTV_VERSION', '0.3.0' );
 
 /**
  * 파일 수정 시각을 버전으로 쓴다. 파일이 없으면 테마 버전으로 떨어진다.
@@ -65,6 +65,9 @@ require_once get_theme_file_path( 'inc/nav-walkers.php' );
 require_once get_theme_file_path( 'inc/schedule-view.php' );
 require_once get_theme_file_path( 'inc/schedule-data.php' );
 require_once get_theme_file_path( 'inc/schedule-page.php' );
+require_once get_theme_file_path( 'inc/review.php' );
+add_action( 'wp_enqueue_scripts', 'bstv_review_assets' );
+add_action( 'wp_head', 'bstv_review_head' );
 
 /**
  * 스타일·스크립트.
@@ -156,7 +159,7 @@ function bstv_menu( $location, $args = array() ) {
  */
 function bstv_expose_rank_math_meta() {
 	foreach ( array( 'page', 'post' ) as $type ) {
-		foreach ( array( 'rank_math_title', 'rank_math_description' ) as $key ) {
+		foreach ( array( 'rank_math_title', 'rank_math_description', 'rank_math_focus_keyword' ) as $key ) {
 			register_post_meta(
 				$type,
 				$key,
@@ -173,6 +176,26 @@ function bstv_expose_rank_math_meta() {
 	}
 }
 add_action( 'init', 'bstv_expose_rank_math_meta' );
+
+/**
+ * 경기 리뷰 글의 SportsEvent JSON-LD 를 담는 메타. 자동 발행기가 REST 로 저장하고,
+ * 테마가 wp_head 에 찍는다 (inc/review.php). Article 스키마는 Rank Math 가 맡는다.
+ */
+function bstv_expose_review_meta() {
+	register_post_meta(
+		'post',
+		'bstv_review_jsonld',
+		array(
+			'type'          => 'string',
+			'single'        => true,
+			'show_in_rest'  => true,
+			'auth_callback' => function () {
+				return current_user_can( 'edit_posts' );
+			},
+		)
+	);
+}
+add_action( 'init', 'bstv_expose_review_meta' );
 
 /**
  * 고유주소 구조를 REST 에서 다룰 수 있게 노출한다.
