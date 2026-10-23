@@ -9,6 +9,9 @@ data/
 # 배포 산출물 (워크플로가 만든다)
 _site/
 
+# 경기 리뷰 dry 미리보기 (npm run review:dry)
+out/
+
 # 워드프레스 테마 배포 zip 과 손으로 만든 백업 — 원본은 wp-theme/barosportstv 다
 wp-theme/*.zip
 *.bak_*
