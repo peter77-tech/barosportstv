@@ -10,7 +10,7 @@
 | kbo.jpg | https://www.pexels.com/photo/1661950/ | Steshka Croes | 잔디 위의 야구 글러브와 공 | Pexels License (상업 이용·편집 허용, 출처 표기 불요) |
 | kl1.jpg | https://www.pexels.com/photo/16493254/ | Sheenu Rajput | 잔디 위의 축구공 근접 | Pexels License (상업 이용·편집 허용, 출처 표기 불요) |
 | kbl.jpg | https://www.pexels.com/photo/7201554/ | cottonbro studio | 나무 마루 위의 농구공 | Pexels License (상업 이용·편집 허용, 출처 표기 불요) |
-| wkbl.jpg | https://www.pexels.com/photo/15476801/ | Onur Bahadır | 어두운 코트 위의 농구공 | Pexels License (상업 이용·편집 허용, 출처 표기 불요) |
+| wkbl.jpg | https://www.pexels.com/photo/34688571/ | Reinis Bruzitis | 파란 실내 코트(나무 바닥) 위의 농구공 | Pexels License (상업 이용·편집 허용, 출처 표기 불요) |
 | vm.jpg | https://www.pexels.com/photo/32602955/ | Critical Smith | 실내 코트 라인 위의 배구공 | Pexels License (상업 이용·편집 허용, 출처 표기 불요) |
 | vw.jpg | https://www.pexels.com/photo/32602956/ | Critical Smith | 밝은 실내 코트 위의 노랑·흰 배구공 | Pexels License (상업 이용·편집 허용, 출처 표기 불요) |
 
