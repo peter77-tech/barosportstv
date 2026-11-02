@@ -164,6 +164,11 @@ check( 'sitemap_type: 다른 글 유형도 뺀다', true === bstv_index_sitemap_
 $url = array( 'loc' => 'https://barosportstv.com/match-review/x/' );
 check( 'sitemap_entry: 리뷰는 그대로', $url === bstv_index_sitemap_entry( $url, true ) );
 check( 'sitemap_entry: 리뷰가 아니면 뺀다', false === bstv_index_sitemap_entry( $url, false ) );
+// Rank Math 는 sitemap/entry 에 WP_Post 가 아니라 DB 행(stdClass)을 넘긴다 — 2026-11-02 실서버에서 리뷰까지 다 빠졌다
+$row     = new stdClass();
+$row->ID = '361';
+check( 'post_id: DB 행(stdClass)에서 ID 를 읽는다', 361 === bstv_index_post_id( $row ) );
+check( 'post_id: ID 가 없거나 객체가 아니면 0', 0 === bstv_index_post_id( new stdClass() ) && 0 === bstv_index_post_id( null ) && 0 === bstv_index_post_id( '361' ) );
 
 require __DIR__ . '/data.php';
 

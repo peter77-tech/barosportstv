@@ -45,6 +45,16 @@ function bstv_index_sitemap_entry( $url, $is_review ) {
 	return $is_review ? $url : false;
 }
 
+/**
+ * sitemap/entry 가 넘기는 글 객체에서 ID 를 꺼낸다. 없으면 0.
+ *
+ * 🔴 Rank Math 는 WP_Post 가 아니라 $wpdb 로 읽은 DB 행(stdClass)을 넘긴다 — instanceof WP_Post 로
+ *    거르면 리뷰까지 전부 빠져 post-sitemap.xml 이 404 가 된다(2026-11-02 실서버, 0.4.1).
+ */
+function bstv_index_post_id( $object ) {
+	return is_object( $object ) && isset( $object->ID ) ? (int) $object->ID : 0;
+}
+
 /* ── WordPress 연결 ─────────────────────────────── */
 
 if ( function_exists( 'add_filter' ) ) {
@@ -52,6 +62,14 @@ if ( function_exists( 'add_filter' ) ) {
 		'rank_math/frontend/robots',
 		function ( $robots ) {
 			return bstv_index_robots( (array) $robots, '1' === (string) get_option( 'blog_public' ), bstv_is_review_post() );
+		}
+	);
+	/* 사이트맵 캐시를 파일 대신 DB(transient)에 둔다. 2026-11-02 실측: 글 저장·사이트맵 설정 변경 뒤에도
+	   uploads/rank-math/ 의 옛 사이트맵이 계속 나왔다(파일 캐시는 만료가 없고, 삭제가 실패하면 영영 남는다). */
+	add_filter(
+		'rank_math/sitemap/cache_mode',
+		function () {
+			return 'db';
 		}
 	);
 	add_filter( 'rank_math/sitemap/exclude_post_type', 'bstv_index_sitemap_exclude_type', 10, 2 );
@@ -63,7 +81,8 @@ if ( function_exists( 'add_filter' ) ) {
 			if ( 'post' !== $type ) {
 				return $url;
 			}
-			return bstv_index_sitemap_entry( $url, $object instanceof WP_Post && has_category( 'match-review', $object ) );
+			$id = bstv_index_post_id( $object );
+			return bstv_index_sitemap_entry( $url, $id > 0 && has_category( 'match-review', $id ) );
 		},
 		10,
 		3
