@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'BSTV_VERSION', '0.3.0' );
+define( 'BSTV_VERSION', '0.4.0' );
 
 /**
  * 파일 수정 시각을 버전으로 쓴다. 파일이 없으면 테마 버전으로 떨어진다.
@@ -66,6 +66,7 @@ require_once get_theme_file_path( 'inc/schedule-view.php' );
 require_once get_theme_file_path( 'inc/schedule-data.php' );
 require_once get_theme_file_path( 'inc/schedule-page.php' );
 require_once get_theme_file_path( 'inc/review.php' );
+require_once get_theme_file_path( 'inc/indexing.php' ); // 리뷰만 색인 — review.php 의 bstv_is_review_post 를 쓴다
 add_action( 'wp_enqueue_scripts', 'bstv_review_assets' );
 add_action( 'wp_head', 'bstv_review_head' );
 
@@ -259,10 +260,10 @@ function bstv_launch_checklist() {
 
 	$todo = array();
 
-	// 1. 색인 차단 — 소프트런칭 2026-12-01 에 반드시 해제
+	// 1. 색인 차단 — 해제하면 경기 리뷰 글만 열린다(inc/indexing.php). 나머지는 noindex, follow 로 남는다.
 	if ( '1' !== get_option( 'blog_public' ) ) {
 		$todo[] = sprintf(
-			'<strong>검색 엔진 노출이 차단돼 있습니다.</strong> 출시 준비 중이라면 정상입니다. 출시일에 <a href="%s">설정 → 읽기</a>에서 해제하십시오.',
+			'<strong>검색 엔진 노출이 차단돼 있습니다.</strong> 개인정보처리방침 페이지를 만든 뒤 <a href="%s">설정 → 읽기</a>에서 해제하십시오. 해제해도 <strong>경기 리뷰 글만</strong> 색인되고 나머지 페이지는 계속 막힙니다 — 이 규칙은 Rank Math 필터로 돌므로 Rank Math 가 켜져 있어야 합니다.',
 			esc_url( admin_url( 'options-reading.php' ) )
 		);
 	}

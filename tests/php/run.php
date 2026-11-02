@@ -142,6 +142,29 @@ check( 'jsonld_tag: 목록·@type 없는 객체는 빈 문자열', '' === bstv_r
 check( 'jsonld_tag: 객체가 아닌 JSON 은 빈 문자열', '' === bstv_review_jsonld_tag( '"x"' ) && '' === bstv_review_jsonld_tag( '12' ) && '' === bstv_review_jsonld_tag( 'null' ) );
 
 /* ── 데이터 받기·저장 (WordPress 스텁) ─────────────── */
+/* ── 색인 정책 (inc/indexing.php) ─────────────────── */
+require __DIR__ . '/../../wp-theme/barosportstv/inc/indexing.php';
+
+$blocked = array( 'index' => 'noindex', 'follow' => 'nofollow' );
+check( 'index_robots: 전체 차단 중에는 리뷰도 그대로', $blocked === bstv_index_robots( $blocked, false, true ) );
+check( 'index_robots: 전체 차단 중에는 일반 페이지도 그대로', $blocked === bstv_index_robots( $blocked, false, false ) );
+$open = array( 'index' => 'index', 'follow' => 'follow', 'nosnippet' => 'nosnippet' );
+check( 'index_robots: 공개 후 리뷰는 Rank Math 값 그대로', $open === bstv_index_robots( $open, true, true ) );
+$own = array( 'index' => 'noindex', 'follow' => 'follow' );
+check( 'index_robots: 리뷰에 직접 건 noindex 는 존중', $own === bstv_index_robots( $own, true, true ) );
+$other = bstv_index_robots( $open, true, false );
+check( 'index_robots: 공개 후 리뷰 아닌 곳은 noindex, follow', 'noindex' === $other['index'] && 'follow' === $other['follow'] );
+check( 'index_robots: 다른 지시어는 남긴다', 'nosnippet' === $other['nosnippet'] );
+$nof = bstv_index_robots( array( 'index' => 'index', 'follow' => 'nofollow' ), true, false );
+check( 'index_robots: 리뷰 아닌 곳의 nofollow 도 follow 로', 'follow' === $nof['follow'] );
+
+check( 'sitemap_type: post 는 남긴다', false === bstv_index_sitemap_exclude_type( false, 'post' ) );
+check( 'sitemap_type: page 는 뺀다', true === bstv_index_sitemap_exclude_type( false, 'page' ) );
+check( 'sitemap_type: 다른 글 유형도 뺀다', true === bstv_index_sitemap_exclude_type( false, 'attachment' ) );
+$url = array( 'loc' => 'https://barosportstv.com/match-review/x/' );
+check( 'sitemap_entry: 리뷰는 그대로', $url === bstv_index_sitemap_entry( $url, true ) );
+check( 'sitemap_entry: 리뷰가 아니면 뺀다', false === bstv_index_sitemap_entry( $url, false ) );
+
 require __DIR__ . '/data.php';
 
 echo "\npass {$passed} · fail {$failed}\n";
