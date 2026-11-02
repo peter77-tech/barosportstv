@@ -12,21 +12,24 @@ const GAP_MS = 700;   // 사이트 요청 사이 최소 간격 (공통 제약)
      onclick="CSSJS.callCalendarScrap('...query=2026년 10월 23일 ...')" 가 있는데 href 가 아니라 속성
      문자열이라 <a href> 만 읽으면 걸러진다. 표 바깥에는 「2026년 프로야구 일정」「2026년 4월 26일
      여자프로농구 경기일정」 같은 다른 링크가 있어 표 안으로만 자른다.
-   - 배구: <div class="mflick"> 안의 .match_wrap 목록 (<a class="match_title">·<a class="match_link"> 가
-     경기당 두 번 같은 검색어를 가리킨다 → 중복 제거). 끝은 <div class="more_wrap"> 직전.
+   - 배구 정규시즌(2026-11-02 실측): <div class="league_schedule"> 타임라인. 남자부·여자부 탭이 한 카드에
+     같이 오고 경기 한 줄은 아래 컵대회와 같은 .match_wrap 이다. 끝은 <div class="more_wrap"> 직전.
+   - 배구 컵대회(2026-10-22 실측): <div class="mflick"> 안의 .match_wrap 목록 (<a class="match_title">·
+     <a class="match_link"> 가 경기당 두 번 같은 검색어를 가리킨다 → 중복 제거). 끝은 <div class="more_wrap"> 직전.
+   배구 두 카드가 한 페이지에 같이 오면(컵대회·정규시즌이 겹치는 때) 둘 다 읽어 잇는다 — 중복은 아래에서 걸러진다.
    어느 표식도 없으면 빈 문자열 → 0개를 돌려주고, 부르는 쪽(Task 13)이 구조 변경 오류로 처리한다. */
 function scheduleRegion(html) {
-  let s = html.indexOf('id="myschedule"');
+  const s = html.indexOf('id="myschedule"');
   if (s >= 0) {
     const e = html.indexOf('</table>', s);
     return e < 0 ? html.slice(s) : html.slice(s, e);
   }
-  s = html.indexOf('class="mflick"');
-  if (s >= 0) {
+  return ['class="league_schedule"', 'class="mflick"'].map((mark) => {
+    const s = html.indexOf(mark);
+    if (s < 0) return '';
     const e = html.indexOf('class="more_wrap"', s);
     return e < 0 ? html.slice(s) : html.slice(s, e);
-  }
-  return '';
+  }).join('\n');
 }
 
 const QUERY_RE = /^(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일\s*(.+)$/;

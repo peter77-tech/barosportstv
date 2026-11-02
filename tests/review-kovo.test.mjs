@@ -168,4 +168,6 @@ test('kovo_aliases_cover_every_fixture_team_name', () => {
     vw: ['흥국생명', '정관장', 'GS칼텍스', 'IBK기업은행', '페퍼저축은행', '한국도로공사', '현대건설'],
   };
   for (const [league, names] of Object.entries(real)) for (const n of names) assert.ok(n in ALIASES[league], n);
+  // 2026-27 개막(10-31) 목록에 새로 나온 여자부 이름 — 네이버 카드에서는 「SOOP 수퍼스」
+  assert.ok('SOOP' in ALIASES.vw);
 });

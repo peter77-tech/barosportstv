@@ -76,14 +76,17 @@ export async function fetchFacts(game, { fetchImpl = fetch, sleep = realSleep, n
 /* 하프 안 timeMin 이 45 를 넘으면 추가시간. 후반 timeMin 도 후반 시작부터 센다(교체 「후반 0분」). */
 const minuteText = (m) => (m > 45 ? `45+${m - 45}` : String(m));
 
-function eventLine(e) {
+/* scorerOf(e) = 자책골이 누구의 득점인지(상대 팀 이름), 모르면 null → 적지 않는다.
+   자책골 teamId 는 자책한 선수의 팀이다(2026-11-01 kl1-204 실측). */
+function eventLine(e, scorerOf) {
   const when = `${e.halfTypeName} ${minuteText(e.timeMin)}분`;
   // 첫 선수 = 나간 선수 (출전 시간과 일치, 실측)
   if (e.eventName === '교체') return `${when} 교체 ${e.teamName} ${e.playerName} (OUT) → ${e.playerName2} (IN)`;
-  return `${when} ${e.eventName} ${e.teamName} ${e.playerName}`;
+  const scorer = e.eventName === '자책골' ? scorerOf(e) : null;
+  return `${when} ${e.eventName} ${e.teamName} ${e.playerName}${scorer ? ` (${scorer} 득점)` : ''}`;
 }
 
-const TIMELINE_EVENTS = new Set(['득점', '도움', '경고', '퇴장', '교체']);
+const TIMELINE_EVENTS = new Set(['득점', '자책골', '도움', '경고', '퇴장', '교체']);
 
 const pct = (n, d) => (d > 0 ? (Math.round((n / d) * 1000) / 10).toFixed(1) : '0.0');
 const ratio = (acc, all) => `${acc}/${all} (${pct(acc, all)}%)`;
@@ -108,16 +111,15 @@ export function toFacts({ game, record, info, detail }) {
   const score = { home: game.homeScore, away: game.awayScore };
 
   const halves = [info.firstHalf || [], info.secondHalf || []];
-  const timeline = halves.flat().filter((e) => TIMELINE_EVENTS.has(e.eventName)).map(eventLine);
-
-  /* 하프별 득점은 「득점」 이벤트의 팀 기준. 합이 최종 점수와 다르면(표기가 어긋난 자책골 등)
+  /* 하프별 득점은 「득점」 이벤트의 팀 기준, 「자책골」은 상대 팀 득점으로 센다. 합이 최종 점수와 다르면
      틀린 숫자를 내지 않고 null 로 둔다. */
   const goals = { home: [0, 0], away: [0, 0] };
   halves.forEach((half, h) => {
     for (const e of half) {
-      if (e.eventName !== '득점') continue;
-      if (e.teamId === it.homeTeam) goals.home[h]++;
-      else if (e.teamId === it.awayTeam) goals.away[h]++;
+      const side = e.teamId === it.homeTeam ? 'home' : e.teamId === it.awayTeam ? 'away' : null;
+      if (!side) continue;
+      if (e.eventName === '득점') goals[side][h]++;
+      else if (e.eventName === '자책골') goals[side === 'home' ? 'away' : 'home'][h]++;
     }
   });
   const total = (a) => a[0] + a[1];
@@ -127,6 +129,11 @@ export function toFacts({ game, record, info, detail }) {
     home: consistent ? goals.home : [null, null],
     away: consistent ? goals.away : [null, null],
   };
+
+  // 자책골의 득점 팀은 합계가 최종 점수와 맞을 때만 적는다 — 틀린 득점 팀을 글에 내보내지 않는다
+  const scorerOf = (e) => (!consistent ? null
+    : e.teamId === it.homeTeam ? away.name : e.teamId === it.awayTeam ? home.name : null);
+  const timeline = halves.flat().filter((e) => TIMELINE_EVENTS.has(e.eventName)).map((e) => eventLine(e, scorerOf));
 
   const sh = detail.sumH, sa = detail.sumA;
   const rh = record.home, ra = record.away;

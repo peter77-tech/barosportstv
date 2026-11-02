@@ -49,6 +49,26 @@ test('volley_card_dedupes_double_links', () => {
   assert.equal(e.filter(x => x.query === q).length, 1);
   assert.equal(e.length, 9);
 });
+/* 정규시즌(2026-10-31 개막)부터 배구 카드는 mflick 이 아니라 league_schedule 타임라인이다. 남자부·여자부 탭이 한 카드에 같이 온다. */
+test('volley_season_card_has_both_tabs', () => {
+  const e = parseNaverSchedule(fixture('naver-vleague-season.html'));
+  assert.equal(e.length, 16);
+  assert.ok(e.some(x => x.query === '2026년 11월 01일 KB손해보험 스타즈 배구단 삼성화재 블루팡스 배구단' && x.date === '2026-11-01'));
+  assert.ok(e.some(x => x.query === '2026년 11월 01일 흥국생명 핑크스파이더스 배구단 SOOP 수퍼스'));
+});
+test('volley_season_pairs_men_and_women', () => {
+  const es = parseNaverSchedule(fixture('naver-vleague-season.html'));
+  assert.equal(pairQuery({ league: 'vm', date: '2026-11-01', home: 'KB손해보험', away: '삼성화재' }, es).query,
+    '2026년 11월 01일 KB손해보험 스타즈 배구단 삼성화재 블루팡스 배구단');
+  assert.equal(pairQuery({ league: 'vw', date: '2026-11-01', home: '흥국생명', away: 'SOOP' }, es).query,
+    '2026년 11월 01일 흥국생명 핑크스파이더스 배구단 SOOP 수퍼스');
+});
+test('volley_season_and_cup_cards_both_read_and_more_wrap_ends', () => {
+  const q = (s) => `<a class="match_title" href="?where=nexearch&amp;query=${encodeURIComponent(s)}">x</a>`;
+  const html = `<div class="league_schedule">${q('2026년 11월 01일 A팀 B팀')}<div class="more_wrap">${q('2026년 11월 09일 미끼 미끼')}</div></div>`
+    + `<div class="mflick">${q('2026년 11월 02일 C팀 D팀')}<div class="more_wrap"></div></div>`;
+  assert.deepEqual(parseNaverSchedule(html).map(x => x.text), ['A팀 B팀', 'C팀 D팀']);
+});
 test('no_schedule_card_gives_empty', () => {
   assert.deepEqual(parseNaverSchedule('<html><a href="?query=2026%EB%85%8410%EC%9B%9421%EC%9D%BC%20A%20B">x</a></html>'), []);
   assert.deepEqual(parseNaverSchedule(''), []);
@@ -108,6 +128,7 @@ test('aliases_cover_every_team_seen_in_fixtures', () => {
     kl1: ['naver-kl1.html', ['전북', '제주', '대전', '광주', '서울', '김천', '울산', '부천', '포항', '안양', '강원', '인천']],
     wkbl: ['naver-wkbl.html', ['청주 KB스타즈', 'BNK 썸', '용인 삼성생명', '부천 하나은행', '인천 신한은행', '우리은행']],
     vm: ['naver-vm.html', ['한국전력', '우리카드', '삼성화재', 'OK저축은행', '현대캐피탈', 'KB손해보험', '대한항공']],
+    vw: ['naver-vleague-season.html', ['흥국생명', '정관장', 'GS칼텍스', 'IBK기업은행', 'SOOP', '한국도로공사', '현대건설']],
   };
   for (const [league, [file, teams]] of Object.entries(need)) {
     const text = parseNaverSchedule(fixture(file)).map(x => x.text).join('\n');

@@ -37,6 +37,33 @@ test('kl1_halves_null_when_goals_disagree_with_score', () => {
   const bad = { ...fx190, game: { ...fx190.game, homeScore: 4 } };
   assert.deepEqual(toFacts(bad).periods.home, [null, null]);
 });
+/* 자책골은 eventName 「자책골」, teamId 는 자책한 선수의 팀(실점한 쪽)으로 온다 — 2026-11-01 kl1-204 실측
+   (부천 홍성욱 자책골 → 안양 2-1). 하프 점수는 상대 팀 득점으로 세고, 타임라인에는 누구의 득점인지 적는다. */
+test('kl1_own_goal_counts_for_opponent', () => {
+  const it = fx190.game.ref.item;
+  const og = { eventName: '자책골', teamId: it.awayTeam, teamName: it.awayTeamName, playerName: '홍성욱',
+    playerName2: '', halfType: 2, halfTypeName: '후반', timeMin: 9, timeSec: 50 };
+  const f = toFacts({
+    ...fx190,
+    game: { ...fx190.game, homeScore: fx190.game.homeScore + 1 },
+    info: { ...fx190.info, secondHalf: [...fx190.info.secondHalf, og] },
+  });
+  assert.deepEqual(f.periods.home, [1, 3]);
+  assert.deepEqual(f.periods.away, [1, 1]);
+  assert.ok(f.timeline.includes(`후반 9분 자책골 ${it.awayTeamName} 홍성욱 (${it.homeTeamName} 득점)`), f.timeline.join('\n'));
+});
+test('kl1_own_goal_scorer_omitted_when_unsure', () => {
+  const it = fx190.game.ref.item;
+  const og = (teamId) => ({ eventName: '자책골', teamId, teamName: 'X', playerName: '홍성욱',
+    playerName2: '', halfType: 2, halfTypeName: '후반', timeMin: 9, timeSec: 50 });
+  // 어느 팀도 아닌 teamId → 누구 득점인지 적지 않는다
+  const unknown = toFacts({ ...fx190, info: { ...fx190.info, secondHalf: [...fx190.info.secondHalf, og('K99')] } });
+  assert.ok(unknown.timeline.includes('후반 9분 자책골 X 홍성욱'), unknown.timeline.join('\n'));
+  // 합계가 최종 점수와 어긋나면(점수 그대로 두고 자책골만 더함) 득점 팀도 적지 않는다
+  const off = toFacts({ ...fx190, info: { ...fx190.info, secondHalf: [...fx190.info.secondHalf, og(it.awayTeam)] } });
+  assert.deepEqual(off.periods.home, [null, null]);
+  assert.ok(off.timeline.includes('후반 9분 자책골 X 홍성욱'), off.timeline.join('\n'));
+});
 test('kl1_pass_pct_recomputed', () => {
   assert.equal(toFacts(fx190).teamStats.find(s => s.label === '패스 성공').home, '332/389 (85.3%)');
 });

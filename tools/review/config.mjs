@@ -39,7 +39,9 @@ export const LEAGUES = {
   },
   vw:   {
     titleName: 'V리그 여자부',
-    naverQueries: ['V리그 여자부 일정'],   // Task 2 에서 실측 후 확정
+    // 「V리그 여자부 일정」은 정규시즌에도 컵대회(남자부 결승) 카드만 준다 — 2026-11-02 실측.
+    // 「프로배구 여자부 일정」은 남자부·여자부 탭이 든 정규시즌 카드를 준다. 컵대회 때를 위해 둘 다 묻는다.
+    naverQueries: ['V리그 여자부 일정', '프로배구 여자부 일정'],
     sport: 'volleyball', sourceName: 'KOVO 공식 기록',
     internal: { scheduleSlug: 'v-league', relaySlug: '배구중계', guideSlug: null },
   },
