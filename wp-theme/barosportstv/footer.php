@@ -32,7 +32,7 @@
       <nav class="flex items-center gap-4 md:gap-6 flex-wrap justify-center" aria-label="푸터 메뉴">
         <a class="font-label-caps text-on-surface-variant hover:text-primary transition-colors uppercase" href="#">About Us</a>
         <a class="font-label-caps text-on-surface-variant hover:text-primary transition-colors uppercase" href="#">Terms of Service</a>
-        <a class="font-label-caps text-on-surface-variant hover:text-primary transition-colors uppercase" href="#">Privacy Policy</a>
+        <a class="font-label-caps text-on-surface-variant hover:text-primary transition-colors uppercase" href="<?php echo esc_url( get_privacy_policy_url() ?: '#' ); ?>">Privacy Policy</a>
         <a class="font-label-caps text-on-surface-variant hover:text-primary transition-colors uppercase" href="#">Help Center</a>
         <a class="font-label-caps text-on-surface-variant hover:text-primary transition-colors uppercase" href="#">Careers</a>
       </nav>
