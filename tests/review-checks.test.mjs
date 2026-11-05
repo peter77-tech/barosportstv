@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { checkDoc } from '../tools/review/checks.mjs';
+import { checkDoc, statPairs } from '../tools/review/checks.mjs';
 import { toFacts as kblFacts } from '../tools/review/sources/kbl.mjs';
 import { toFacts as kl1Facts } from '../tools/review/sources/kl1.mjs';
 import { titleFor } from '../tools/review/config.mjs';
@@ -48,6 +48,22 @@ test('unknown_number_flagged', () => {
 test('derived_numbers_allowed', () => {
   const d = { ...good, answer: '서울 삼성이 97-86, 11점 차로 이겼다. 어시스트 27-16, 2점 득점 64-50, 3쿼터 22-13.' };
   assert.equal(checkDoc(d, F, EXP, EXP).ok, true);
+});
+/* 쓰는 AI 에게 건네는 합·차 목록은 검사기가 허용하는 값과 같은 출처다 — 목록의 값을 옮겨 쓰면 언제나 통과한다. */
+test('stat_pairs_sums_and_diffs_always_pass', () => {
+  const pairs = statPairs(F);
+  assert.ok(pairs.some((p) => p.home === 97 && p.away === 86 && p.sum === 183 && p.diff === 11), '최종 점수 짝');
+  const nums = pairs.flatMap((p) => [p.sum, p.diff]).join(', ');
+  assert.deepEqual(checkDoc({ ...good, verdict_html: `<p>${nums}</p>` }, F, EXP, EXP).issues, []);
+});
+/* #405(vm-023-7): 공격 성공률 58.0% 대 49.5% 의 차를 AI 가 9.5 로 암산했다. 코드가 계산한 차는 8.5 다. */
+test('percentage_diff_computed_by_code', () => {
+  const fx = { ...F, teamStats: [{ label: '공격 성공률', home: '58.0%', away: '49.5%' }] };
+  const p = statPairs(fx).find((x) => x.label === '공격 성공률');
+  assert.equal(p.diff, 8.5);
+  assert.equal(p.sum, 107.5);
+  assert.equal(checkDoc({ ...good, verdict_html: '<p>성공률은 8.5%포인트 높았다.</p>' }, fx, EXP, EXP).ok, true);
+  assert.ok(checkDoc({ ...good, verdict_html: '<p>성공률은 9.5%포인트 높았다.</p>' }, fx, EXP, EXP).issues.some((i) => /9\.5/.test(i.problem)));
 });
 test('banned_phrases', () => {
   for (const p of ['기록에 없다', '데이터상', '때문에 이겼다', '점수 차를 설명한다', '경기 내내 앞섰다'])

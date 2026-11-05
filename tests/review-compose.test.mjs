@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { composeReview } from '../tools/review/compose.mjs';
 import { callClaude } from '../tools/review/claude.mjs';
-import { WRITER_SYSTEM, REVIEWER_SYSTEM } from '../tools/review/prompts.mjs';
+import { WRITER_SYSTEM, REVIEWER_SYSTEM, writerMessage, reviewerMessage } from '../tools/review/prompts.mjs';
 import { toFacts as kblFacts } from '../tools/review/sources/kbl.mjs';
 import { titleFor, MODEL } from '../tools/review/config.mjs';
 
@@ -152,6 +152,15 @@ test('prompts_carry_rules', () => {
     assert.ok(WRITER_SYSTEM.includes(s), `WRITER_SYSTEM: ${s}`);
   for (const s of ['pass', 'issues', 'field', 'quote', 'problem', 'fix', '문체'])
     assert.ok(REVIEWER_SYSTEM.includes(s), `REVIEWER_SYSTEM: ${s}`);
+});
+
+/* AI 가 합·차를 암산하지 않게 코드가 계산해 메시지에 싣는다(#405 — 58.0-49.5 를 9.5 로 썼다). */
+test('messages_carry_code_computed_sums_and_diffs', () => {
+  assert.ok(WRITER_SYSTEM.includes('계산해 둔 합·차'));
+  for (const m of [writerMessage(F), reviewerMessage(F, good)]) {
+    assert.ok(m.includes('계산해 둔 합·차'));
+    assert.ok(m.includes('홈 97 · 원정 86 → 합 183, 차 11'), '최종 점수 줄');
+  }
 });
 
 /* ---- callClaude: SSE ---- */

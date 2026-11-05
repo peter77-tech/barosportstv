@@ -22,6 +22,23 @@ function flatten(v, out = []) {
 
 const plainNums = (strs) => strs.flatMap(numbersIn).filter((t) => !t.includes('+')).map(Number);
 
+const round3 = (n) => Math.round(n * 1000) / 1000;
+
+/* 두 팀 숫자 짝(최종 점수·기간 점수·팀 기록)과 그 합·차. 검사기가 허용하는 합·차가 곧 이것이고,
+   쓰는 AI 에게도 이 목록을 그대로 건넨다 — AI 가 암산하지 않게(#405: 58.0-49.5 를 9.5 로 썼다). */
+export function statPairs(facts) {
+  const pairs = [];
+  const push = (label, home, away) => pairs.push({ label, home, away, sum: round3(home + away), diff: round3(Math.abs(home - away)) });
+  push('최종 점수', facts.score.home, facts.score.away);
+  const p = facts.periods ?? { home: [], away: [] };
+  p.home.forEach((h, i) => { if (h != null && p.away[i] != null) push(p.labels?.[i] ?? `${i + 1}번째 기간`, h, p.away[i]); });
+  for (const s of facts.teamStats ?? []) {
+    const h = plainNums([s.home]); const a = plainNums([s.away]);
+    h.forEach((x, i) => { if (a[i] != null) push(s.label, x, a[i]); });
+  }
+  return pairs;
+}
+
 function allowedNumbers(facts, title) {
   const nums = new Set();
   const minutes = new Set();                // '45+9' 같은 토큰
@@ -33,15 +50,7 @@ function allowedNumbers(facts, title) {
     if (Number(m[2]) > 0) add(Math.round((Number(m[1]) / Number(m[2])) * 1000) / 10);   // 백분율 소수 1자리
   }
 
-  const pairs = [];
-  pairs.push([facts.score.home, facts.score.away]);
-  const p = facts.periods ?? { home: [], away: [] };
-  p.home.forEach((h, i) => { if (h != null && p.away[i] != null) pairs.push([h, p.away[i]]); });
-  for (const s of facts.teamStats ?? []) {
-    const h = plainNums([s.home]); const a = plainNums([s.away]);
-    h.forEach((x, i) => { if (a[i] != null) pairs.push([x, a[i]]); });
-  }
-  for (const [x, y] of pairs) { add(x); add(y); add(x + y); add(Math.abs(x - y)); }
+  for (const { home, away, sum, diff } of statPairs(facts)) { add(home); add(away); add(sum); add(diff); }
 
   for (const n of [...nums]) add(n * 2);    // 2점 득점 등
 
