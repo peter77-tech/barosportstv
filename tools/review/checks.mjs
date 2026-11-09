@@ -39,6 +39,23 @@ export function statPairs(facts) {
   return pairs;
 }
 
+/* 기간(쿼터·세트·이닝·전후반)별 승패 개수. 쓰는 AI·검토 AI 에 함께 건넨다 —
+   #471(kbl-S49G01N61): 1·3·4쿼터를 진 팀을 AI 가 「두 쿼터」로 셌다. 기간 점수가 없으면 null. */
+export function periodTally(facts) {
+  const p = facts.periods;
+  if (!p || !Array.isArray(p.home) || !Array.isArray(p.away)) return null;
+  const t = { home: { count: 0, labels: [] }, away: { count: 0, labels: [] }, tie: { count: 0, labels: [] } };
+  const num = (v) => (v == null || v === '' ? NaN : Number(v));   // Number(null) 은 0 이라 따로 거른다
+  p.home.forEach((hv, i) => {
+    const h = num(hv); const a = num(p.away[i]);
+    if (!Number.isFinite(h) || !Number.isFinite(a)) return;
+    const side = h > a ? t.home : a > h ? t.away : t.tie;
+    side.count += 1;
+    side.labels.push(p.labels?.[i] ?? `${i + 1}번째 기간`);
+  });
+  return t;
+}
+
 function allowedNumbers(facts, title) {
   const nums = new Set();
   const minutes = new Set();                // '45+9' 같은 토큰

@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { checkDoc, statPairs } from '../tools/review/checks.mjs';
+import { checkDoc, statPairs, periodTally } from '../tools/review/checks.mjs';
 import { toFacts as kblFacts } from '../tools/review/sources/kbl.mjs';
 import { toFacts as kl1Facts } from '../tools/review/sources/kl1.mjs';
 import { titleFor } from '../tools/review/config.mjs';
@@ -64,6 +64,19 @@ test('percentage_diff_computed_by_code', () => {
   assert.equal(p.sum, 107.5);
   assert.equal(checkDoc({ ...good, verdict_html: '<p>성공률은 8.5%포인트 높았다.</p>' }, fx, EXP, EXP).ok, true);
   assert.ok(checkDoc({ ...good, verdict_html: '<p>성공률은 9.5%포인트 높았다.</p>' }, fx, EXP, EXP).issues.some((i) => /9\.5/.test(i.problem)));
+});
+/* #471(kbl-S49G01N61): 창원 LG 가 1·3·4쿼터를 졌는데 AI 가 「두 쿼터」로 셌다. 기간별 승패 개수는 코드가 센다. */
+test('period_tally_counted_by_code', () => {
+  const t = periodTally(F);   // 삼성 30-21, 23-28, 22-13, 22-24 KCC
+  assert.deepEqual(t.home, { count: 2, labels: ['1Q', '3Q'] });
+  assert.deepEqual(t.away, { count: 2, labels: ['2Q', '4Q'] });
+  assert.deepEqual(t.tie, { count: 0, labels: [] });
+  const fx = { ...F, periods: { labels: ['1세트', '2세트', '3세트'], home: [25, 20, 25], away: [25, 25, null] } };
+  const v = periodTally(fx);
+  assert.deepEqual([v.home.count, v.away.count, v.tie.count], [0, 1, 1], '빈 기간은 세지 않는다');
+  assert.equal(periodTally({ ...F, periods: undefined }), null);
+  const s = periodTally({ ...F, periods: { labels: ['1', '2', '3'], home: ['3', 'X', ''], away: [1, 0, 0] } });
+  assert.deepEqual([s.home.labels, s.away.count, s.tie.count], [['1'], 0, 0], '숫자 문자열은 세고 X·빈칸은 뺀다');
 });
 test('banned_phrases', () => {
   for (const p of ['기록에 없다', '데이터상', '때문에 이겼다', '점수 차를 설명한다', '경기 내내 앞섰다'])

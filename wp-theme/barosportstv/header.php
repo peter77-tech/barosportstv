@@ -136,7 +136,7 @@
         </button>
 
         <div class="w-8 h-8 rounded-pill bg-surface-variant overflow-hidden border-2 border-outline-variant shrink-0">
-          <img class="w-full h-full object-cover" src="assets/img/avatar.svg" alt="내 계정" width="32" height="32">
+          <img class="w-full h-full object-cover" src="<?php echo esc_url( get_theme_file_uri( 'assets/img/avatar.svg' ) ); ?>" alt="내 계정" width="32" height="32">
         </div>
       </div>
     </div>

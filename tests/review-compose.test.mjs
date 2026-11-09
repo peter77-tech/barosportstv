@@ -163,6 +163,23 @@ test('messages_carry_code_computed_sums_and_diffs', () => {
   }
 });
 
+/* #471: 기간별 승패 개수도 코드가 세어 싣는다. 검토 메시지에도 같은 목록이 간다. */
+test('messages_carry_code_counted_period_tally', () => {
+  assert.ok(WRITER_SYSTEM.includes('기간별 승패(코드가 셌다)'));
+  for (const m of [writerMessage(F), reviewerMessage(F, good)]) {
+    assert.ok(m.includes('기간별 승패(코드가 셌다)'));
+    assert.ok(m.includes('홈 서울 삼성 2개(1Q·3Q) · 원정 부산 KCC 2개(2Q·4Q) · 동점 0개'), '기간별 승패 줄');
+  }
+});
+
+/* #423·#438·#465: 한 기록의 우위를 승리 원인으로 단정해 검토에 막혔다. 지시문이 「결과와의 연결」을 요구하지 않고,
+   원인 단정·근거 없는 최상급 비교를 금지한다. */
+test('writer_prompt_forbids_causal_links_and_superlatives', () => {
+  assert.ok(!WRITER_SYSTEM.includes('결과와의 연결'));
+  for (const s of ['승리의 원인', '가장 큰 차이'])
+    assert.ok(WRITER_SYSTEM.includes(s), `WRITER_SYSTEM: ${s}`);
+});
+
 /* ---- callClaude: SSE ---- */
 
 function sseResponse(chunks, status = 200) {

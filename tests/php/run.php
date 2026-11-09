@@ -170,6 +170,18 @@ $row->ID = '361';
 check( 'post_id: DB 행(stdClass)에서 ID 를 읽는다', 361 === bstv_index_post_id( $row ) );
 check( 'post_id: ID 가 없거나 객체가 아니면 0', 0 === bstv_index_post_id( new stdClass() ) && 0 === bstv_index_post_id( null ) && 0 === bstv_index_post_id( '361' ) );
 
+/* ── relative_assets ───────────────────────────────────
+ * 테마에서 src="assets/…" 처럼 상대경로를 쓰면 페이지 주소 아래로 붙어 404 가 된다.
+ * 2026-11-06 네이버가 /assets/img/avatar.svg 를 「접근 불가」로 잡았다(header.php). */
+$bstv_rel = array();
+$bstv_it  = new RecursiveIteratorIterator( new RecursiveDirectoryIterator( dirname( __DIR__, 2 ) . '/wp-theme/barosportstv', FilesystemIterator::SKIP_DOTS ) );
+foreach ( $bstv_it as $bstv_f ) {
+	if ( 'php' === $bstv_f->getExtension() && preg_match( '/\b(?:src|href)=["\'](?:\.\/)?assets\//', file_get_contents( $bstv_f->getPathname() ) ) ) {
+		$bstv_rel[] = $bstv_f->getFilename();
+	}
+}
+check( 'relative_assets: 테마 PHP 에 상대경로 assets/ 가 없다' . ( $bstv_rel ? ' (' . implode( ',', $bstv_rel ) . ')' : '' ), ! $bstv_rel );
+
 require __DIR__ . '/data.php';
 
 echo "\npass {$passed} · fail {$failed}\n";
