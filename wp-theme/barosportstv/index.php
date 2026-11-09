@@ -32,7 +32,7 @@ get_header();
 				'mid_size'  => 2,
 				'prev_text' => '이전',
 				'next_text' => '다음',
-				'class'     => 'bstv-pager mt-10',
+				'class'     => 'bstv-pager', // 워드프레스가 공백을 지워 클래스는 하나만 된다(0.4.4 에서 bstv-pagermt-10 으로 깨짐)
 			)
 		);
 		?>

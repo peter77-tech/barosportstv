@@ -108,6 +108,9 @@
 /* ── 글 목록 쪽 번호 (index.php the_posts_pagination) ── 2026-11-09 BD
  * 전에는 모양이 없어 숫자가 맨 글자로 붙어 있었다(보기·누르기 불편). 가운데 정렬, 누르는 칸 44px.
  * 색은 카드(.bg-surface-container · .border-outline-variant)와 리그 칩 선택 주황(#d14300)과 같다. */
+.bstv-pager {
+  margin-top: 2.5rem;   /* mt-10 — class 인자에 둘째 클래스를 넣을 수 없어 여기서 준다 */
+}
 .bstv-pager .nav-links {
   display: flex;
   flex-wrap: wrap;

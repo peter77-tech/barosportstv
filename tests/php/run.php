@@ -182,6 +182,11 @@ foreach ( $bstv_it as $bstv_f ) {
 }
 check( 'relative_assets: 테마 PHP 에 상대경로 assets/ 가 없다' . ( $bstv_rel ? ' (' . implode( ',', $bstv_rel ) . ')' : '' ), ! $bstv_rel );
 
+/* the_posts_pagination 의 class 인자는 sanitize_html_class 를 거쳐 공백이 지워진다 — 0.4.4 에서
+ * 'bstv-pager mt-10' 이 'bstv-pagermt-10' 이 되어 쪽 번호 스타일이 안 걸렸다. 클래스는 하나만 쓴다. */
+preg_match_all( "/'class'\s*=>\s*'([^']*)'/", file_get_contents( dirname( __DIR__, 2 ) . '/wp-theme/barosportstv/index.php' ), $bstv_m );
+check( 'pagination_class: 쪽 번호 class 인자에 공백이 없다', $bstv_m[1] && ! preg_grep( '/\s/', $bstv_m[1] ) );
+
 require __DIR__ . '/data.php';
 
 echo "\npass {$passed} · fail {$failed}\n";
