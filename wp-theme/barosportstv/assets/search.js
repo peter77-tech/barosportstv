@@ -76,6 +76,23 @@
       return { label: p[0], kind: '화면', url: p[1], meta: p[2], alias: '' };
     }));
 
+  /* 워드프레스(테마)에서는 functions.php 가 BSTV_SEARCH_URL(…/?s=)을 준다.
+     정적 화면(team-hub.html 등)은 워드프레스에 없어 404 가 난다(2026-11-09 BD: 「전북 현대」를 눌러도 안 나옴).
+     그래서 팀만 남기고, 누르면 그 팀 이름으로 워드프레스 검색(경기 리뷰)을 연다. 정적 사이트는 그대로다. */
+  var SEARCH_URL = window.BSTV_SEARCH_URL || '';
+  if (SEARCH_URL) {
+    INDEX = INDEX.filter(function (item) { return item.kind === '팀'; }).map(function (item) {
+      return { label: item.label, kind: item.kind, meta: item.meta, alias: item.alias,
+        url: SEARCH_URL + encodeURIComponent(item.label) };
+    });
+  }
+
+  /* 항목을 고르지 않고 Enter — 워드프레스에서는 입력한 말 그대로 검색한다. 정적 사이트는 null. */
+  function queryUrl(q) {
+    var t = String(q || '').trim();
+    return SEARCH_URL && t ? SEARCH_URL + encodeURIComponent(t) : null;
+  }
+
   var MAX = 7;
 
   function norm(v) {
@@ -94,7 +111,12 @@
       hits.push({ item: item, score: pos });
     }
     hits.sort(function (a, b) { return a.score - b.score; });
-    return hits.slice(0, MAX).map(function (h) { return h.item; });
+    if (!SEARCH_URL) return hits.slice(0, MAX).map(function (h) { return h.item; });
+    /* 워드프레스: 팀 사전에 없는 팀(KBL·V리그 다수)도 찾게 끝에 늘 「입력어 리뷰 검색」을 붙인다. */
+    var label = String(q).trim();
+    return hits.slice(0, MAX - 1).map(function (h) { return h.item; }).concat([
+      { label: '「' + label + '」 리뷰 검색', kind: '검색', meta: '경기 리뷰', alias: '', url: queryUrl(label) }
+    ]);
   }
 
   var KIND_STYLE = {
@@ -102,7 +124,8 @@
     '경기': 'bg-hermes-orange/10 text-primary',
     '뉴스': 'bg-surface-container-highest text-on-surface-variant',
     '종목': 'bg-apex-blue/10 text-apex-blue',
-    '화면': 'bg-surface-container-highest text-on-surface-variant'
+    '화면': 'bg-surface-container-highest text-on-surface-variant',
+    '검색': 'bg-hermes-orange/10 text-primary'
   };
 
   var ESC = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
@@ -193,6 +216,11 @@
 
     input.addEventListener('keydown', function (e) {
       if (e.key === 'Escape') { close(); return; }
+      if (e.key === 'Enter' && active < 0 && queryUrl(input.value)) {
+        e.preventDefault();
+        location.href = queryUrl(input.value);
+        return;
+      }
       if (!results.length) return;
       if (e.key === 'ArrowDown') {
         e.preventDefault();
@@ -261,6 +289,8 @@
       closeMobile();
     });
   }
+
+  window.BstvSearch = { search: search, index: INDEX, queryUrl: queryUrl };   // 테스트용(tests/wp-search.test.mjs)
 
   Array.prototype.forEach.call(document.querySelectorAll('form[role="search"]'), init);
 })();

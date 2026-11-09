@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'BSTV_VERSION', '0.4.5' );
+define( 'BSTV_VERSION', '0.4.6' );
 
 /**
  * 파일 수정 시각을 버전으로 쓴다. 파일이 없으면 테마 버전으로 떨어진다.
@@ -123,6 +123,9 @@ function bstv_assets() {
 			wp_enqueue_script( $handle, get_theme_file_uri( $path ), $deps, bstv_asset_version( $path ), true );
 		}
 	}
+
+	// 상단 검색이 정적 화면(team-hub.html) 대신 워드프레스 검색으로 가게 한다(assets/search.js).
+	wp_add_inline_script( 'bstv-search', 'window.BSTV_SEARCH_URL = ' . wp_json_encode( home_url( '/?s=' ) ) . ';', 'before' );
 }
 add_action( 'wp_enqueue_scripts', 'bstv_assets' );
 
