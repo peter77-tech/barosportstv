@@ -104,3 +104,44 @@
   border-color: #E85110;
   box-shadow: inset 0 0 0 1px #E85110;
 }
+
+/* ── 글 목록 쪽 번호 (index.php the_posts_pagination) ── 2026-11-09 BD
+ * 전에는 모양이 없어 숫자가 맨 글자로 붙어 있었다(보기·누르기 불편). 가운데 정렬, 누르는 칸 44px.
+ * 색은 카드(.bg-surface-container · .border-outline-variant)와 리그 칩 선택 주황(#d14300)과 같다. */
+.bstv-pager .nav-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+}
+.bstv-pager .page-numbers {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.75rem;
+  height: 2.75rem;
+  padding: 0 0.875rem;
+  border: 1px solid rgb(227 191 179);
+  border-radius: 0.5rem;
+  background: rgb(239 237 237);
+  color: rgb(27 28 28);
+  font-weight: 600;
+  text-decoration: none;
+  transition: background-color 0.15s, border-color 0.15s;
+}
+.bstv-pager a.page-numbers:hover,
+.bstv-pager a.page-numbers:focus-visible {
+  background: #fff;
+  border-color: #E85110;
+}
+.bstv-pager .page-numbers.current {
+  background: #d14300;
+  border-color: #d14300;
+  color: #fff;
+}
+.bstv-pager .page-numbers.dots {
+  min-width: auto;
+  padding: 0 0.25rem;
+  border-color: transparent;
+  background: none;
+}

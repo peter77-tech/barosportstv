@@ -32,7 +32,7 @@ get_header();
 				'mid_size'  => 2,
 				'prev_text' => '이전',
 				'next_text' => '다음',
-				'class'     => 'mt-10',
+				'class'     => 'bstv-pager mt-10',
 			)
 		);
 		?>
